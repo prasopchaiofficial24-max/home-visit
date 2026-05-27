@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบบันทึกการเยี่ยมบ้านนักเรียน – Online</title>
+
+<!-- ═══════════════════════════════════════════════════════
+  🔥 FIREBASE CONFIG – แก้ไขค่าเหล่านี้จาก Firebase Console
+  ดูคู่มือการตั้งค่าใน: คู่มือติดตั้ง-Firebase.html
+═══════════════════════════════════════════════════════ -->
+<script>
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDXJIhFdFT8_9Uz5iyxvo0Tze5sYHrI4iM",
+  authDomain:        "school-student-home-visit.firebaseapp.com",
+  projectId:         "school-student-home-visit",
+  storageBucket:     "school-student-home-visit.firebasestorage.app",
+  messagingSenderId: "639982697383",
+  appId:             "1:639982697383:web:55488f484c1f80a4bbd482"
+};
+// ถ้ายังไม่ได้ตั้งค่า Firebase จะใช้ localStorage แทน (ใช้ได้เครื่องเดียว)
+const USE_FIREBASE = FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY";
+</script>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- Chart.js + SheetJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+:root {
+  --primary:#1a56db; --primary-dark:#1e429f; --secondary:#0e9f6e;
+  --danger:#e02424; --warning:#ff5a1f; --bg:#f3f4f6; --card:#fff;
+  --border:#e5e7eb; --text:#111827; --text-muted:#6b7280;
+  --shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun','Noto Sans Thai',Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px}
+
+/* TOPBAR */
+.topbar{background:var(--primary-dark);color:#fff;padding:0 16px;display:flex;align-items:center;gap:0;min-height:56px;box-shadow:0 2px 8px rgba(0,0,0,.2);position:sticky;top:0;z-index:100}
+.topbar-logo{font-size:1rem;font-weight:700;margin-right:16px;white-space:nowrap}
+.topbar-logo span{color:#93c5fd}
+.nav-tabs{display:flex;gap:2px;flex:1;overflow-x:auto}
+.nav-tab{padding:16px 16px;color:#cbd5e1;cursor:pointer;border-bottom:3px solid transparent;font-size:0.88rem;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.nav-tab:hover{color:#fff;background:rgba(255,255,255,.07)}
+.nav-tab.active{color:#fff;border-bottom-color:#60a5fa;font-weight:600}
+.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
+.status-badge{padding:4px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;white-space:nowrap}
+.status-online{background:#065f46;color:#6ee7b7}
+.status-offline{background:#7f1d1d;color:#fca5a5}
+.status-local{background:#1e3a5f;color:#93c5fd}
+.btn-settings{background:rgba(255,255,255,.1);border:none;border-radius:6px;cursor:pointer;color:#cbd5e1;font-size:0.85rem;padding:7px 12px}
+.btn-settings:hover{background:rgba(255,255,255,.2);color:#fff}
+
+/* LOADING OVERLAY */
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(255,255,255,.8);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.loading-overlay.show{display:flex}
+.spinner{width:44px;height:44px;border:4px solid #e5e7eb;border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{color:var(--text-muted);font-size:.9rem}
+
+/* LAYOUT */
+.page{display:none;max-width:1200px;margin:0 auto;padding:20px 14px}
+.page.active{display:block}
+
+/* CARDS */
+.card{background:var(--card);border-radius:10px;box-shadow:var(--shadow);padding:18px 20px;margin-bottom:18px}
+.card-title{font-size:1rem;font-weight:700;color:var(--primary-dark);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.stat-card{background:var(--card);border-radius:10px;padding:16px;box-shadow:var(--shadow);border-left:4px solid var(--primary)}
+.stat-card.green{border-left-color:var(--secondary)}
+.stat-card.orange{border-left-color:var(--warning)}
+.stat-card.red{border-left-color:var(--danger)}
+.stat-card.purple{border-left-color:#7e3af2}
+.stat-label{font-size:0.78rem;color:var(--text-muted);margin-bottom:4px}
+.stat-value{font-size:1.85rem;font-weight:800;color:var(--text);line-height:1}
+.stat-sub{font-size:0.75rem;color:var(--text-muted);margin-top:3px}
+
+/* CHARTS */
+.charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:18px}
+.chart-box{background:var(--card);border-radius:10px;padding:18px;box-shadow:var(--shadow)}
+.chart-box h3{font-size:.82rem;font-weight:700;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em}
+.chart-container{position:relative;height:200px}
+
+/* FORM */
+.form-section{background:var(--card);border-radius:10px;box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+.form-section-header{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;padding:11px 18px;font-weight:700;font-size:.92rem;display:flex;align-items:center;gap:7px}
+.form-section-body{padding:18px 20px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-label{font-size:.83rem;font-weight:600;color:#374151}
+.form-label .req{color:var(--danger);margin-left:2px}
+input[type=text],input[type=number],input[type=date],select,textarea{border:1.5px solid var(--border);border-radius:6px;padding:8px 10px;font-size:.9rem;font-family:inherit;width:100%;background:#f9fafb;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(26,86,219,.1)}
+textarea{resize:vertical;min-height:70px}
+.num-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:9px}
+.num-item{display:flex;align-items:center;gap:9px;padding:8px 11px;background:#f9fafb;border-radius:6px;border:1px solid var(--border)}
+.num-item label{flex:1;font-size:.85rem;color:#374151}
+.num-item input{width:68px;flex-shrink:0;text-align:center}
+.check-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:7px}
+.check-item{display:flex;align-items:center;gap:7px;padding:8px 11px;background:#f9fafb;border-radius:6px;border:1px solid var(--border);cursor:pointer}
+.check-item:hover{background:#eff6ff;border-color:#bfdbfe}
+.check-item input[type=checkbox]{width:15px;height:15px;accent-color:var(--primary);flex-shrink:0}
+.check-item span{font-size:.85rem}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 18px;border-radius:7px;font-size:.88rem;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
+.btn-success{background:var(--secondary);color:#fff}.btn-success:hover{background:#057a55}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:#c81e1e}
+.btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--primary)}.btn-outline:hover{background:#eff6ff}
+.btn-warning{background:var(--warning);color:#fff}.btn-warning:hover{background:#d03801}
+.btn-gray{background:#6b7280;color:#fff}.btn-gray:hover{background:#4b5563}
+.btn-sm{padding:5px 11px;font-size:.8rem}
+.btn-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:#f3f4f6;color:#374151;font-weight:700;padding:9px 11px;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap}
+td{padding:8px 11px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+tr:hover td{background:#f9fafb}
+.badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:.76rem;font-weight:600}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.badge-green{background:#d1fae5;color:#065f46}
+.badge-orange{background:#ffedd5;color:#9a3412}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:50px 20px;color:var(--text-muted)}
+.empty-state-icon{font-size:3rem;margin-bottom:10px;opacity:.4}
+
+/* ALERT */
+.alert{padding:10px 14px;border-radius:7px;margin-bottom:14px;font-size:.88rem;display:flex;align-items:center;gap:7px}
+.alert-success{background:#d1fae5;color:#065f46;border:1px solid #a7f3d0}
+.alert-danger{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.alert-info{background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe}
+.alert-warning{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:24px;max-width:500px;width:95%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:88vh;overflow-y:auto}
+.modal h3{font-size:1.05rem;font-weight:700;margin-bottom:14px;color:var(--primary-dark)}
+.modal-actions{display:flex;gap:9px;margin-top:18px;justify-content:flex-end}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* PRINT */
+@media print{
+  body *{visibility:hidden}
+  #print-area,#print-area *{visibility:visible}
+  #print-area{position:absolute;left:0;top:0;width:100%}
+  .no-print{display:none!important}
+  .topbar,.loading-overlay{display:none}
+}
+.print-doc{font-family:'TH Sarabun New','Sarabun',serif;font-size:15pt;line-height:1.75;color:#000;background:#fff;padding:0}
+.print-doc .doc-header{text-align:center;margin-bottom:10px}
+.print-doc .doc-title{font-size:16pt;font-weight:bold}
+.print-doc .doc-line{margin:5px 0}
+.print-doc .doc-section{margin-top:11px}
+.print-doc .doc-section-title{font-weight:bold;margin-bottom:3px;text-decoration:underline}
+.print-doc .doc-item{margin-left:18px;margin-bottom:2px}
+.dot-line{border-bottom:1px dotted #555;display:inline-block;min-width:100px}
+.photo-placeholder{border:1px dashed #999;width:100%;height:110px;display:flex;align-items:center;justify-content:center;color:#999;font-size:12pt;margin:6px 0}
+.doc-sign-row{display:flex;justify-content:space-between;margin-top:18px;flex-wrap:wrap;gap:20px}
+.doc-sign-block{text-align:center;min-width:180px}
+.doc-sign-line{border-bottom:1px solid #000;margin:0 16px 4px}
+
+/* MOBILE */
+@media(max-width:600px){
+  .topbar{min-height:50px}
+  .nav-tab{padding:13px 10px;font-size:.8rem}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .form-grid{grid-template-columns:1fr}
+  .settings-grid{grid-template-columns:1fr}
+  .page{padding:14px 10px}
+  .btn{padding:8px 14px;font-size:.85rem}
+}
+
+/* FIREBASE SETUP BANNER */
+.setup-banner{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:14px 20px;border-radius:10px;margin-bottom:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.setup-banner strong{font-size:1rem}
+.setup-banner p{font-size:.88rem;opacity:.9;flex:1;min-width:200px}
+.setup-banner a{color:#fff;text-decoration:underline;font-weight:600}
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">กำลังโหลดข้อมูล...</div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">🏠 เยี่ยมบ้าน <span>สพม.</span></div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="showPage('dashboard')">📊 แดชบอร์ด</div>
+    <div class="nav-tab" onclick="showPage('form')">📝 กรอกฟอร์ม</div>
+    <div class="nav-tab" onclick="showPage('records')">📋 รายการ</div>
+    <div class="nav-tab" onclick="showPage('district')">📄 รายงานเขต</div>
+  </div>
+  <div class="topbar-right">
+    <span class="status-badge" id="conn-badge">...</span>
+    <button class="btn-settings" onclick="openSettings()">⚙️</button>
+  </div>
+</div>
+
+<!-- ==================== DASHBOARD ==================== -->
+<div id="page-dashboard" class="page active">
+  <div id="setup-warning"></div>
+  <div id="dash-alert" style="display:none"></div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">รายงานทั้งหมด</div><div class="stat-value" id="s-total-reports">0</div><div class="stat-sub">ห้องเรียน</div></div>
+    <div class="stat-card green"><div class="stat-label">นักเรียนทั้งหมด</div><div class="stat-value" id="s-total-students">0</div><div class="stat-sub">คน</div></div>
+    <div class="stat-card"><div class="stat-label">ได้รับการเยี่ยมบ้าน</div><div class="stat-value" id="s-visited">0</div><div class="stat-sub" id="s-visited-pct">0%</div></div>
+    <div class="stat-card orange"><div class="stat-label">พฤติกรรมเสี่ยง</div><div class="stat-value" id="s-risk">0</div><div class="stat-sub">คน</div></div>
+    <div class="stat-card red"><div class="stat-label">ช่วยเหลือด่วน</div><div class="stat-value" id="s-urgent">0</div><div class="stat-sub">คน</div></div>
+    <div class="stat-card purple"><div class="stat-label">ปัญหาการเรียน</div><div class="stat-value" id="s-prob-learn">0</div><div class="stat-sub">คน</div></div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-box"><h3>พฤติกรรมเสี่ยง</h3><div class="chart-container"><canvas id="chart-risk"></canvas></div></div>
+    <div class="chart-box"><h3>ความสัมพันธ์ครอบครัว</h3><div class="chart-container"><canvas id="chart-family"></canvas></div></div>
+    <div class="chart-box"><h3>ปัญหาที่พบ</h3><div class="chart-container"><canvas id="chart-problems"></canvas></div></div>
+    <div class="chart-box"><h3>สภาพแวดล้อม</h3><div class="chart-container"><canvas id="chart-env"></canvas></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 รายงานล่าสุด</div>
+    <div id="recent-records"></div>
+  </div>
+</div>
+
+<!-- ==================== FORM ==================== -->
+<div id="page-form" class="page">
+  <div id="form-alert" style="display:none"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <div>
+      <h2 style="font-size:1.1rem;font-weight:800;color:var(--primary-dark)">📝 กรอกแบบสรุปการเยี่ยมบ้าน</h2>
+      <p style="font-size:.82rem;color:var(--text-muted)">แบบสรุปรายงานการเยี่ยมบ้านนักเรียน สพม.อุบลราชธานี อำนาจเจริญ</p>
+    </div>
+    <button class="btn btn-gray btn-sm" onclick="clearForm()">🗑 ล้างฟอร์ม</button>
+  </div>
+  <input type="hidden" id="edit-id" value="">
+
+  <!-- ส่วนที่ 1: ข้อมูลทั่วไป -->
+  <div class="form-section">
+    <div class="form-section-header">📌 ส่วนที่ 1 – ข้อมูลทั่วไป</div>
+    <div class="form-section-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">ชื่อโรงเรียน<span class="req">*</span></label><input type="text" id="f-school" placeholder="ชื่อโรงเรียน"></div>
+        <div class="form-group"><label class="form-label">อำเภอ</label><input type="text" id="f-amphoe" placeholder="เช่น หัวตะพาน"></div>
+        <div class="form-group"><label class="form-label">จังหวัด</label><input type="text" id="f-province" placeholder="เช่น อำนาจเจริญ"></div>
+        <div class="form-group"><label class="form-label">ปีการศึกษา</label><input type="text" id="f-year" placeholder="เช่น 2568"></div>
+        <div class="form-group"><label class="form-label">ครั้งที่</label>
+          <select id="f-semester"><option value="1">ครั้งที่ 1</option><option value="2" selected>ครั้งที่ 2</option></select></div>
+        <div class="form-group"><label class="form-label">ชั้น/ห้อง<span class="req">*</span></label><input type="text" id="f-grade" placeholder="เช่น ม.1/1"></div>
+        <div class="form-group"><label class="form-label">ครูที่ปรึกษา<span class="req">*</span></label><input type="text" id="f-teacher" placeholder="ชื่อ-นามสกุล"></div>
+        <div class="form-group"><label class="form-label">เบอร์โทรศัพท์</label><input type="text" id="f-phone" placeholder="เบอร์ติดต่อ"></div>
+        <div class="form-group"><label class="form-label">ระหว่างวันที่</label><input type="text" id="f-daterange" placeholder="เช่น 1 ม.ค. – 28 ก.พ. 2568"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ส่วนที่ 2: จำนวนนักเรียน -->
+  <div class="form-section">
+    <div class="form-section-header">👥 ส่วนที่ 2 – จำนวนนักเรียน</div>
+    <div class="form-section-body">
+      <div class="num-grid">
+        <div class="num-item"><label>นักเรียนทั้งหมดในห้อง</label><input type="number" id="f-total-students" min="0" value="0"></div>
+        <div class="num-item"><label>เยี่ยมบ้านได้ (ชาย)</label><input type="number" id="f-visited-male" min="0" value="0"></div>
+        <div class="num-item"><label>เยี่ยมบ้านได้ (หญิง)</label><input type="number" id="f-visited-female" min="0" value="0"></div>
+        <div class="num-item"><label>ไม่ได้รับการเยี่ยมบ้าน</label><input type="number" id="f-not-visited" min="0" value="0"></div>
+      </div>
+      <div style="margin-top:12px">
+        <label class="form-label" style="margin-bottom:7px;display:block">สาเหตุที่ไม่ได้ออกเยี่ยมบ้าน</label>
+        <div class="check-grid">
+          <label class="check-item"><input type="checkbox" id="nv-full"><span>เยี่ยมบ้านครบ 100%</span></label>
+          <label class="check-item"><input type="checkbox" id="nv-absent"><span>นักเรียนไม่มาเรียนนาน</span></label>
+          <label class="check-item"><input type="checkbox" id="nv-guardian-busy"><span>ผู้ปกครองติดงาน/ฤดูกาลทำนา</span></label>
+          <label class="check-item"><input type="checkbox" id="nv-cant-contact"><span>ติดต่อไม่ได้</span></label>
+          <label class="check-item"><input type="checkbox" id="nv-other"><span>อื่น ๆ ระบุ</span></label>
+        </div>
+        <input type="text" id="nv-other-text" placeholder="ระบุสาเหตุอื่น ๆ..." style="margin-top:7px">
+      </div>
+    </div>
+  </div>
+
+  <!-- ส่วนที่ 3: ครอบครัว -->
+  <div class="form-section">
+    <div class="form-section-header">👨‍👩‍👧‍👦 ส่วนที่ 3 – ข้อมูลครอบครัว</div>
+    <div class="form-section-body">
+      <div class="num-grid">
+        <div class="num-item"><label>บิดา-มารดาเสียชีวิตทั้งคู่</label><input type="number" id="f-both-deceased" min="0" value="0"></div>
+        <div class="num-item"><label>บิดาหรือมารดาเสียชีวิต</label><input type="number" id="f-one-deceased" min="0" value="0"></div>
+        <div class="num-item"><label>บิดา-มารดาเลิกร้างกัน</label><input type="number" id="f-divorced" min="0" value="0"></div>
+        <div class="num-item"><label>ไม่ได้อาศัยกับบิดา-มารดา</label><input type="number" id="f-not-with-parents" min="0" value="0"></div>
+        <div class="num-item"><label>มีพี่น้องต่างบิดา-มารดา</label><input type="number" id="f-half-siblings" min="0" value="0"></div>
+      </div>
+      <div style="margin-top:14px">
+        <label class="form-label" style="margin-bottom:7px;display:block">ความสัมพันธ์ของสมาชิกในครอบครัว</label>
+        <div class="num-grid">
+          <div class="num-item"><label>สนิทสนม/รักใคร่กันดี</label><input type="number" id="f-fam-close" min="0" value="0"></div>
+          <div class="num-item"><label>ขัดแย้งทะเลาะบางครั้ง</label><input type="number" id="f-fam-conflict-some" min="0" value="0"></div>
+          <div class="num-item"><label>ขัดแย้งทะเลาะบ่อยครั้ง</label><input type="number" id="f-fam-conflict-often" min="0" value="0"></div>
+          <div class="num-item"><label>ห่างเหิน</label><input type="number" id="f-fam-distant" min="0" value="0"></div>
+          <div class="num-item"><label>ทำร้ายร่างกายบางครั้ง</label><input type="number" id="f-fam-viol-some" min="0" value="0"></div>
+          <div class="num-item"><label>ทำร้ายร่างกายบ่อยครั้ง</label><input type="number" id="f-fam-viol-often" min="0" value="0"></div>
+          <div class="num-item"><label>ความสัมพันธ์อื่น ๆ</label><input type="number" id="f-fam-other" min="0" value="0"></div>
+        </div>
+        <input type="text" id="f-fam-other-text" placeholder="ระบุความสัมพันธ์อื่น ๆ..." style="margin-top:7px">
+      </div>
+    </div>
+  </div>
+
+  <!-- ส่วนที่ 4: สภาพแวดล้อม -->
+  <div class="form-section">
+    <div class="form-section-header">🏡 ส่วนที่ 4 – สภาพแวดล้อมที่อยู่อาศัย</div>
+    <div class="form-section-body">
+      <div class="num-grid">
+        <div class="num-item"><label>บ้านสภาพพอใช้ถึงดี</label><input type="number" id="f-house-good" min="0" value="0"></div>
+        <div class="num-item"><label>บ้านเก่าทรุดโทรม/ไม่มีความเป็นส่วนตัว</label><input type="number" id="f-house-old" min="0" value="0"></div>
+        <div class="num-item"><label>ใกล้แหล่งมั่วสุม/ชุมชนแออัด</label><input type="number" id="f-near-bad" min="0" value="0"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ส่วนที่ 5: พฤติกรรมเสี่ยง -->
+  <div class="form-section">
+    <div class="form-section-header">⚠️ ส่วนที่ 5 – พฤติกรรมเสี่ยงที่พบ</div>
+    <div class="form-section-body">
+      <div class="num-grid">
+        <div class="num-item"><label>ด้านสุขภาพอนามัย</label><input type="number" id="f-risk-health" min="0" value="0"></div>
+        <div class="num-item"><label>การใช้สารเสพติด</label><input type="number" id="f-risk-substance" min="0" value="0"></div>
+        <div class="num-item"><label>การใช้ความรุนแรง</label><input type="number" id="f-risk-violence" min="0" value="0"></div>
+        <div class="num-item"><label>การเดินทางมาเรียน</label><input type="number" id="f-risk-transport" min="0" value="0"></div>
+        <div class="num-item"><label>ด้านเพศ</label><input type="number" id="f-risk-sex" min="0" value="0"></div>
+        <div class="num-item"><label>ติดโทรศัพท์/เกม/โซเชียล</label><input type="number" id="f-risk-phone" min="0" value="0"></div>
+        <div class="num-item"><label>สวัสดิภาพและความปลอดภัย</label><input type="number" id="f-risk-safety" min="0" value="0"></div>
+        <div class="num-item"><label>พฤติกรรมเสี่ยงอื่น ๆ</label><input type="number" id="f-risk-other" min="0" value="0"></div>
+      </div>
+      <input type="text" id="f-risk-other-text" placeholder="ระบุพฤติกรรมเสี่ยงอื่น ๆ..." style="margin-top:7px">
+    </div>
+  </div>
+
+  <!-- ส่วนที่ 6: ปัญหา -->
+  <div class="form-section">
+    <div class="form-section-header">🔍 ส่วนที่ 6 – ปัญหาที่พบ</div>
+    <div class="form-section-body">
+      <div class="num-grid">
+        <div class="num-item"><label>เสี่ยง/มีปัญหาด้านการเรียน</label><input type="number" id="f-prob-learning" min="0" value="0"></div>
+        <div class="num-item"><label>ปัญหาด้านสุขภาพ</label><input type="number" id="f-prob-health" min="0" value="0"></div>
+        <div class="num-item"><label>ปัญหาด้านเศรษฐกิจ</label><input type="number" id="f-prob-economy" min="0" value="0"></div>
+        <div class="num-item"><label>ปัญหาสารเสพติด (กระท่อม/กัญชา/บุหรี่ไฟฟ้า)</label><input type="number" id="f-prob-substance" min="0" value="0"></div>
+        <div class="num-item"><label>ภาวะ/โรคซึมเศร้า</label><input type="number" id="f-prob-depression" min="0" value="0"></div>
+        <div class="num-item"><label>ปัญหาอื่น ๆ</label><input type="number" id="f-prob-other" min="0" value="0"></div>
+      </div>
+      <input type="text" id="f-prob-other-text" placeholder="ระบุปัญหาอื่น ๆ..." style="margin-top:7px">
+    </div>
+  </div>
+
+  <!-- ส่วนที่ 7: ช่วยเหลือด่วน -->
+  <div class="form-section">
+    <div class="form-section-header">🆘 ส่วนที่ 7 – การช่วยเหลือเร่งด่วน</div>
+    <div class="form-section-body">
+      <div class="num-grid" style="margin-bottom:10px">
+        <div class="num-item"><label>นักเรียนที่ต้องช่วยเหลือเร่งด่วน</label><input type="number" id="f-urgent" min="0" value="0"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ระบุความต้องการช่วยเหลือ</label>
+        <textarea id="f-urgent-detail" placeholder="อธิบายความต้องการช่วยเหลือ..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ส่วนที่ 8: หน่วยงานร่วม -->
+  <div class="form-section">
+    <div class="form-section-header">🤝 ส่วนที่ 8 – หน่วยงาน/สหวิชาชีพร่วมเยี่ยมบ้าน</div>
+    <div class="form-section-body">
+      <div class="check-grid">
+        <label class="check-item"><input type="checkbox" id="p-social"><span>สำนักงานพัฒนาสังคมและความมั่นคงของมนุษย์</span></label>
+        <label class="check-item"><input type="checkbox" id="p-health"><span>หน่วยงานสาธารณสุข</span></label>
+        <label class="check-item"><input type="checkbox" id="p-none"><span>ไม่มีหน่วยงาน/สหวิชาชีพ/องค์กรร่วม</span></label>
+        <label class="check-item"><input type="checkbox" id="p-other"><span>อื่น ๆ ระบุ</span></label>
+      </div>
+      <input type="text" id="p-other-text" placeholder="ระบุหน่วยงานอื่น ๆ..." style="margin-top:7px">
+    </div>
+  </div>
+
+  <!-- ส่วนที่ 9: สรุปและข้อเสนอแนะ -->
+  <div class="form-section">
+    <div class="form-section-header">📝 ส่วนที่ 9 – ข้อมูลสรุปและข้อเสนอแนะ</div>
+    <div class="form-section-body" style="display:grid;gap:12px">
+      <div class="form-group"><label class="form-label">การนำข้อมูลเยี่ยมบ้านไปใช้ประโยชน์</label><textarea id="f-data-usage" placeholder="อธิบายการนำข้อมูลไปใช้..."></textarea></div>
+      <div class="form-group"><label class="form-label">ข้อห่วงใยของผู้ปกครองที่มีต่อนักเรียน</label><textarea id="f-parent-concerns" placeholder="ข้อห่วงใยของผู้ปกครอง..."></textarea></div>
+      <div class="form-group"><label class="form-label">ปัญหา/อุปสรรค/ข้อเสนอแนะ</label><textarea id="f-obstacles" placeholder="ปัญหา อุปสรรค หรือข้อเสนอแนะ..."></textarea></div>
+      <div class="form-group"><label class="form-label">ความคิดเห็นและข้อเสนอแนะ</label><textarea id="f-opinions" placeholder="ความคิดเห็นและข้อเสนอแนะเพิ่มเติม..."></textarea></div>
+    </div>
+  </div>
+
+  <!-- ส่วนที่ 10: ทุนการศึกษา -->
+  <div class="form-section">
+    <div class="form-section-header">🎓 ส่วนที่ 10 – ทุนการศึกษา (หากมีทุนครั้งต่อไป)</div>
+    <div class="form-section-body">
+      <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:10px">ระบุนักเรียน 3 อันดับที่ควรได้รับทุน (จากมากไปน้อย)</p>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">อันดับที่ 1</label><input type="text" id="f-sch1" placeholder="ชื่อ-นามสกุล"></div>
+        <div class="form-group"><label class="form-label">อันดับที่ 2</label><input type="text" id="f-sch2" placeholder="ชื่อ-นามสกุล"></div>
+        <div class="form-group"><label class="form-label">อันดับที่ 3</label><input type="text" id="f-sch3" placeholder="ชื่อ-นามสกุล"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-actions">
+    <button class="btn btn-primary" onclick="saveRecord()">💾 บันทึกรายงาน</button>
+    <button class="btn btn-outline" onclick="clearForm()">🗑 ล้างฟอร์ม</button>
+    <button class="btn btn-gray" onclick="showPage('records')">📋 ดูรายการ</button>
+  </div>
+</div>
+
+<!-- ==================== RECORDS ==================== -->
+<div id="page-records" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <div>
+      <h2 style="font-size:1.1rem;font-weight:800;color:var(--primary-dark)">📋 รายการรายงานการเยี่ยมบ้าน</h2>
+      <p style="font-size:.82rem;color:var(--text-muted)" id="records-count">ทั้งหมด 0 รายงาน</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-success btn-sm" onclick="exportExcel()">📥 Export Excel</button>
+      <button class="btn btn-primary btn-sm" onclick="showPage('form')">➕ เพิ่มรายงาน</button>
+    </div>
+  </div>
+  <div class="card"><div id="records-table-wrap"></div></div>
+</div>
+
+<!-- ==================== DISTRICT REPORT ==================== -->
+<div id="page-district" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px" class="no-print">
+    <div>
+      <h2 style="font-size:1.1rem;font-weight:800;color:var(--primary-dark)">📄 รายงานเขต – สพม.อุบลราชธานี อำนาจเจริญ</h2>
+      <p style="font-size:.82rem;color:var(--text-muted)">สรุปรวมทุกห้องเรียน พิมพ์เป็น PDF ได้ทันที</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-warning btn-sm" onclick="printDistrictReport()">🖨 พิมพ์ / PDF</button>
+      <button class="btn btn-success btn-sm" onclick="exportExcel()">📥 Excel</button>
+    </div>
+  </div>
+  <div class="card no-print" style="padding:14px 18px">
+    <div class="form-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+      <div class="form-group"><label class="form-label">กรองโรงเรียน</label><select id="d-filter-school" onchange="renderDistrictReport()"><option value="">ทั้งหมด</option></select></div>
+      <div class="form-group"><label class="form-label">กรองครั้งที่</label>
+        <select id="d-filter-semester" onchange="renderDistrictReport()"><option value="">ทั้งหมด</option><option value="1">ครั้งที่ 1</option><option value="2">ครั้งที่ 2</option></select></div>
+      <div class="form-group"><label class="form-label">ปีการศึกษา</label><input type="text" id="d-filter-year" placeholder="เช่น 2568" oninput="renderDistrictReport()"></div>
+      <div class="form-group"><label class="form-label">ชื่อผู้สรุปรายงาน</label><input type="text" id="d-reporter" placeholder="ชื่อ-นามสกุล" oninput="renderDistrictReport()"></div>
+      <div class="form-group"><label class="form-label">ตำแหน่ง</label><input type="text" id="d-reporter-pos" placeholder="ตำแหน่ง" oninput="renderDistrictReport()"></div>
+      <div class="form-group"><label class="form-label">ผู้อำนวยการ</label><input type="text" id="d-principal" placeholder="ชื่อผู้อำนวยการ" oninput="renderDistrictReport()"></div>
+    </div>
+  </div>
+  <div id="print-area">
+    <div id="district-report-content" class="print-doc" style="background:#fff;padding:28px 40px;border-radius:10px;box-shadow:var(--shadow-md)"></div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <h3>⚙️ ตั้งค่าระบบ</h3>
+    <div class="settings-grid">
+      <div class="form-group"><label class="form-label">ชื่อโรงเรียน (ค่าเริ่มต้น)</label><input type="text" id="cfg-school" placeholder="ชื่อโรงเรียน"></div>
+      <div class="form-group"><label class="form-label">อำเภอ</label><input type="text" id="cfg-amphoe"></div>
+      <div class="form-group"><label class="form-label">จังหวัด</label><input type="text" id="cfg-province"></div>
+      <div class="form-group"><label class="form-label">ปีการศึกษา</label><input type="text" id="cfg-year" placeholder="2568"></div>
+      <div class="form-group"><label class="form-label">ผู้อำนวยการโรงเรียน</label><input type="text" id="cfg-principal"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-gray btn-sm" onclick="closeSettings()">ยกเลิก</button>
+      <button class="btn btn-primary btn-sm" onclick="saveSettings()">💾 บันทึก</button>
+    </div>
+    <hr style="margin:18px 0;border-color:var(--border)">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="exportDataBackup()">📤 Backup JSON</button>
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('import-file').click()">📥 Restore JSON</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importDataBackup(event)">
+    </div>
+    <div style="margin-top:12px">
+      <button class="btn btn-danger btn-sm" onclick="clearAllData()">🗑 ล้างข้อมูลทั้งหมด</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <h3>⚠️ ยืนยันการลบ</h3>
+    <p>คุณต้องการลบรายงานนี้ใช่หรือไม่? ไม่สามารถยกเลิกได้</p>
+    <div class="modal-actions">
+      <button class="btn btn-gray btn-sm" onclick="document.getElementById('delete-modal').classList.remove('open')">ยกเลิก</button>
+      <button class="btn btn-danger btn-sm" id="confirm-delete-btn">ยืนยันลบ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// DATA LAYER  (Firebase + localStorage fallback)
+// ═══════════════════════════════════════
+const STORAGE_KEY = 'home_visit_records';
+const CONFIG_KEY  = 'home_visit_config';
+let _records = [];
+let db = null;
+
+function initFirebase() {
+  if (!USE_FIREBASE) return;
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+    setStatus('online');
+  } catch(e) {
+    console.error('Firebase init error:', e);
+    setStatus('offline');
+  }
+}
+
+async function loadRecords() {
+  if (USE_FIREBASE && db) {
+    try {
+      const snap = await db.collection('records').orderBy('createdAt','asc').get();
+      _records = snap.docs.map(d => {
+        const data = d.data();
+        // Convert Firestore Timestamp to ISO string
+        if (data.createdAt && data.createdAt.toDate) data.createdAt = data.createdAt.toDate().toISOString();
+        if (data.updatedAt && data.updatedAt.toDate) data.updatedAt = data.updatedAt.toDate().toISOString();
+        return { ...data, id: d.id };
+      });
+      setStatus('online');
+    } catch(e) {
+      console.error('Load error:', e);
+      setStatus('offline');
+      _records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    }
+  } else {
+    _records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  }
+}
+
+function getRecords() { return _records; }
+
+async function addRecord(data) {
+  if (USE_FIREBASE && db) {
+    const toSave = { ...data };
+    delete toSave.id;
+    toSave.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+    toSave.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+    const ref = await db.collection('records').add(toSave);
+    data.id = ref.id;
+    data.createdAt = new Date().toISOString();
+  } else {
+    data.id = genId();
+    data.createdAt = new Date().toISOString();
+  }
+  data.updatedAt = new Date().toISOString();
+  _records.push(data);
+  if (!USE_FIREBASE) localStorage.setItem(STORAGE_KEY, JSON.stringify(_records));
+}
+
+async function updateRecord(data) {
+  data.updatedAt = new Date().toISOString();
+  if (USE_FIREBASE && db) {
+    const toSave = { ...data };
+    delete toSave.id;
+    toSave.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+    await db.collection('records').doc(data.id).set(toSave);
+  }
+  const idx = _records.findIndex(r => r.id === data.id);
+  if (idx >= 0) _records[idx] = data;
+  if (!USE_FIREBASE) localStorage.setItem(STORAGE_KEY, JSON.stringify(_records));
+}
+
+async function removeRecord(id) {
+  if (USE_FIREBASE && db) {
+    await db.collection('records').doc(id).delete();
+  }
+  _records = _records.filter(r => r.id !== id);
+  if (!USE_FIREBASE) localStorage.setItem(STORAGE_KEY, JSON.stringify(_records));
+}
+
+function getConfig() { try { return JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}'); } catch { return {}; } }
+function saveConfigLocal(cfg) { localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); }
+function genId() { return Date.now().toString(36)+Math.random().toString(36).substr(2,5); }
+
+// ═══════════════════════════════════════
+// STATUS
+// ═══════════════════════════════════════
+function setStatus(state) {
+  const el = document.getElementById('conn-badge');
+  if (!el) return;
+  if (!USE_FIREBASE) {
+    el.textContent = '💾 โหมดออฟไลน์';
+    el.className = 'status-badge status-local';
+  } else if (state === 'online') {
+    el.textContent = '🟢 Online (Firebase)';
+    el.className = 'status-badge status-online';
+  } else {
+    el.textContent = '🔴 Offline';
+    el.className = 'status-badge status-offline';
+  }
+}
+
+function showSetupWarning() {
+  const el = document.getElementById('setup-warning');
+  if (!USE_FIREBASE && el) {
+    el.innerHTML = `<div class="setup-banner">
+      <span style="font-size:1.5rem">⚠️</span>
+      <div>
+        <strong>โหมดออฟไลน์ – ข้อมูลเก็บเฉพาะในเครื่องนี้</strong>
+        <p>หากต้องการให้ครูหลายคนกรอกจากมือถือได้ กรุณาดูคู่มือ
+          <a href="คู่มือติดตั้ง-Firebase.html" target="_blank">คลิกที่นี่</a>
+          เพื่อตั้งค่า Firebase</p>
+      </div>
+    </div>`;
+  }
+}
+
+// ═══════════════════════════════════════
+// LOADING STATE
+// ═══════════════════════════════════════
+function showLoading(show, text) {
+  const el = document.getElementById('loading-overlay');
+  const tx = document.getElementById('loading-text');
+  if (show) { el.classList.add('show'); if (text && tx) tx.textContent = text; }
+  else el.classList.remove('show');
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+async function showPage(name) {
+  showLoading(true, 'กำลังโหลดข้อมูล...');
+  await loadRecords();
+  showLoading(false);
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  const idx = ['dashboard','form','records','district'].indexOf(name);
+  document.querySelectorAll('.nav-tab')[idx].classList.add('active');
+  if (name==='dashboard') renderDashboard();
+  if (name==='records')   renderRecordsTable();
+  if (name==='district')  { populateDistrictFilters(); renderDistrictReport(); }
+  window.scrollTo(0,0);
+}
+
+// ═══════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════
+function openSettings() {
+  const cfg = getConfig();
+  ['school','amphoe','province','year','principal'].forEach(k => {
+    const el = document.getElementById('cfg-'+k);
+    if (el) el.value = cfg[k] || '';
+  });
+  document.getElementById('settings-modal').classList.add('open');
+}
+function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
+function saveSettings() {
+  const cfg = {
+    school: document.getElementById('cfg-school').value,
+    amphoe: document.getElementById('cfg-amphoe').value,
+    province: document.getElementById('cfg-province').value,
+    year: document.getElementById('cfg-year').value,
+    principal: document.getElementById('cfg-principal').value,
+  };
+  saveConfigLocal(cfg);
+  closeSettings();
+  showAlert('dash-alert','success','✅ บันทึกการตั้งค่าเรียบร้อย');
+}
+
+// ═══════════════════════════════════════
+// FORM
+// ═══════════════════════════════════════
+function applyConfigToForm() {
+  const cfg = getConfig();
+  if (cfg.school)    document.getElementById('f-school').value   = cfg.school;
+  if (cfg.amphoe)    document.getElementById('f-amphoe').value   = cfg.amphoe;
+  if (cfg.province)  document.getElementById('f-province').value = cfg.province;
+  if (cfg.year)      document.getElementById('f-year').value     = cfg.year;
+}
+
+function getFormData() {
+  const n = id => parseInt(document.getElementById(id)?.value)||0;
+  const v = id => document.getElementById(id)?.value.trim()||'';
+  const c = id => document.getElementById(id)?.checked||false;
+  return {
+    id: v('edit-id')||'',
+    school:v('f-school'), amphoe:v('f-amphoe'), province:v('f-province'),
+    year:v('f-year'), semester:v('f-semester'), grade:v('f-grade'),
+    teacher:v('f-teacher'), phone:v('f-phone'), dateRange:v('f-daterange'),
+    totalStudents:n('f-total-students'), visitedMale:n('f-visited-male'),
+    visitedFemale:n('f-visited-female'), notVisited:n('f-not-visited'),
+    notVisitedReasons:{ full100:c('nv-full'), absent:c('nv-absent'),
+      guardianBusy:c('nv-guardian-busy'), cantContact:c('nv-cant-contact'),
+      other:c('nv-other'), otherText:v('nv-other-text') },
+    bothDeceased:n('f-both-deceased'), oneDeceased:n('f-one-deceased'),
+    divorced:n('f-divorced'), notWithParents:n('f-not-with-parents'), halfSiblings:n('f-half-siblings'),
+    famClose:n('f-fam-close'), famConflictSome:n('f-fam-conflict-some'),
+    famConflictOften:n('f-fam-conflict-often'), famDistant:n('f-fam-distant'),
+    famViolSome:n('f-fam-viol-some'), famViolOften:n('f-fam-viol-often'), famOther:n('f-fam-other'),
+    famOtherText:v('f-fam-other-text'),
+    houseGood:n('f-house-good'), houseOld:n('f-house-old'), nearBad:n('f-near-bad'),
+    riskHealth:n('f-risk-health'), riskSubstance:n('f-risk-substance'),
+    riskViolence:n('f-risk-violence'), riskTransport:n('f-risk-transport'),
+    riskSex:n('f-risk-sex'), riskPhone:n('f-risk-phone'),
+    riskSafety:n('f-risk-safety'), riskOther:n('f-risk-other'), riskOtherText:v('f-risk-other-text'),
+    probLearning:n('f-prob-learning'), probHealth:n('f-prob-health'),
+    probEconomy:n('f-prob-economy'), probSubstance:n('f-prob-substance'),
+    probDepression:n('f-prob-depression'), probOther:n('f-prob-other'), probOtherText:v('f-prob-other-text'),
+    urgent:n('f-urgent'), urgentDetail:v('f-urgent-detail'),
+    partnerSocial:c('p-social'), partnerHealth:c('p-health'),
+    partnerNone:c('p-none'), partnerOther:c('p-other'), partnerOtherText:v('p-other-text'),
+    dataUsage:v('f-data-usage'), parentConcerns:v('f-parent-concerns'),
+    obstacles:v('f-obstacles'), opinions:v('f-opinions'),
+    scholarship1:v('f-sch1'), scholarship2:v('f-sch2'), scholarship3:v('f-sch3'),
+  };
+}
+
+function setFormData(r) {
+  const sv = (id,val) => { const el=document.getElementById(id); if(el) el.value=val||''; };
+  const sc = (id,val) => { const el=document.getElementById(id); if(el) el.checked=!!val; };
+  sv('edit-id',r.id); sv('f-school',r.school); sv('f-amphoe',r.amphoe); sv('f-province',r.province);
+  sv('f-year',r.year); sv('f-semester',r.semester); sv('f-grade',r.grade);
+  sv('f-teacher',r.teacher); sv('f-phone',r.phone); sv('f-daterange',r.dateRange);
+  sv('f-total-students',r.totalStudents); sv('f-visited-male',r.visitedMale);
+  sv('f-visited-female',r.visitedFemale); sv('f-not-visited',r.notVisited);
+  if(r.notVisitedReasons){
+    sc('nv-full',r.notVisitedReasons.full100); sc('nv-absent',r.notVisitedReasons.absent);
+    sc('nv-guardian-busy',r.notVisitedReasons.guardianBusy); sc('nv-cant-contact',r.notVisitedReasons.cantContact);
+    sc('nv-other',r.notVisitedReasons.other); sv('nv-other-text',r.notVisitedReasons.otherText);
+  }
+  sv('f-both-deceased',r.bothDeceased); sv('f-one-deceased',r.oneDeceased);
+  sv('f-divorced',r.divorced); sv('f-not-with-parents',r.notWithParents); sv('f-half-siblings',r.halfSiblings);
+  sv('f-fam-close',r.famClose); sv('f-fam-conflict-some',r.famConflictSome);
+  sv('f-fam-conflict-often',r.famConflictOften); sv('f-fam-distant',r.famDistant);
+  sv('f-fam-viol-some',r.famViolSome); sv('f-fam-viol-often',r.famViolOften);
+  sv('f-fam-other',r.famOther); sv('f-fam-other-text',r.famOtherText);
+  sv('f-house-good',r.houseGood); sv('f-house-old',r.houseOld); sv('f-near-bad',r.nearBad);
+  sv('f-risk-health',r.riskHealth); sv('f-risk-substance',r.riskSubstance);
+  sv('f-risk-violence',r.riskViolence); sv('f-risk-transport',r.riskTransport);
+  sv('f-risk-sex',r.riskSex); sv('f-risk-phone',r.riskPhone);
+  sv('f-risk-safety',r.riskSafety); sv('f-risk-other',r.riskOther); sv('f-risk-other-text',r.riskOtherText);
+  sv('f-prob-learning',r.probLearning); sv('f-prob-health',r.probHealth);
+  sv('f-prob-economy',r.probEconomy); sv('f-prob-substance',r.probSubstance);
+  sv('f-prob-depression',r.probDepression); sv('f-prob-other',r.probOther); sv('f-prob-other-text',r.probOtherText);
+  sv('f-urgent',r.urgent); sv('f-urgent-detail',r.urgentDetail);
+  sc('p-social',r.partnerSocial); sc('p-health',r.partnerHealth);
+  sc('p-none',r.partnerNone); sc('p-other',r.partnerOther); sv('p-other-text',r.partnerOtherText);
+  sv('f-data-usage',r.dataUsage); sv('f-parent-concerns',r.parentConcerns);
+  sv('f-obstacles',r.obstacles); sv('f-opinions',r.opinions);
+  sv('f-sch1',r.scholarship1); sv('f-sch2',r.scholarship2); sv('f-sch3',r.scholarship3);
+}
+
+async function saveRecord() {
+  const data = getFormData();
+  if (!data.school) { showAlert('form-alert','danger','⚠️ กรุณาระบุชื่อโรงเรียน'); return; }
+  if (!data.grade)  { showAlert('form-alert','danger','⚠️ กรุณาระบุชั้น/ห้อง'); return; }
+  if (!data.teacher){ showAlert('form-alert','danger','⚠️ กรุณาระบุชื่อครูที่ปรึกษา'); return; }
+  showLoading(true,'กำลังบันทึก...');
+  try {
+    const editId = data.id;
+    if (editId) {
+      await updateRecord(data);
+    } else {
+      await addRecord(data);
+    }
+    showLoading(false);
+    showAlert('form-alert','success','✅ บันทึกรายงานเรียบร้อยแล้ว!');
+    clearForm();
+  } catch(e) {
+    showLoading(false);
+    showAlert('form-alert','danger','❌ บันทึกไม่สำเร็จ: '+e.message);
+  }
+  window.scrollTo(0,0);
+}
+
+function clearForm() {
+  document.getElementById('edit-id').value='';
+  document.querySelectorAll('#page-form input[type=text],#page-form input[type=number],#page-form textarea').forEach(el=>{
+    el.value = el.type==='number' ? 0 : '';
+  });
+  document.querySelectorAll('#page-form select').forEach(el=>{
+    el.selectedIndex = el.id==='f-semester' ? 1 : 0;
+  });
+  document.querySelectorAll('#page-form input[type=checkbox]').forEach(el=>el.checked=false);
+  applyConfigToForm();
+}
+
+function editRecord(id) {
+  const r = _records.find(x=>x.id===id);
+  if (!r) return;
+  setFormData(r);
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-form').classList.add('active');
+  document.querySelectorAll('.nav-tab')[1].classList.add('active');
+  showAlert('form-alert','info','✏️ กำลังแก้ไขรายงาน – กด "บันทึกรายงาน" เพื่ออัปเดต');
+  window.scrollTo(0,0);
+}
+
+function confirmDelete(id) {
+  document.getElementById('confirm-delete-btn').onclick = async () => {
+    document.getElementById('delete-modal').classList.remove('open');
+    showLoading(true,'กำลังลบ...');
+    await removeRecord(id);
+    showLoading(false);
+    renderRecordsTable();
+    renderDashboard();
+  };
+  document.getElementById('delete-modal').classList.add('open');
+}
+
+// ═══════════════════════════════════════
+// RECORDS TABLE
+// ═══════════════════════════════════════
+function renderRecordsTable() {
+  const records = getRecords();
+  document.getElementById('records-count').textContent = `ทั้งหมด ${records.length} รายงาน`;
+  const wrap = document.getElementById('records-table-wrap');
+  if (!records.length) {
+    wrap.innerHTML=`<div class="empty-state"><div class="empty-state-icon">📋</div><p>ยังไม่มีรายงาน<br><strong>คลิก "เพิ่มรายงาน"</strong> เพื่อเริ่มกรอก</p></div>`;
+    return;
+  }
+  const rows = records.slice().reverse().map(r=>{
+    const vis = (r.visitedMale||0)+(r.visitedFemale||0);
+    const pct = r.totalStudents>0 ? Math.round(vis/r.totalStudents*100) : 0;
+    const dt = r.createdAt ? new Date(r.createdAt).toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}) : '-';
+    return `<tr>
+      <td><strong>${r.grade||'-'}</strong></td>
+      <td>${r.school||'-'}</td>
+      <td>${r.teacher||'-'}</td>
+      <td>ครั้งที่ ${r.semester||'-'} / ${r.year||'-'}</td>
+      <td>${r.totalStudents||0}</td>
+      <td><span class="badge ${pct>=80?'badge-green':pct>=50?'badge-blue':'badge-orange'}">${vis} (${pct}%)</span></td>
+      <td>${r.urgent||0}</td>
+      <td>${dt}</td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="editRecord('${r.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" style="margin-left:3px" onclick="confirmDelete('${r.id}')">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr><th>ชั้น/ห้อง</th><th>โรงเรียน</th><th>ครูที่ปรึกษา</th><th>ครั้งที่/ปี</th><th>ทั้งหมด</th><th>เยี่ยมบ้าน</th><th>ด่วน</th><th>วันที่บันทึก</th><th>จัดการ</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
+}
+
+// ═══════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════
+let chartInstances = {};
+function renderDashboard() {
+  const recs = getRecords();
+  let totStudents=0,vis=0,visM=0,visF=0,risk=0,urgent=0,probLearn=0;
+  let rH=0,rS=0,rV=0,rT=0,rSx=0,rP=0,rSf=0,rO=0;
+  let pH=0,pE=0,pSb=0,pDp=0,pO=0;
+  let fC=0,fCS=0,fCO=0,fD=0,fVS=0,fVO=0,fO=0;
+  let eG=0,eOld=0,eBad=0;
+  recs.forEach(r=>{
+    totStudents+=r.totalStudents||0;
+    visM+=r.visitedMale||0; visF+=r.visitedFemale||0;
+    urgent+=r.urgent||0; probLearn+=r.probLearning||0;
+    rH+=r.riskHealth||0; rS+=r.riskSubstance||0; rV+=r.riskViolence||0;
+    rT+=r.riskTransport||0; rSx+=r.riskSex||0; rP+=r.riskPhone||0;
+    rSf+=r.riskSafety||0; rO+=r.riskOther||0;
+    pH+=r.probHealth||0; pE+=r.probEconomy||0; pSb+=r.probSubstance||0;
+    pDp+=r.probDepression||0; pO+=r.probOther||0;
+    fC+=r.famClose||0; fCS+=r.famConflictSome||0; fCO+=r.famConflictOften||0;
+    fD+=r.famDistant||0; fVS+=r.famViolSome||0; fVO+=r.famViolOften||0; fO+=r.famOther||0;
+    eG+=r.houseGood||0; eOld+=r.houseOld||0; eBad+=r.nearBad||0;
+  });
+  vis = visM+visF;
+  risk = rH+rS+rV+rT+rSx+rP+rSf+rO;
+  const pct = totStudents>0 ? (vis/totStudents*100).toFixed(1) : 0;
+  document.getElementById('s-total-reports').textContent = recs.length;
+  document.getElementById('s-total-students').textContent = totStudents;
+  document.getElementById('s-visited').textContent = vis;
+  document.getElementById('s-visited-pct').textContent = `${pct}%`;
+  document.getElementById('s-risk').textContent = risk;
+  document.getElementById('s-urgent').textContent = urgent;
+  document.getElementById('s-prob-learn').textContent = probLearn;
+
+  makeBar('chart-risk',
+    ['สุขภาพ','สารเสพติด','ความรุนแรง','การเดินทาง','เพศ','ติดโทรศัพท์','ความปลอดภัย','อื่นๆ'],
+    [rH,rS,rV,rT,rSx,rP,rSf,rO],
+    ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6','#14b8a6','#94a3b8']);
+  makePie('chart-family',
+    ['สนิทสนม','ขัดแย้งบางครั้ง','ขัดแย้งบ่อย','ห่างเหิน','ทำร้ายบางครั้ง','ทำร้ายบ่อย','อื่นๆ'],
+    [fC,fCS,fCO,fD,fVS,fVO,fO],
+    ['#22c55e','#f59e0b','#ef4444','#94a3b8','#f97316','#dc2626','#8b5cf6']);
+  makeBar('chart-problems',
+    ['การเรียน','สุขภาพ','เศรษฐกิจ','สารเสพติด','ซึมเศร้า','อื่นๆ'],
+    [probLearn,pH,pE,pSb,pDp,pO],
+    ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#94a3b8']);
+  makeBar('chart-env',['บ้านพอใช้-ดี','บ้านเก่า/ทรุดโทรม','ใกล้แหล่งมั่วสุม'],
+    [eG,eOld,eBad],['#22c55e','#f59e0b','#ef4444']);
+
+  const recent = recs.slice(-5).reverse();
+  const el = document.getElementById('recent-records');
+  if (!recent.length) {
+    el.innerHTML=`<div class="empty-state"><div class="empty-state-icon">📊</div><p>ยังไม่มีข้อมูล</p></div>`;
+  } else {
+    el.innerHTML=`<div class="table-wrap"><table><thead><tr><th>ชั้น/ห้อง</th><th>ครู</th><th>เยี่ยมบ้าน</th><th>ด่วน</th><th></th></tr></thead><tbody>
+      ${recent.map(r=>`<tr>
+        <td><strong>${r.grade}</strong> – ${r.school}</td>
+        <td>${r.teacher}</td>
+        <td>${(r.visitedMale||0)+(r.visitedFemale||0)} / ${r.totalStudents||0} คน</td>
+        <td>${r.urgent||0} คน</td>
+        <td><button class="btn btn-outline btn-sm" onclick="editRecord('${r.id}')">✏️</button></td>
+      </tr>`).join('')}
+    </tbody></table></div>`;
+  }
+}
+function makeBar(id,labels,data,colors){
+  const ctx=document.getElementById(id); if(!ctx) return;
+  if(chartInstances[id]) chartInstances[id].destroy();
+  chartInstances[id]=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+}
+function makePie(id,labels,data,colors){
+  const ctx=document.getElementById(id); if(!ctx) return;
+  if(chartInstances[id]) chartInstances[id].destroy();
+  chartInstances[id]=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}});
+}
+
+// ═══════════════════════════════════════
+// DISTRICT REPORT
+// ═══════════════════════════════════════
+function populateDistrictFilters() {
+  const schools = [...new Set(getRecords().map(r=>r.school).filter(Boolean))];
+  const sel = document.getElementById('d-filter-school');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">ทั้งหมด</option>'+schools.map(s=>`<option value="${s}"${s===cur?' selected':''}>${s}</option>`).join('');
+  const cfg = getConfig();
+  if (!document.getElementById('d-principal').value && cfg.principal)
+    document.getElementById('d-principal').value = cfg.principal;
+}
+
+function getFilteredRecords() {
+  const sc = document.getElementById('d-filter-school').value;
+  const sem = document.getElementById('d-filter-semester').value;
+  const yr = document.getElementById('d-filter-year').value;
+  return getRecords().filter(r=>(!sc||r.school===sc)&&(!sem||r.semester===sem)&&(!yr||r.year===yr));
+}
+
+function ag(recs,k){ return recs.reduce((s,r)=>s+(r[k]||0),0); }
+function pc(n,d){ return d>0?(n/d*100).toFixed(2):'0.00'; }
+
+function renderDistrictReport() {
+  const recs = getFilteredRecords();
+  const cfg = getConfig();
+  const reporter = document.getElementById('d-reporter').value || '............................................';
+  const reporterPos = document.getElementById('d-reporter-pos').value || '............................................';
+  const principal = document.getElementById('d-principal').value || cfg.principal || '............................................';
+  if (!recs.length) {
+    document.getElementById('district-report-content').innerHTML=`<div class="empty-state"><div class="empty-state-icon">📄</div><p>ยังไม่มีข้อมูลสำหรับตัวกรองที่เลือก</p></div>`;
+    return;
+  }
+  const school = recs[0].school||cfg.school||'...................................................................';
+  const amphoe = recs[0].amphoe||cfg.amphoe||'';
+  const province = recs[0].province||cfg.province||'';
+  const year = recs[0].year||cfg.year||'2568';
+  const semester = recs[0].semester||'2';
+  const totalStudents = ag(recs,'totalStudents');
+  const visitedMale = ag(recs,'visitedMale');
+  const visitedFemale = ag(recs,'visitedFemale');
+  const visited = visitedMale+visitedFemale;
+  const notVisited = ag(recs,'notVisited');
+  const nvArr=[];
+  let nvFull=0,nvAbs=0,nvGrd=0,nvCnt=0,nvOth=0;
+  recs.forEach(r=>{
+    if(r.notVisitedReasons){
+      if(r.notVisitedReasons.full100) nvFull++;
+      if(r.notVisitedReasons.absent) nvAbs++;
+      if(r.notVisitedReasons.guardianBusy) nvGrd++;
+      if(r.notVisitedReasons.cantContact) nvCnt++;
+      if(r.notVisitedReasons.other) nvOth++;
+    }
+  });
+  if(nvFull) nvArr.push('เยี่ยมบ้านครบ 100%');
+  if(nvAbs) nvArr.push('นักเรียนไม่มาเรียนเป็นเวลานาน');
+  if(nvGrd) nvArr.push('ผู้ปกครองติดงาน/ฤดูกาลทำนา');
+  if(nvCnt) nvArr.push('ติดต่อนักเรียน/ผู้ปกครองไม่ได้');
+  if(nvOth){ const o=recs.map(r=>r.notVisitedReasons?.otherText).filter(Boolean); nvArr.push('อื่น ๆ'+(o.length?': '+o.join(', '):''));}
+  const partnerList=[];
+  if(recs.some(r=>r.partnerSocial)) partnerList.push('สำนักงานพัฒนาสังคมและความมั่นคงของมนุษย์');
+  if(recs.some(r=>r.partnerHealth)) partnerList.push('หน่วยงานสาธารณสุข');
+  const pOthers=recs.map(r=>r.partnerOtherText).filter(Boolean);
+  if(pOthers.length) partnerList.push('อื่น ๆ: '+pOthers.join(', '));
+  if(!partnerList.length) partnerList.push('ไม่มีหน่วยงาน/สหวิชาชีพ/องค์กรร่วม');
+  const joinText=k=>recs.map(r=>r[k]).filter(Boolean).join('\n')||'–';
+  const totalRisk = ag(recs,'riskHealth')+ag(recs,'riskSubstance')+ag(recs,'riskViolence')+ag(recs,'riskTransport')+ag(recs,'riskSex')+ag(recs,'riskPhone')+ag(recs,'riskSafety')+ag(recs,'riskOther');
+  const dateRange = recs.map(r=>r.dateRange).filter(Boolean).join(', ') || '...................................................................';
+
+  document.getElementById('district-report-content').innerHTML = `
+<div class="doc-header">
+  <div class="doc-title">แบบสรุปรายงานการเยี่ยมบ้านนักเรียนของสถานศึกษาในสังกัด สพม.อุบลราชธานี อำนาจเจริญ</div>
+  <div class="doc-line" style="margin-top:8px">โรงเรียน<span class="dot-line">&nbsp;${school}&nbsp;</span>
+    ${amphoe?`อำเภอ<span class="dot-line">&nbsp;${amphoe}&nbsp;</span>`:''}
+    ${province?`จังหวัด<span class="dot-line">&nbsp;${province}&nbsp;</span>`:''}
+  </div>
+  <div class="doc-line">ครั้งที่ <strong>${semester}</strong> &nbsp; ปีการศึกษา <strong>${year}</strong></div>
+  <div class="doc-line">ระหว่างวันที่ <span class="dot-line">&nbsp;${dateRange}&nbsp;</span></div>
+</div>
+<hr style="margin:12px 0;border:1px solid #ccc">
+<div class="doc-section">
+  <div class="doc-line">จำนวนนักเรียนทั้งหมดของสถานศึกษา <strong>${totalStudents}</strong> คน เป็นชาย <strong>${visitedMale}</strong> คน หญิง <strong>${visitedFemale}</strong> คน</div>
+  <div class="doc-line">จำนวนนักเรียนที่ออกเยี่ยมบ้าน <strong>${visited}</strong> คน คิดเป็นร้อยละ <strong>${pc(visited,totalStudents)}</strong></div>
+  <div class="doc-line" style="padding-left:18px">เป็นชาย <strong>${visitedMale}</strong> คน หญิง <strong>${visitedFemale}</strong> คน</div>
+  <div class="doc-line">จำนวนนักเรียนที่ไม่ได้ออกเยี่ยมบ้าน <strong>${notVisited}</strong> คน คิดเป็นร้อยละ <strong>${pc(notVisited,totalStudents)}</strong></div>
+  <div class="doc-line">สาเหตุที่ไม่ได้ออกเยี่ยมบ้าน: <strong>${nvArr.length?nvArr.join(', '):'ไม่ระบุ'}</strong></div>
+</div>
+<div class="doc-section">
+  <div class="doc-section-title">ข้อมูลครอบครัว</div>
+  <div class="doc-item">พบว่านักเรียนที่บิดาและมารดาเสียชีวิต จำนวน <strong>${ag(recs,'bothDeceased')}</strong> คน</div>
+  <div class="doc-item">พบว่านักเรียนที่มีบิดาหรือมารดาเสียชีวิต จำนวน <strong>${ag(recs,'oneDeceased')}</strong> คน</div>
+  <div class="doc-item">พบว่านักเรียนที่บิดาและมารดาเลิกร้างกัน จำนวน <strong>${ag(recs,'divorced')}</strong> คน</div>
+  <div class="doc-item">พบว่านักเรียนมิได้อาศัยอยู่กับบิดาหรือมารดา จำนวน <strong>${ag(recs,'notWithParents')}</strong> คน</div>
+  <div class="doc-item">พบว่านักเรียนมีพี่น้องที่เกิดจากต่างบิดาและมารดา จำนวน <strong>${ag(recs,'halfSiblings')}</strong> คน</div>
+</div>
+<div class="doc-section">
+  <div class="doc-section-title">ความสัมพันธ์ของสมาชิกในครอบครัว</div>
+  <div class="doc-item">สนิทสนม/รักใคร่กันดี จำนวน <strong>${ag(recs,'famClose')}</strong> คน</div>
+  <div class="doc-item">ขัดแย้งทะเลาะกันบางครั้ง จำนวน <strong>${ag(recs,'famConflictSome')}</strong> คน</div>
+  <div class="doc-item">ขัดแย้งทะเลาะกันบ่อยครั้ง จำนวน <strong>${ag(recs,'famConflictOften')}</strong> คน</div>
+  <div class="doc-item">ห่างเหิน จำนวน <strong>${ag(recs,'famDistant')}</strong> คน</div>
+  <div class="doc-item">ขัดแย้งและทำร้ายร่างกายบางครั้ง จำนวน <strong>${ag(recs,'famViolSome')}</strong> คน</div>
+  <div class="doc-item">ขัดแย้งและทำร้ายร่างกายบ่อยครั้ง จำนวน <strong>${ag(recs,'famViolOften')}</strong> คน</div>
+  <div class="doc-item">อื่น ๆ จำนวน <strong>${ag(recs,'famOther')}</strong> คน</div>
+</div>
+<div class="doc-section">
+  <div class="doc-section-title">สภาพแวดล้อมที่อยู่อาศัย</div>
+  <div class="doc-item">สภาพตัวบ้านพอใช้ถึงดี จำนวน <strong>${ag(recs,'houseGood')}</strong> คน</div>
+  <div class="doc-item">สภาพตัวบ้านเก่าทรุดโทรม/ไม่มีความเป็นส่วนตัว จำนวน <strong>${ag(recs,'houseOld')}</strong> คน</div>
+  <div class="doc-item">สภาพแวดล้อมใกล้แหล่งมั่วสุม/สถานบันเทิง/ชุมชนแออัด จำนวน <strong>${ag(recs,'nearBad')}</strong> คน</div>
+</div>
+<div class="doc-section">
+  <div class="doc-section-title">พฤติกรรมความเสี่ยง</div>
+  <div class="doc-item">สุขภาพอนามัย จำนวน <strong>${ag(recs,'riskHealth')}</strong> คน</div>
+  <div class="doc-item">พฤติกรรมการใช้สารเสพติด จำนวน <strong>${ag(recs,'riskSubstance')}</strong> คน</div>
+  <div class="doc-item">พฤติกรรมการใช้ความรุนแรง จำนวน <strong>${ag(recs,'riskViolence')}</strong> คน</div>
+  <div class="doc-item">การเดินทางมาเรียน จำนวน <strong>${ag(recs,'riskTransport')}</strong> คน</div>
+  <div class="doc-item">ด้านเพศ จำนวน <strong>${ag(recs,'riskSex')}</strong> คน</div>
+  <div class="doc-item">พฤติกรรมการใช้โทรศัพท์ ติดเกม/ติดโซเชียล จำนวน <strong>${ag(recs,'riskPhone')}</strong> คน</div>
+  <div class="doc-item">สวัสดิภาพและความปลอดภัย จำนวน <strong>${ag(recs,'riskSafety')}</strong> คน</div>
+  <div class="doc-item">อื่น ๆ จำนวน <strong>${ag(recs,'riskOther')}</strong> คน</div>
+  <div class="doc-item"><strong>คิดเป็นจำนวนทั้งสิ้น ${totalRisk} คน</strong></div>
+</div>
+<div class="doc-section">
+  <div class="doc-section-title">ปัญหาที่พบ</div>
+  <div class="doc-item">พบว่านักเรียนเสี่ยงหรือมีปัญหาด้านการเรียน จำนวน <strong>${ag(recs,'probLearning')}</strong> คน</div>
+  <div class="doc-item">พบว่านักเรียนมีปัญหาด้านสุขภาพ จำนวน <strong>${ag(recs,'probHealth')}</strong> คน</div>
+  <div class="doc-item">พบว่านักเรียนมีปัญหาด้านเศรษฐกิจ จำนวน <strong>${ag(recs,'probEconomy')}</strong> คน</div>
+  <div class="doc-item">พบว่านักเรียนมีปัญหาการใช้สารเสพติด จำนวน <strong>${ag(recs,'probSubstance')}</strong> คน</div>
+  <div class="doc-item">พบว่านักเรียนมีภาวะซึมเศร้า/โรคซึมเศร้า จำนวน <strong>${ag(recs,'probDepression')}</strong> คน</div>
+  <div class="doc-item">พบว่านักเรียนมีปัญหาอื่น ๆ จำนวน <strong>${ag(recs,'probOther')}</strong> คน</div>
+</div>
+<div class="doc-section">
+  <div class="doc-section-title">การช่วยเหลือเร่งด่วน</div>
+  <div class="doc-item">นักเรียนที่ต้องได้รับการช่วยเหลือเร่งด่วน จำนวน <strong>${ag(recs,'urgent')}</strong> คน</div>
+  <div class="doc-item">ระบุความต้องการ: ${joinText('urgentDetail')}</div>
+</div>
+<div class="doc-section">
+  <div class="doc-section-title">หน่วยงาน/สหวิชาชีพ/องค์กรที่ร่วมเยี่ยมบ้าน</div>
+  <div class="doc-item">${partnerList.join(', ')}</div>
+</div>
+<div class="doc-section">
+  <div class="doc-section-title">การนำข้อมูลเยี่ยมบ้านนักเรียนไปใช้ประโยชน์</div>
+  <div class="doc-item" style="white-space:pre-line">${joinText('dataUsage')}</div>
+</div>
+<div class="doc-section">
+  <div class="doc-section-title">ข้อห่วงใยของผู้ปกครองที่มีต่อนักเรียน</div>
+  <div class="doc-item" style="white-space:pre-line">${joinText('parentConcerns')}</div>
+</div>
+<div class="doc-section">
+  <div class="doc-section-title">ปัญหา/อุปสรรค/ข้อเสนอแนะ</div>
+  <div class="doc-item" style="white-space:pre-line">${joinText('obstacles')}</div>
+</div>
+<div class="doc-section">
+  <div class="doc-section-title">ความคิดเห็นและข้อเสนอแนะ</div>
+  <div class="doc-item" style="white-space:pre-line">${joinText('opinions')}</div>
+</div>
+<div class="doc-section">
+  <div class="doc-section-title">รูปภาพประกอบ 2 – 4 รูป</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:7px">
+    <div class="photo-placeholder">รูปภาพที่ 1</div><div class="photo-placeholder">รูปภาพที่ 2</div>
+    <div class="photo-placeholder">รูปภาพที่ 3</div><div class="photo-placeholder">รูปภาพที่ 4</div>
+  </div>
+</div>
+<div style="margin-top:40px">
+  <div style="font-weight:bold;margin-bottom:7px">ผู้สรุปรายงานการเยี่ยมบ้านนักเรียนของสถานศึกษา</div>
+  <div class="doc-line">ชื่อ – นามสกุล <span class="dot-line">&nbsp;${reporter}&nbsp;</span></div>
+  <div class="doc-line">ตำแหน่ง <span class="dot-line">&nbsp;${reporterPos}&nbsp;</span> หมายเลขโทรศัพท์ <span class="dot-line">&nbsp;.................................&nbsp;</span></div>
+  <div class="doc-sign-row">
+    <div class="doc-sign-block"><div style="margin-bottom:44px">ลงชื่อ</div><div class="doc-sign-line"></div><div>(${reporter})</div><div>ผู้รายงาน</div></div>
+    <div class="doc-sign-block"><div style="margin-bottom:44px">ลงชื่อ</div><div class="doc-sign-line"></div><div>(${principal})</div><div>ผู้อำนวยการโรงเรียน${school}</div></div>
+  </div>
+</div>`;
+}
+function printDistrictReport(){ window.print(); }
+
+// ═══════════════════════════════════════
+// EXCEL EXPORT
+// ═══════════════════════════════════════
+function exportExcel() {
+  const recs = getRecords();
+  if (!recs.length) { alert('ยังไม่มีข้อมูล'); return; }
+  const headers=['โรงเรียน','อำเภอ','จังหวัด','ปีการศึกษา','ครั้งที่','ชั้น/ห้อง','ครูที่ปรึกษา','เบอร์โทร','ช่วงวันที่','นักเรียนทั้งหมด','เยี่ยม(ชาย)','เยี่ยม(หญิง)','เยี่ยมรวม','%เยี่ยม','ไม่ได้เยี่ยม','บิดา-มารดาเสียทั้งคู่','บิดาหรือมารดาเสีย','เลิกร้าง','ไม่อยู่กับพ่อแม่','พี่น้องต่างพ่อแม่','ครอบครัวสนิทสนม','ขัดแย้งบางครั้ง','ขัดแย้งบ่อย','ห่างเหิน','ทำร้ายบางครั้ง','ทำร้ายบ่อย','ความสัมพันธ์อื่น','บ้านพอใช้-ดี','บ้านเก่า','ใกล้มั่วสุม','เสี่ยงสุขภาพ','เสี่ยงสารเสพติด','เสี่ยงรุนแรง','เสี่ยงเดินทาง','เสี่ยงเพศ','ติดโทรศัพท์','เสี่ยงความปลอดภัย','เสี่ยงอื่น','ปัญหาการเรียน','ปัญหาสุขภาพ','ปัญหาเศรษฐกิจ','ปัญหาสารเสพติด','ซึมเศร้า','ปัญหาอื่น','ช่วยเหลือด่วน','รายละเอียดด่วน','การนำข้อมูลไปใช้','ข้อห่วงใยผปค.','ปัญหา-อุปสรรค','ความคิดเห็น','ทุนอันดับ1','ทุนอันดับ2','ทุนอันดับ3','วันที่บันทึก'];
+  const rows=recs.map(r=>{
+    const vis=(r.visitedMale||0)+(r.visitedFemale||0);
+    const pct=r.totalStudents>0?(vis/r.totalStudents*100).toFixed(2):0;
+    const dt=r.createdAt?new Date(r.createdAt).toLocaleDateString('th-TH'):'';
+    return [r.school,r.amphoe,r.province,r.year,r.semester,r.grade,r.teacher,r.phone,r.dateRange,
+      r.totalStudents,r.visitedMale,r.visitedFemale,vis,pct,r.notVisited,
+      r.bothDeceased,r.oneDeceased,r.divorced,r.notWithParents,r.halfSiblings,
+      r.famClose,r.famConflictSome,r.famConflictOften,r.famDistant,r.famViolSome,r.famViolOften,r.famOther,
+      r.houseGood,r.houseOld,r.nearBad,
+      r.riskHealth,r.riskSubstance,r.riskViolence,r.riskTransport,r.riskSex,r.riskPhone,r.riskSafety,r.riskOther,
+      r.probLearning,r.probHealth,r.probEconomy,r.probSubstance,r.probDepression,r.probOther,
+      r.urgent,r.urgentDetail,r.dataUsage,r.parentConcerns,r.obstacles,r.opinions,
+      r.scholarship1,r.scholarship2,r.scholarship3,dt];
+  });
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  ws['!cols']=headers.map((_,i)=>({wch:i<3?20:i<9?14:10}));
+  XLSX.utils.book_append_sheet(wb,ws,'ข้อมูลเยี่ยมบ้าน');
+  const cfg=getConfig();
+  const sch=cfg.school||(recs[0]?.school||'โรงเรียน');
+  const total=ag(recs,'totalStudents'); const vis2=ag(recs,'visitedMale')+ag(recs,'visitedFemale');
+  const ws2=XLSX.utils.aoa_to_sheet([['หัวข้อ','จำนวน(คน)','ร้อยละ'],
+    ['นักเรียนทั้งหมด',total,'100'],['ได้รับการเยี่ยมบ้าน',vis2,pc(vis2,total)],
+    ['ไม่ได้รับการเยี่ยมบ้าน',ag(recs,'notVisited'),pc(ag(recs,'notVisited'),total)],[],
+    ['ข้อมูลครอบครัว'],['บิดา-มารดาเสียชีวิตทั้งคู่',ag(recs,'bothDeceased'),pc(ag(recs,'bothDeceased'),vis2)],
+    ['บิดาหรือมารดาเสียชีวิต',ag(recs,'oneDeceased'),pc(ag(recs,'oneDeceased'),vis2)],
+    ['บิดา-มารดาเลิกร้าง',ag(recs,'divorced'),pc(ag(recs,'divorced'),vis2)],[],
+    ['พฤติกรรมเสี่ยง'],['สุขภาพอนามัย',ag(recs,'riskHealth'),pc(ag(recs,'riskHealth'),vis2)],
+    ['สารเสพติด',ag(recs,'riskSubstance'),pc(ag(recs,'riskSubstance'),vis2)],
+    ['ติดโทรศัพท์/เกม',ag(recs,'riskPhone'),pc(ag(recs,'riskPhone'),vis2)],[],
+    ['ปัญหาที่พบ'],['ด้านการเรียน',ag(recs,'probLearning'),pc(ag(recs,'probLearning'),vis2)],
+    ['ด้านสุขภาพ',ag(recs,'probHealth'),pc(ag(recs,'probHealth'),vis2)],
+    ['ด้านเศรษฐกิจ',ag(recs,'probEconomy'),pc(ag(recs,'probEconomy'),vis2)],
+    ['ภาวะซึมเศร้า',ag(recs,'probDepression'),pc(ag(recs,'probDepression'),vis2)],[],
+    ['ต้องช่วยเหลือเร่งด่วน',ag(recs,'urgent'),pc(ag(recs,'urgent'),vis2)]]);
+  ws2['!cols']=[{wch:35},{wch:14},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws2,'สรุปภาพรวม');
+  XLSX.writeFile(wb,`รายงานเยี่ยมบ้าน_${sch}_${recs[0]?.year||''}.xlsx`);
+}
+
+// ═══════════════════════════════════════
+// BACKUP / RESTORE
+// ═══════════════════════════════════════
+function exportDataBackup() {
+  const data={records:getRecords(),config:getConfig(),exportDate:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
+}
+function importDataBackup(e) {
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=async ev=>{
+    try {
+      const data=JSON.parse(ev.target.result);
+      if(USE_FIREBASE && db && data.records) {
+        showLoading(true,'กำลัง Import...');
+        for(const r of data.records) { const d={...r}; delete d.id; await db.collection('records').add(d); }
+        await loadRecords();
+        showLoading(false);
+      } else if (data.records) {
+        localStorage.setItem(STORAGE_KEY,JSON.stringify(data.records));
+        _records=data.records;
+      }
+      if(data.config) saveConfigLocal(data.config);
+      closeSettings(); renderDashboard();
+      alert(`✅ นำเข้าสำเร็จ: ${data.records?.length||0} รายการ`);
+    } catch{ alert('❌ ไฟล์ไม่ถูกต้อง'); }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+async function clearAllData() {
+  if(!confirm('⚠️ ยืนยันลบข้อมูลทั้งหมด?')) return;
+  if(USE_FIREBASE && db) {
+    showLoading(true,'กำลังลบข้อมูล...');
+    const snap=await db.collection('records').get();
+    for(const d of snap.docs) await d.ref.delete();
+    showLoading(false);
+  }
+  localStorage.removeItem(STORAGE_KEY);
+  _records=[];
+  closeSettings(); renderDashboard();
+  alert('ลบข้อมูลทั้งหมดเรียบร้อย');
+}
+
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+function showAlert(id,type,msg) {
+  const el=document.getElementById(id); if(!el) return;
+  el.className=`alert alert-${type}`; el.textContent=msg; el.style.display='flex';
+  setTimeout(()=>el.style.display='none',4000);
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async ()=>{
+  initFirebase();
+  if(!USE_FIREBASE) setStatus('local');
+  showSetupWarning();
+  showLoading(true,'กำลังโหลดข้อมูล...');
+  await loadRecords();
+  showLoading(false);
+  applyConfigToForm();
+  renderDashboard();
+  document.querySelectorAll('.modal-overlay').forEach(o=>{
+    o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
+  });
+});
+</script>
+</body>
+</html>
