@@ -41,21 +41,27 @@ const USE_FIREBASE = FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY";
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Sarabun','Noto Sans Thai',Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px}
 
-/* TOPBAR */
-.topbar{background:var(--primary-dark);color:#fff;padding:0 16px;display:flex;align-items:center;gap:0;min-height:56px;box-shadow:0 2px 8px rgba(0,0,0,.2);position:sticky;top:0;z-index:100}
-.topbar-logo{font-size:1rem;font-weight:700;margin-right:16px;white-space:nowrap}
+/* TOPBAR – 2-row layout ใช้ได้ทั้งมือถือและคอม */
+.topbar{background:var(--primary-dark);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2);position:sticky;top:0;z-index:100;display:flex;flex-direction:column}
+.topbar-top{display:flex;align-items:center;padding:8px 14px;gap:10px;min-height:46px}
+.topbar-logo{font-size:1rem;font-weight:700;white-space:nowrap;flex-shrink:0}
 .topbar-logo span{color:#93c5fd}
-.nav-tabs{display:flex;gap:2px;flex:1;overflow-x:auto}
-.nav-tab{padding:16px 16px;color:#cbd5e1;cursor:pointer;border-bottom:3px solid transparent;font-size:0.88rem;transition:all .15s;white-space:nowrap;flex-shrink:0}
-.nav-tab:hover{color:#fff;background:rgba(255,255,255,.07)}
-.nav-tab.active{color:#fff;border-bottom-color:#60a5fa;font-weight:600}
-.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
-.status-badge{padding:4px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;white-space:nowrap}
+.topbar-teacher{color:#bfdbfe;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.topbar-right{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0}
+.status-badge{padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:600;white-space:nowrap}
 .status-online{background:#065f46;color:#6ee7b7}
 .status-offline{background:#7f1d1d;color:#fca5a5}
 .status-local{background:#1e3a5f;color:#93c5fd}
-.btn-settings{background:rgba(255,255,255,.1);border:none;border-radius:6px;cursor:pointer;color:#cbd5e1;font-size:0.85rem;padding:7px 12px}
+.btn-settings{background:rgba(255,255,255,.1);border:none;border-radius:6px;cursor:pointer;color:#cbd5e1;font-size:.85rem;padding:6px 10px}
 .btn-settings:hover{background:rgba(255,255,255,.2);color:#fff}
+/* แถว Nav tabs */
+.topbar-nav{display:flex;overflow-x:auto;border-top:1px solid rgba(255,255,255,.1);-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.topbar-nav::-webkit-scrollbar{display:none}
+.nav-tab{padding:10px 16px;color:#cbd5e1;cursor:pointer;border-bottom:3px solid transparent;font-size:.85rem;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.nav-tab:hover{color:#fff;background:rgba(255,255,255,.07)}
+.nav-tab.active{color:#fff;border-bottom-color:#60a5fa;font-weight:600}
+/* ชั้นเรียน badge */
+.grade-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.75rem;font-weight:700;background:rgba(255,255,255,.15);color:#fff;margin-left:4px}
 
 /* LOADING OVERLAY */
 .loading-overlay{display:none;position:fixed;inset:0;background:rgba(255,255,255,.8);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:12px}
@@ -174,14 +180,22 @@ tr:hover td{background:#f9fafb}
 
 /* MOBILE */
 @media(max-width:600px){
-  .topbar{min-height:50px}
-  .nav-tab{padding:13px 10px;font-size:.8rem}
+  .topbar-teacher{max-width:100px}
   .stats-grid{grid-template-columns:repeat(2,1fr)}
   .form-grid{grid-template-columns:1fr}
   .settings-grid{grid-template-columns:1fr}
   .page{padding:14px 10px}
   .btn{padding:8px 14px;font-size:.85rem}
+  .grade-table{font-size:.8rem}
 }
+/* GRADE TABLE */
+.grade-table{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:8px}
+.grade-table th{background:#f3f4f6;padding:8px 10px;text-align:center;border-bottom:2px solid var(--border);font-weight:700;font-size:.82rem}
+.grade-table td{padding:7px 10px;border-bottom:1px solid #f0f0f0;text-align:center}
+.grade-table tr:hover td{background:#f9fafb}
+.grade-table td:first-child{font-weight:700;color:var(--primary-dark);text-align:left}
+.pct-bar{height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;min-width:60px}
+.pct-fill{height:100%;background:var(--secondary);border-radius:3px;transition:width .3s}
 
 /* FIREBASE SETUP BANNER */
 .setup-banner{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:14px 20px;border-radius:10px;margin-bottom:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
@@ -200,16 +214,19 @@ tr:hover td{background:#f9fafb}
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="topbar-logo">🏠 เยี่ยมบ้าน <span>สพม.</span></div>
-  <div class="nav-tabs">
+  <div class="topbar-top">
+    <div class="topbar-logo">🏠 เยี่ยมบ้าน <span>สพม.</span></div>
+    <div class="topbar-teacher" id="topbar-teacher">ยังไม่ได้ตั้งชื่อ</div>
+    <div class="topbar-right">
+      <span class="status-badge" id="conn-badge">...</span>
+      <button class="btn-settings" onclick="openSettings()" title="ตั้งค่า">⚙️</button>
+    </div>
+  </div>
+  <div class="topbar-nav">
     <div class="nav-tab active" onclick="showPage('dashboard')">📊 แดชบอร์ด</div>
     <div class="nav-tab" onclick="showPage('form')">📝 กรอกฟอร์ม</div>
     <div class="nav-tab" onclick="showPage('records')">📋 รายการ</div>
     <div class="nav-tab" onclick="showPage('district')">📄 รายงานเขต</div>
-  </div>
-  <div class="topbar-right">
-    <span class="status-badge" id="conn-badge">...</span>
-    <button class="btn-settings" onclick="openSettings()">⚙️</button>
   </div>
 </div>
 
@@ -232,6 +249,11 @@ tr:hover td{background:#f9fafb}
     <div class="chart-box"><h3>ความสัมพันธ์ครอบครัว</h3><div class="chart-container"><canvas id="chart-family"></canvas></div></div>
     <div class="chart-box"><h3>ปัญหาที่พบ</h3><div class="chart-container"><canvas id="chart-problems"></canvas></div></div>
     <div class="chart-box"><h3>สภาพแวดล้อม</h3><div class="chart-container"><canvas id="chart-env"></canvas></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏫 สรุปแยกตามระดับชั้น ม.1–6</div>
+    <div id="grade-breakdown"></div>
   </div>
 
   <div class="card">
@@ -263,7 +285,18 @@ tr:hover td{background:#f9fafb}
         <div class="form-group"><label class="form-label">ปีการศึกษา</label><input type="text" id="f-year" placeholder="เช่น 2568"></div>
         <div class="form-group"><label class="form-label">ครั้งที่</label>
           <select id="f-semester"><option value="1">ครั้งที่ 1</option><option value="2" selected>ครั้งที่ 2</option></select></div>
-        <div class="form-group"><label class="form-label">ชั้น/ห้อง<span class="req">*</span></label><input type="text" id="f-grade" placeholder="เช่น ม.1/1"></div>
+        <div class="form-group"><label class="form-label">ระดับชั้น<span class="req">*</span></label>
+          <select id="f-grade-level">
+            <option value="">-- เลือกระดับชั้น --</option>
+            <option value="ม.1">ม.1</option>
+            <option value="ม.2">ม.2</option>
+            <option value="ม.3">ม.3</option>
+            <option value="ม.4">ม.4</option>
+            <option value="ม.5">ม.5</option>
+            <option value="ม.6">ม.6</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">ห้อง<span class="req">*</span></label><input type="text" id="f-room" placeholder="เช่น /1, /2"></div>
         <div class="form-group"><label class="form-label">ครูที่ปรึกษา<span class="req">*</span></label><input type="text" id="f-teacher" placeholder="ชื่อ-นามสกุล"></div>
         <div class="form-group"><label class="form-label">เบอร์โทรศัพท์</label><input type="text" id="f-phone" placeholder="เบอร์ติดต่อ"></div>
         <div class="form-group"><label class="form-label">ระหว่างวันที่</label><input type="text" id="f-daterange" placeholder="เช่น 1 ม.ค. – 28 ก.พ. 2568"></div>
@@ -470,10 +503,51 @@ tr:hover td{background:#f9fafb}
   </div>
 </div>
 
+<!-- TEACHER WELCOME MODAL -->
+<div class="modal-overlay open" id="teacher-modal">
+  <div class="modal" style="max-width:400px;text-align:center">
+    <div style="font-size:2.5rem;margin-bottom:12px">👋</div>
+    <h3 style="font-size:1.2rem;margin-bottom:8px">ยินดีต้อนรับ!</h3>
+    <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:20px">กรุณาใส่ชื่อของท่านเพื่อเริ่มใช้งานระบบ<br>ชื่อนี้จะแสดงในรายงานของท่าน</p>
+    <div class="form-group" style="text-align:left;margin-bottom:14px">
+      <label class="form-label">ชื่อ-นามสกุล ครู<span class="req">*</span></label>
+      <input type="text" id="welcome-teacher-name" placeholder="เช่น นายสมชาย ใจดี" style="font-size:1rem">
+    </div>
+    <div class="form-group" style="text-align:left;margin-bottom:20px">
+      <label class="form-label">ระดับชั้นที่ดูแล<span class="req">*</span></label>
+      <select id="welcome-grade-level" style="font-size:1rem">
+        <option value="">-- เลือกระดับชั้น --</option>
+        <option value="ม.1">ม.1</option>
+        <option value="ม.2">ม.2</option>
+        <option value="ม.3">ม.3</option>
+        <option value="ม.4">ม.4</option>
+        <option value="ม.5">ม.5</option>
+        <option value="ม.6">ม.6</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" style="width:100%;font-size:1rem" onclick="saveTeacherWelcome()">🚀 เริ่มใช้งาน</button>
+    <p style="margin-top:10px;font-size:.78rem;color:var(--text-muted)">สามารถเปลี่ยนได้ภายหลังที่ ⚙️ ตั้งค่า</p>
+  </div>
+</div>
+
 <!-- SETTINGS MODAL -->
 <div class="modal-overlay" id="settings-modal">
   <div class="modal">
     <h3>⚙️ ตั้งค่าระบบ</h3>
+    <div style="background:#eff6ff;border-radius:8px;padding:12px 14px;margin-bottom:14px">
+      <div style="font-weight:700;color:var(--primary-dark);margin-bottom:10px">👤 ข้อมูลครู</div>
+      <div class="settings-grid">
+        <div class="form-group"><label class="form-label">ชื่อ-นามสกุลครู</label><input type="text" id="cfg-teacher-name" placeholder="ชื่อครู"></div>
+        <div class="form-group"><label class="form-label">ระดับชั้นที่ดูแล</label>
+          <select id="cfg-teacher-grade">
+            <option value="">-- เลือก --</option>
+            <option value="ม.1">ม.1</option><option value="ม.2">ม.2</option>
+            <option value="ม.3">ม.3</option><option value="ม.4">ม.4</option>
+            <option value="ม.5">ม.5</option><option value="ม.6">ม.6</option>
+          </select>
+        </div>
+      </div>
+    </div>
     <div class="settings-grid">
       <div class="form-group"><label class="form-label">ชื่อโรงเรียน (ค่าเริ่มต้น)</label><input type="text" id="cfg-school" placeholder="ชื่อโรงเรียน"></div>
       <div class="form-group"><label class="form-label">อำเภอ</label><input type="text" id="cfg-amphoe"></div>
@@ -641,6 +715,42 @@ function showLoading(show, text) {
 }
 
 // ═══════════════════════════════════════
+// TEACHER NAME
+// ═══════════════════════════════════════
+function getTeacherName() { return localStorage.getItem('teacher_name') || ''; }
+function getTeacherGrade() { return localStorage.getItem('teacher_grade') || ''; }
+
+function saveTeacherWelcome() {
+  const name = document.getElementById('welcome-teacher-name').value.trim();
+  const grade = document.getElementById('welcome-grade-level').value;
+  if (!name) { alert('กรุณาใส่ชื่อครับ'); return; }
+  if (!grade) { alert('กรุณาเลือกระดับชั้นครับ'); return; }
+  localStorage.setItem('teacher_name', name);
+  localStorage.setItem('teacher_grade', grade);
+  document.getElementById('teacher-modal').classList.remove('open');
+  updateTopbarTeacher();
+  applyConfigToForm();
+}
+
+function updateTopbarTeacher() {
+  const name = getTeacherName();
+  const grade = getTeacherGrade();
+  const el = document.getElementById('topbar-teacher');
+  if (el && name) {
+    el.innerHTML = `👤 ${name} <span class="grade-badge">${grade}</span>`;
+  }
+}
+
+function checkTeacherModal() {
+  if (!getTeacherName()) {
+    document.getElementById('teacher-modal').classList.add('open');
+  } else {
+    document.getElementById('teacher-modal').classList.remove('open');
+    updateTopbarTeacher();
+  }
+}
+
+// ═══════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════
 async function showPage(name) {
@@ -667,10 +777,18 @@ function openSettings() {
     const el = document.getElementById('cfg-'+k);
     if (el) el.value = cfg[k] || '';
   });
+  const tn = document.getElementById('cfg-teacher-name');
+  const tg = document.getElementById('cfg-teacher-grade');
+  if (tn) tn.value = getTeacherName();
+  if (tg) tg.value = getTeacherGrade();
   document.getElementById('settings-modal').classList.add('open');
 }
 function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
 function saveSettings() {
+  const teacherName = document.getElementById('cfg-teacher-name').value.trim();
+  const teacherGrade = document.getElementById('cfg-teacher-grade').value;
+  if (teacherName) { localStorage.setItem('teacher_name', teacherName); }
+  if (teacherGrade) { localStorage.setItem('teacher_grade', teacherGrade); }
   const cfg = {
     school: document.getElementById('cfg-school').value,
     amphoe: document.getElementById('cfg-amphoe').value,
@@ -679,6 +797,8 @@ function saveSettings() {
     principal: document.getElementById('cfg-principal').value,
   };
   saveConfigLocal(cfg);
+  updateTopbarTeacher();
+  applyConfigToForm();
   closeSettings();
   showAlert('dash-alert','success','✅ บันทึกการตั้งค่าเรียบร้อย');
 }
@@ -688,10 +808,18 @@ function saveSettings() {
 // ═══════════════════════════════════════
 function applyConfigToForm() {
   const cfg = getConfig();
-  if (cfg.school)    document.getElementById('f-school').value   = cfg.school;
-  if (cfg.amphoe)    document.getElementById('f-amphoe').value   = cfg.amphoe;
-  if (cfg.province)  document.getElementById('f-province').value = cfg.province;
-  if (cfg.year)      document.getElementById('f-year').value     = cfg.year;
+  if (cfg.school)   document.getElementById('f-school').value   = cfg.school;
+  if (cfg.amphoe)   document.getElementById('f-amphoe').value   = cfg.amphoe;
+  if (cfg.province) document.getElementById('f-province').value = cfg.province;
+  if (cfg.year)     document.getElementById('f-year').value     = cfg.year;
+  // ใส่ชื่อครูและชั้นเรียนอัตโนมัติ
+  const tname = getTeacherName();
+  const tgrade = getTeacherGrade();
+  if (tname) document.getElementById('f-teacher').value = tname;
+  if (tgrade) {
+    const el = document.getElementById('f-grade-level');
+    if (el) el.value = tgrade;
+  }
 }
 
 function getFormData() {
@@ -701,7 +829,9 @@ function getFormData() {
   return {
     id: v('edit-id')||'',
     school:v('f-school'), amphoe:v('f-amphoe'), province:v('f-province'),
-    year:v('f-year'), semester:v('f-semester'), grade:v('f-grade'),
+    year:v('f-year'), semester:v('f-semester'),
+    gradeLevel:v('f-grade-level'), room:v('f-room'),
+    grade: v('f-grade-level') ? (v('f-grade-level') + (v('f-room') ? v('f-room') : '')) : '',
     teacher:v('f-teacher'), phone:v('f-phone'), dateRange:v('f-daterange'),
     totalStudents:n('f-total-students'), visitedMale:n('f-visited-male'),
     visitedFemale:n('f-visited-female'), notVisited:n('f-not-visited'),
@@ -735,7 +865,8 @@ function setFormData(r) {
   const sv = (id,val) => { const el=document.getElementById(id); if(el) el.value=val||''; };
   const sc = (id,val) => { const el=document.getElementById(id); if(el) el.checked=!!val; };
   sv('edit-id',r.id); sv('f-school',r.school); sv('f-amphoe',r.amphoe); sv('f-province',r.province);
-  sv('f-year',r.year); sv('f-semester',r.semester); sv('f-grade',r.grade);
+  sv('f-year',r.year); sv('f-semester',r.semester);
+  sv('f-grade-level',r.gradeLevel||''); sv('f-room',r.room||'');
   sv('f-teacher',r.teacher); sv('f-phone',r.phone); sv('f-daterange',r.dateRange);
   sv('f-total-students',r.totalStudents); sv('f-visited-male',r.visitedMale);
   sv('f-visited-female',r.visitedFemale); sv('f-not-visited',r.notVisited);
@@ -768,9 +899,9 @@ function setFormData(r) {
 
 async function saveRecord() {
   const data = getFormData();
-  if (!data.school) { showAlert('form-alert','danger','⚠️ กรุณาระบุชื่อโรงเรียน'); return; }
-  if (!data.grade)  { showAlert('form-alert','danger','⚠️ กรุณาระบุชั้น/ห้อง'); return; }
-  if (!data.teacher){ showAlert('form-alert','danger','⚠️ กรุณาระบุชื่อครูที่ปรึกษา'); return; }
+  if (!data.school)      { showAlert('form-alert','danger','⚠️ กรุณาระบุชื่อโรงเรียน'); return; }
+  if (!data.gradeLevel)  { showAlert('form-alert','danger','⚠️ กรุณาเลือกระดับชั้น'); return; }
+  if (!data.teacher)     { showAlert('form-alert','danger','⚠️ กรุณาระบุชื่อครูที่ปรึกษา'); return; }
   showLoading(true,'กำลังบันทึก...');
   try {
     const editId = data.id;
@@ -910,6 +1041,8 @@ function renderDashboard() {
   makeBar('chart-env',['บ้านพอใช้-ดี','บ้านเก่า/ทรุดโทรม','ใกล้แหล่งมั่วสุม'],
     [eG,eOld,eBad],['#22c55e','#f59e0b','#ef4444']);
 
+  renderGradeBreakdown(recs);
+
   const recent = recs.slice(-5).reverse();
   const el = document.getElementById('recent-records');
   if (!recent.length) {
@@ -926,6 +1059,53 @@ function renderDashboard() {
     </tbody></table></div>`;
   }
 }
+function renderGradeBreakdown(recs) {
+  const el = document.getElementById('grade-breakdown');
+  if (!el) return;
+  const grades = ['ม.1','ม.2','ม.3','ม.4','ม.5','ม.6'];
+  const rows = grades.map(g => {
+    const grRecs = recs.filter(r => r.gradeLevel === g || (r.grade && r.grade.startsWith(g)));
+    if (!grRecs.length) return null;
+    const total = grRecs.reduce((s,r)=>s+(r.totalStudents||0),0);
+    const visited = grRecs.reduce((s,r)=>s+(r.visitedMale||0)+(r.visitedFemale||0),0);
+    const risk = grRecs.reduce((s,r)=>s+(r.riskHealth||0)+(r.riskSubstance||0)+(r.riskViolence||0)+(r.riskTransport||0)+(r.riskSex||0)+(r.riskPhone||0)+(r.riskSafety||0)+(r.riskOther||0),0);
+    const urgent = grRecs.reduce((s,r)=>s+(r.urgent||0),0);
+    const pct = total>0 ? (visited/total*100).toFixed(1) : '0.0';
+    const barColor = parseFloat(pct)>=80 ? '#22c55e' : parseFloat(pct)>=50 ? '#f59e0b' : '#ef4444';
+    return `<tr>
+      <td><strong>${g}</strong></td>
+      <td style="text-align:center">${grRecs.length} รายงาน</td>
+      <td style="text-align:center">${total}</td>
+      <td style="text-align:center">${visited}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="flex:1;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px"></div>
+          </div>
+          <span style="font-size:.8rem;color:${barColor};font-weight:700;min-width:38px">${pct}%</span>
+        </div>
+      </td>
+      <td style="text-align:center;color:#ef4444;font-weight:700">${risk}</td>
+      <td style="text-align:center;color:#f97316;font-weight:700">${urgent}</td>
+    </tr>`;
+  }).filter(Boolean);
+  if (!rows.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><p>ยังไม่มีข้อมูล</p></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr>
+      <th>ชั้น</th><th style="text-align:center">รายงาน</th>
+      <th style="text-align:center">นักเรียนทั้งหมด</th>
+      <th style="text-align:center">เยี่ยมแล้ว</th>
+      <th>ความคืบหน้า</th>
+      <th style="text-align:center">เสี่ยง</th>
+      <th style="text-align:center">ด่วน</th>
+    </tr></thead>
+    <tbody>${rows.join('')}</tbody>
+  </table></div>`;
+}
+
 function makeBar(id,labels,data,colors){
   const ctx=document.getElementById(id); if(!ctx) return;
   if(chartInstances[id]) chartInstances[id].destroy();
@@ -1229,8 +1409,9 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   showLoading(false);
   applyConfigToForm();
   renderDashboard();
+  checkTeacherModal();
   document.querySelectorAll('.modal-overlay').forEach(o=>{
-    o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
+    o.addEventListener('click',e=>{ if(e.target===o && o.id!=='teacher-modal') o.classList.remove('open'); });
   });
 });
 </script>
