@@ -2,13 +2,9 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ระบบบันทึกการเยี่ยมบ้านนักเรียน – Online</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ระบบเยี่ยมบ้านนักเรียน – โรงเรียนจิกดู่วิทยา</title>
 
-<!-- ═══════════════════════════════════════════════════════
-  🔥 FIREBASE CONFIG – แก้ไขค่าเหล่านี้จาก Firebase Console
-  ดูคู่มือการตั้งค่าใน: คู่มือติดตั้ง-Firebase.html
-═══════════════════════════════════════════════════════ -->
 <script>
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyDXJIhFdFT8_9Uz5iyxvo0Tze5sYHrI4iM",
@@ -18,1085 +14,1363 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "639982697383",
   appId:             "1:639982697383:web:55488f484c1f80a4bbd482"
 };
-// ถ้ายังไม่ได้ตั้งค่า Firebase จะใช้ localStorage แทน (ใช้ได้เครื่องเดียว)
-const USE_FIREBASE = FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY";
+const USE_FIREBASE = true;
+const SCHOOL   = 'โรงเรียนจิกดู่วิทยา';
+const AMPHOE   = 'หัวตะพาน';
+const PROVINCE = 'อำนาจเจริญ';
+const GRADES    = ['ม.1','ม.2','ม.3','ม.4','ม.5','ม.6'];
+const COL       = 'studentVisits';
+const PRINCIPAL = 'นายโกวิท สุพรรณ์';
 </script>
 
-<!-- Firebase SDK -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
-
-<!-- Chart.js + SheetJS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-:root {
-  --primary:#1a56db; --primary-dark:#1e429f; --secondary:#0e9f6e;
-  --danger:#e02424; --warning:#ff5a1f; --bg:#f3f4f6; --card:#fff;
-  --border:#e5e7eb; --text:#111827; --text-muted:#6b7280;
-  --shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
-  --shadow-md:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.06);
+:root{
+  --pri:#c8102e;--pri-d:#9b0a23;--pri-l:#fde8ec;--pri-ll:#fff5f7;
+  --sec:#16a34a;--dan:#dc2626;--warn:#ea580c;
+  --bg:#f3f4f6;--card:#fff;--bdr:#e5e7eb;--bdr-l:#f1f1f3;
+  --txt:#111827;--muted:#6b7280;
+  --sh:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sh-md:0 4px 16px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.04);
+  --sh-lg:0 12px 40px rgba(0,0,0,.1),0 4px 12px rgba(0,0,0,.05);
+  --radius:14px;--radius-sm:9px;--radius-lg:20px;
+  --tr:all .2s cubic-bezier(.4,0,.2,1)
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Sarabun','Noto Sans Thai',Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px}
+body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background:var(--bg);color:var(--txt);font-size:15px;-webkit-font-smoothing:antialiased}
 
-/* TOPBAR – 2-row layout ใช้ได้ทั้งมือถือและคอม */
-.topbar{background:var(--primary-dark);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2);position:sticky;top:0;z-index:100;display:flex;flex-direction:column}
-.topbar-top{display:flex;align-items:center;padding:8px 14px;gap:10px;min-height:46px}
-.topbar-logo{font-size:1rem;font-weight:700;white-space:nowrap;flex-shrink:0}
-.topbar-logo span{color:#93c5fd}
-.topbar-teacher{color:#bfdbfe;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
-.topbar-right{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0}
-.status-badge{padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:600;white-space:nowrap}
-.status-online{background:#065f46;color:#6ee7b7}
-.status-offline{background:#7f1d1d;color:#fca5a5}
-.status-local{background:#1e3a5f;color:#93c5fd}
-.btn-settings{background:rgba(255,255,255,.1);border:none;border-radius:6px;cursor:pointer;color:#cbd5e1;font-size:.85rem;padding:6px 10px}
-.btn-settings:hover{background:rgba(255,255,255,.2);color:#fff}
-/* แถว Nav tabs */
-.topbar-nav{display:flex;overflow-x:auto;border-top:1px solid rgba(255,255,255,.1);-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.topbar-nav::-webkit-scrollbar{display:none}
-.nav-tab{padding:10px 16px;color:#cbd5e1;cursor:pointer;border-bottom:3px solid transparent;font-size:.85rem;transition:all .15s;white-space:nowrap;flex-shrink:0}
-.nav-tab:hover{color:#fff;background:rgba(255,255,255,.07)}
-.nav-tab.active{color:#fff;border-bottom-color:#60a5fa;font-weight:600}
-/* ชั้นเรียน badge */
-.grade-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.75rem;font-weight:700;background:rgba(255,255,255,.15);color:#fff;margin-left:4px}
+/* ── TOPBAR ── */
+.topbar{background:rgba(255,255,255,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:var(--txt);border-bottom:1px solid var(--bdr);box-shadow:0 1px 0 rgba(0,0,0,.05),0 2px 8px rgba(0,0,0,.04);position:sticky;top:0;z-index:100;display:flex;flex-direction:column}
+.tb-top{display:flex;align-items:center;padding:10px 18px;gap:10px;min-height:52px}
+.tb-logo{font-size:1rem;font-weight:800;white-space:nowrap;flex-shrink:0;color:var(--pri-d);letter-spacing:-.02em}
+.tb-logo span{color:var(--muted);font-size:.76rem;font-weight:400;margin-left:2px}
+.tb-teacher{color:var(--muted);font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;font-weight:500}
+.g-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700;background:var(--pri-l);color:var(--pri-d);margin-left:4px;border:1px solid rgba(200,16,46,.15)}
+.tb-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.s-badge{padding:4px 10px;border-radius:20px;font-size:.71rem;font-weight:600;white-space:nowrap;letter-spacing:.01em}
+.s-online{background:#dcfce7;color:#15803d}
+.s-offline{background:#fee2e2;color:#991b1b}
+.s-local{background:#f1f5f9;color:#475569}
+.btn-gear{background:transparent;border:1.5px solid var(--bdr);border-radius:10px;cursor:pointer;color:var(--muted);font-size:.85rem;padding:6px 11px;transition:var(--tr)}
+.btn-gear:hover{background:var(--pri-l);border-color:rgba(200,16,46,.2);color:var(--pri-d);transform:rotate(30deg)}
+.tb-nav{display:flex;overflow-x:auto;border-top:1px solid var(--bdr);-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0 4px}
+.tb-nav::-webkit-scrollbar{display:none}
+.nav-tab{padding:10px 17px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;font-size:.84rem;transition:var(--tr);white-space:nowrap;flex-shrink:0;font-weight:500}
+.nav-tab:hover{color:var(--pri);background:var(--pri-ll)}
+.nav-tab.active{color:var(--pri-d);border-bottom-color:var(--pri);font-weight:700}
 
-/* LOADING OVERLAY */
-.loading-overlay{display:none;position:fixed;inset:0;background:rgba(255,255,255,.8);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:12px}
-.loading-overlay.show{display:flex}
-.spinner{width:44px;height:44px;border:4px solid #e5e7eb;border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+/* ── LOADING ── */
+.loading{display:none;position:fixed;inset:0;background:rgba(255,255,255,.9);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:500;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+.loading.show{display:flex}
+.spinner{width:40px;height:40px;border:3px solid var(--bdr);border-top-color:var(--pri);border-radius:50%;animation:spin .75s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.loading-text{color:var(--text-muted);font-size:.9rem}
+.loading p{color:var(--muted);font-size:.88rem;font-weight:500}
 
-/* LAYOUT */
-.page{display:none;max-width:1200px;margin:0 auto;padding:20px 14px}
+/* ── PAGES ── */
+.page{display:none;max-width:1100px;margin:0 auto;padding:18px 14px}
 .page.active{display:block}
 
-/* CARDS */
-.card{background:var(--card);border-radius:10px;box-shadow:var(--shadow);padding:18px 20px;margin-bottom:18px}
-.card-title{font-size:1rem;font-weight:700;color:var(--primary-dark);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
+/* ── CARD ── */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--sh);border:1px solid var(--bdr);padding:18px 20px;margin-bottom:14px;transition:var(--tr)}
+.card-title{font-size:.95rem;font-weight:700;color:var(--pri-d);margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--pri-l);display:flex;align-items:center;gap:8px;letter-spacing:-.01em}
 
-/* STATS */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
-.stat-card{background:var(--card);border-radius:10px;padding:16px;box-shadow:var(--shadow);border-left:4px solid var(--primary)}
-.stat-card.green{border-left-color:var(--secondary)}
-.stat-card.orange{border-left-color:var(--warning)}
-.stat-card.red{border-left-color:var(--danger)}
-.stat-card.purple{border-left-color:#7e3af2}
-.stat-label{font-size:0.78rem;color:var(--text-muted);margin-bottom:4px}
-.stat-value{font-size:1.85rem;font-weight:800;color:var(--text);line-height:1}
-.stat-sub{font-size:0.75rem;color:var(--text-muted);margin-top:3px}
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border-radius:12px;padding:14px 15px;box-shadow:var(--sh);border:1px solid var(--bdr);border-top:3px solid var(--pri)}
+.stat.g{border-top-color:var(--sec)} .stat.o{border-top-color:var(--warn)}
+.stat.r{border-top-color:var(--dan)} .stat.p{border-top-color:#7c3aed}
+.stat-lbl{font-size:.72rem;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em}
+.stat-val{font-size:1.75rem;font-weight:800;color:var(--txt);line-height:1}
+.stat-sub{font-size:.7rem;color:var(--muted);margin-top:3px}
 
-/* CHARTS */
-.charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:18px}
-.chart-box{background:var(--card);border-radius:10px;padding:18px;box-shadow:var(--shadow)}
-.chart-box h3{font-size:.82rem;font-weight:700;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em}
-.chart-container{position:relative;height:200px}
+/* ── CHARTS ── */
+.charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-bottom:14px}
+.chart-box{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--sh);border:1px solid var(--bdr)}
+.chart-box h3{font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em}
+.chart-c{position:relative;height:185px}
 
-/* FORM */
-.form-section{background:var(--card);border-radius:10px;box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
-.form-section-header{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;padding:11px 18px;font-weight:700;font-size:.92rem;display:flex;align-items:center;gap:7px}
-.form-section-body{padding:18px 20px}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.form-group{display:flex;flex-direction:column;gap:4px}
-.form-label{font-size:.83rem;font-weight:600;color:#374151}
-.form-label .req{color:var(--danger);margin-left:2px}
-input[type=text],input[type=number],input[type=date],select,textarea{border:1.5px solid var(--border);border-radius:6px;padding:8px 10px;font-size:.9rem;font-family:inherit;width:100%;background:#f9fafb;transition:border-color .15s}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(26,86,219,.1)}
-textarea{resize:vertical;min-height:70px}
-.num-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:9px}
-.num-item{display:flex;align-items:center;gap:9px;padding:8px 11px;background:#f9fafb;border-radius:6px;border:1px solid var(--border)}
-.num-item label{flex:1;font-size:.85rem;color:#374151}
-.num-item input{width:68px;flex-shrink:0;text-align:center}
-.check-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:7px}
-.check-item{display:flex;align-items:center;gap:7px;padding:8px 11px;background:#f9fafb;border-radius:6px;border:1px solid var(--border);cursor:pointer}
-.check-item:hover{background:#eff6ff;border-color:#bfdbfe}
-.check-item input[type=checkbox]{width:15px;height:15px;accent-color:var(--primary);flex-shrink:0}
-.check-item span{font-size:.85rem}
+/* ── FORM ── */
+.fsec{background:var(--card);border-radius:var(--radius);box-shadow:var(--sh);border:1px solid var(--bdr);margin-bottom:14px;overflow:hidden}
+.fsec-hd{background:linear-gradient(135deg,var(--pri) 0%,var(--pri-d) 100%);color:#fff;padding:12px 18px;font-weight:700;font-size:.88rem;display:flex;align-items:center;gap:8px;letter-spacing:.01em}
+.fbody{padding:16px 18px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg label{font-size:.76rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.fg input,.fg select,.fg textarea{padding:9px 12px;border:1.5px solid var(--bdr);border-radius:var(--radius-sm);font-size:.9rem;font-family:inherit;background:#fff;color:var(--txt);transition:var(--tr)}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(200,16,46,.1)}
+.fg textarea{resize:vertical;min-height:64px}
+.finfo{background:linear-gradient(135deg,var(--pri-ll) 0%,var(--pri-l) 100%);border:1px solid rgba(200,16,46,.15);border-radius:var(--radius-sm);padding:10px 14px;font-size:.83rem;color:var(--pri-d);margin-bottom:6px;font-weight:500}
 
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 18px;border-radius:7px;font-size:.88rem;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
-.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
-.btn-success{background:var(--secondary);color:#fff}.btn-success:hover{background:#057a55}
-.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:#c81e1e}
-.btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--primary)}.btn-outline:hover{background:#eff6ff}
-.btn-warning{background:var(--warning);color:#fff}.btn-warning:hover{background:#d03801}
-.btn-gray{background:#6b7280;color:#fff}.btn-gray:hover{background:#4b5563}
-.btn-sm{padding:5px 11px;font-size:.8rem}
-.btn-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+/* ── PILL RADIO / CHECKBOX ── */
+.pill-group{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:.82rem;padding:5px 14px;border:1.5px solid var(--bdr);border-radius:20px;cursor:pointer;transition:var(--tr);user-select:none;background:#fff;color:var(--txt);font-weight:500}
+.pill:hover{border-color:var(--pri);color:var(--pri);background:var(--pri-ll)}
+.pill input{display:none}
+.pill.on{background:var(--pri);border-color:var(--pri);color:#fff;box-shadow:0 2px 8px rgba(200,16,46,.28)}
+.pill.on-g{background:var(--sec);border-color:var(--sec);color:#fff;box-shadow:0 2px 8px rgba(22,163,74,.28)}
+.pill.on-r{background:var(--dan);border-color:var(--dan);color:#fff;box-shadow:0 2px 8px rgba(220,38,38,.28)}
 
-/* TABLE */
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:.85rem}
-th{background:#f3f4f6;color:#374151;font-weight:700;padding:9px 11px;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap}
-td{padding:8px 11px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
-tr:hover td{background:#f9fafb}
-.badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:.76rem;font-weight:600}
-.badge-blue{background:#dbeafe;color:#1e40af}
-.badge-green{background:#d1fae5;color:#065f46}
-.badge-orange{background:#ffedd5;color:#9a3412}
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:var(--radius-sm);font-size:.87rem;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:var(--tr);letter-spacing:.01em}
+.btn:active{transform:scale(.97)}
+.btn-pri{background:linear-gradient(135deg,var(--pri) 0%,var(--pri-d) 100%);color:#fff;box-shadow:0 2px 8px rgba(200,16,46,.28)}.btn-pri:hover{box-shadow:0 4px 16px rgba(200,16,46,.38);transform:translateY(-1px)}
+.btn-suc{background:linear-gradient(135deg,#16a34a 0%,#15803d 100%);color:#fff;box-shadow:0 2px 8px rgba(22,163,74,.28)}.btn-suc:hover{box-shadow:0 4px 16px rgba(22,163,74,.38);transform:translateY(-1px)}
+.btn-dan{background:linear-gradient(135deg,var(--dan) 0%,#b91c1c 100%);color:#fff;box-shadow:0 2px 8px rgba(220,38,38,.28)}.btn-dan:hover{box-shadow:0 4px 16px rgba(220,38,38,.38);transform:translateY(-1px)}
+.btn-gray{background:linear-gradient(135deg,#71717a 0%,#52525b 100%);color:#fff}.btn-gray:hover{transform:translateY(-1px)}
+.btn-out{background:#fff;color:var(--pri);border:1.5px solid var(--pri)}.btn-out:hover{background:var(--pri-l);transform:translateY(-1px)}
+.btn-sm{padding:5px 12px;font-size:.78rem}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 
-/* EMPTY STATE */
-.empty-state{text-align:center;padding:50px 20px;color:var(--text-muted)}
-.empty-state-icon{font-size:3rem;margin-bottom:10px;opacity:.4}
+/* ── TABLE ── */
+.tw{overflow-x:auto;border-radius:var(--radius-sm)}
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+th{background:#f9fafb;padding:10px 12px;text-align:left;font-weight:700;color:var(--muted);border-bottom:2px solid var(--bdr);white-space:nowrap;font-size:.76rem;text-transform:uppercase;letter-spacing:.04em}
+td{padding:10px 12px;border-bottom:1px solid var(--bdr-l);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafafa}
+tbody tr{transition:background .1s}
 
-/* ALERT */
-.alert{padding:10px 14px;border-radius:7px;margin-bottom:14px;font-size:.88rem;display:flex;align-items:center;gap:7px}
-.alert-success{background:#d1fae5;color:#065f46;border:1px solid #a7f3d0}
-.alert-danger{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
-.alert-info{background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe}
-.alert-warning{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+/* ── ALERT ── */
+.alert{display:none;padding:10px 14px;border-radius:var(--radius-sm);font-size:.86rem;margin-bottom:12px;align-items:center;gap:8px;font-weight:500}
+.al-ok{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
+.al-err{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+.al-info{background:var(--pri-l);color:var(--pri-d);border:1px solid rgba(200,16,46,.2)}
 
-/* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
-.modal-overlay.open{display:flex}
-.modal{background:#fff;border-radius:12px;padding:24px;max-width:500px;width:95%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:88vh;overflow-y:auto}
-.modal h3{font-size:1.05rem;font-weight:700;margin-bottom:14px;color:var(--primary-dark)}
-.modal-actions{display:flex;gap:9px;margin-top:18px;justify-content:flex-end}
-.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* ── MODAL ── */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:16px}
+.mo.open{display:flex}
+.mo-box{background:#fff;border-radius:var(--radius-lg);padding:26px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.2),0 8px 20px rgba(0,0,0,.1)}
+.mo-box h2{font-size:1.1rem;font-weight:800;margin-bottom:16px;color:var(--pri-d);letter-spacing:-.02em}
+.mo-box .fg{margin-bottom:11px}
 
-/* PRINT */
+/* ── BADGES ── */
+.bv{background:#f0fdf4;color:#15803d;padding:3px 10px;border-radius:20px;font-size:.74rem;font-weight:700;border:1px solid #bbf7d0}
+.bnv{background:#fef2f2;color:#991b1b;padding:3px 10px;border-radius:20px;font-size:.74rem;font-weight:700;border:1px solid #fecaca}
+.bur{background:#fff7ed;color:#c2410c;padding:3px 10px;border-radius:20px;font-size:.74rem;font-weight:700;border:1px solid #fed7aa}
+
+/* ── GRADE FILTER TABS ── */
+.gtabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.gtab{padding:5px 16px;border-radius:20px;font-size:.81rem;font-weight:600;cursor:pointer;border:1.5px solid var(--bdr);background:#fff;color:var(--muted);transition:var(--tr)}
+.gtab:hover{border-color:var(--pri);color:var(--pri);background:var(--pri-ll)}
+.gtab.active{background:var(--pri);border-color:var(--pri);color:#fff;box-shadow:0 2px 8px rgba(200,16,46,.25)}
+
+/* ── PROGRESS ── */
+.pbar{height:7px;background:var(--bdr);border-radius:4px;overflow:hidden;flex:1;min-width:60px}
+.pfill{height:100%;border-radius:4px;transition:width .5s ease}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:48px 16px;color:var(--muted)}
+.empty-ico{font-size:2.6rem;margin-bottom:10px}
+
+/* ── PRINT ── */
 @media print{
-  body *{visibility:hidden}
-  #print-area,#print-area *{visibility:visible}
-  #print-area{position:absolute;left:0;top:0;width:100%}
-  .no-print{display:none!important}
-  .topbar,.loading-overlay{display:none}
-}
-.print-doc{font-family:'TH Sarabun New','Sarabun',serif;font-size:15pt;line-height:1.75;color:#000;background:#fff;padding:0}
-.print-doc .doc-header{text-align:center;margin-bottom:10px}
-.print-doc .doc-title{font-size:16pt;font-weight:bold}
-.print-doc .doc-line{margin:5px 0}
-.print-doc .doc-section{margin-top:11px}
-.print-doc .doc-section-title{font-weight:bold;margin-bottom:3px;text-decoration:underline}
-.print-doc .doc-item{margin-left:18px;margin-bottom:2px}
-.dot-line{border-bottom:1px dotted #555;display:inline-block;min-width:100px}
-.photo-placeholder{border:1px dashed #999;width:100%;height:110px;display:flex;align-items:center;justify-content:center;color:#999;font-size:12pt;margin:6px 0}
-.doc-sign-row{display:flex;justify-content:space-between;margin-top:18px;flex-wrap:wrap;gap:20px}
-.doc-sign-block{text-align:center;min-width:180px}
-.doc-sign-line{border-bottom:1px solid #000;margin:0 16px 4px}
+  @page{
+    size: A4 portrait;
+    margin: 2cm 2.5cm 2cm 2.5cm;
+  }
+  *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 
-/* MOBILE */
-@media(max-width:600px){
-  .topbar-teacher{max-width:100px}
-  .stats-grid{grid-template-columns:repeat(2,1fr)}
-  .form-grid{grid-template-columns:1fr}
-  .settings-grid{grid-template-columns:1fr}
-  .page{padding:14px 10px}
-  .btn{padding:8px 14px;font-size:.85rem}
-  .grade-table{font-size:.8rem}
-}
-/* GRADE TABLE */
-.grade-table{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:8px}
-.grade-table th{background:#f3f4f6;padding:8px 10px;text-align:center;border-bottom:2px solid var(--border);font-weight:700;font-size:.82rem}
-.grade-table td{padding:7px 10px;border-bottom:1px solid #f0f0f0;text-align:center}
-.grade-table tr:hover td{background:#f9fafb}
-.grade-table td:first-child{font-weight:700;color:var(--primary-dark);text-align:left}
-.pct-bar{height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;min-width:60px}
-.pct-fill{height:100%;background:var(--secondary);border-radius:3px;transition:width .3s}
+  /* ซ่อนทุกอย่างยกเว้นรายงานเขต */
+  body{ background:#fff!important; font-family:'TH SarabunPSK','Sarabun','Noto Sans Thai',Arial,sans-serif!important; font-size:14pt!important; color:#000!important; margin:0; padding:0 }
+  .topbar,.btn-row,.btn,.no-print,.gtabs{ display:none!important }
+  .page{ display:none!important }
+  #page-district{ display:block!important; max-width:100%; padding:0; margin:0 }
+  #page-district > .no-print{ display:none!important }
+  #district-out{ display:block!important }
 
-/* FIREBASE SETUP BANNER */
-.setup-banner{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:14px 20px;border-radius:10px;margin-bottom:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.setup-banner strong{font-size:1rem}
-.setup-banner p{font-size:.88rem;opacity:.9;flex:1;min-width:200px}
-.setup-banner a{color:#fff;text-decoration:underline;font-weight:600}
+  /* รีเซ็ต card wrapper */
+  #district-out > div{
+    box-shadow:none!important; border-radius:0!important;
+    padding:0!important; border:none!important;
+    font-family:'TH SarabunPSK','Sarabun','Noto Sans Thai',Arial,sans-serif!important;
+    font-size:14pt!important; color:#000!important; line-height:1.6!important;
+  }
+
+  /* หัวรายงาน */
+  #district-out .rpt-head{ text-align:center; margin-bottom:10pt; border-bottom:1.5pt solid #000; padding-bottom:6pt }
+
+  /* ข้อความในฟอร์ม */
+  #district-out div{ orphans:2; widows:2 }
+
+  /* ป้องกันตัดข้ามหน้ากลางข้อ */
+  #district-out > div > div{ break-inside:avoid }
+
+  /* ลายเซ็นอยู่ล่างสุด ไม่ตัดหน้า */
+  #district-out .sig-section{ break-before:avoid; margin-top:16pt }
+
+  /* table header สีเข้ม */
+  #district-out table th{ background:#9b0a23!important; color:#fff!important; font-size:11pt!important; padding:4pt 6pt }
+  #district-out table td{ font-size:11pt!important; padding:3pt 6pt; border:0.5pt solid #999 }
+  #district-out table{ border-collapse:collapse; width:100%; margin-bottom:10pt }
+
+  /* พิมพ์ฟอร์มรายนักเรียน */
+  body.printing-student .page,
+  body.printing-student .topbar,
+  body.printing-student .mo > .mo-box > div.no-print{ display:none!important }
+  body.printing-student #mo-print-student{
+    display:block!important; position:static!important; background:none!important;
+    padding:0!important;
+  }
+  body.printing-student #mo-print-student .mo-box{
+    max-width:100%!important; box-shadow:none!important; border-radius:0!important; padding:0!important;
+  }
+  body.printing-student #student-print-body{
+    max-height:none!important; overflow:visible!important; padding:0!important;
+  }
+  body.printing-student .no-print{ display:none!important }
+}
+
+/* ── DASHBOARD HERO ── */
+.db-hero{background:linear-gradient(135deg,#c8102e 0%,#7a0a1e 100%);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:16px;box-shadow:0 8px 32px rgba(200,16,46,.32),0 2px 8px rgba(200,16,46,.16);overflow:hidden;position:relative}
+.db-hero::before{content:'';position:absolute;top:-50px;right:-30px;width:200px;height:200px;background:rgba(255,255,255,.06);border-radius:50%;pointer-events:none}
+.db-hero::after{content:'';position:absolute;bottom:-60px;right:100px;width:140px;height:140px;background:rgba(255,255,255,.04);border-radius:50%;pointer-events:none}
+.db-hero-info{flex:1;min-width:0;position:relative;z-index:1}
+.db-hero-eyebrow{font-size:.72rem;font-weight:700;color:rgba(255,255,255,.6);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+.db-hero-title{font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:16px}
+.db-pct-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.db-pct-label{font-size:.82rem;color:rgba(255,255,255,.75)}
+.db-pct-val{font-size:1.9rem;font-weight:900;color:#fff;line-height:1}
+.db-pbar-bg{height:11px;background:rgba(255,255,255,.2);border-radius:6px;overflow:hidden;margin-bottom:8px}
+.db-pbar-fill{height:100%;background:#fff;border-radius:6px;transition:width .7s cubic-bezier(.4,0,.2,1);width:0%}
+.db-vis-row{display:flex;justify-content:space-between;font-size:.77rem;color:rgba(255,255,255,.65)}
+.db-vis-row strong{color:#fff;font-weight:700}
+.db-hero-deco{font-size:5.5rem;font-weight:900;color:rgba(255,255,255,.12);line-height:1;flex-shrink:0;letter-spacing:-.04em;user-select:none}
+
+/* ── DASHBOARD MINI STATS ── */
+.db-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.db-stat{background:#fff;border-radius:var(--radius);padding:16px 17px;box-shadow:var(--sh);border:1px solid var(--bdr);display:flex;align-items:center;gap:14px;transition:var(--tr)}
+.db-stat:hover{box-shadow:var(--sh-md);transform:translateY(-2px)}
+.db-ico{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+.db-lbl{font-size:.69rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.db-val{font-size:1.8rem;font-weight:900;line-height:1.1;letter-spacing:-.02em}
+.db-sub{font-size:.69rem;color:var(--muted);margin-top:2px}
+
+/* ── DASHBOARD CHARTS ── */
+.db-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:14px}
+.db-chart-box{background:#fff;border-radius:var(--radius);padding:18px 18px 14px;box-shadow:var(--sh);border:1px solid var(--bdr);transition:var(--tr)}
+.db-chart-box:hover{box-shadow:var(--sh-md)}
+.db-chart-box h3{font-size:.8rem;font-weight:700;color:var(--txt);margin-bottom:14px;display:flex;align-items:center;gap:7px;padding-bottom:10px;border-bottom:1px solid var(--bdr-l)}
+.db-chart-c{position:relative;height:185px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){.db-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){
+  .fgrid{grid-template-columns:1fr}
+  .db-hero-deco{display:none}
+  .db-stats{grid-template-columns:repeat(2,1fr)}
+}
 </style>
 </head>
 <body>
 
 <!-- LOADING OVERLAY -->
-<div class="loading-overlay" id="loading-overlay">
-  <div class="spinner"></div>
-  <div class="loading-text" id="loading-text">กำลังโหลดข้อมูล...</div>
-</div>
+<div class="loading" id="ld"><div class="spinner"></div><p id="ld-txt">กำลังโหลด...</p></div>
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="topbar-top">
-    <div class="topbar-logo">🏠 เยี่ยมบ้าน <span>สพม.</span></div>
-    <div class="topbar-teacher" id="topbar-teacher">ยังไม่ได้ตั้งชื่อ</div>
-    <div class="topbar-right">
-      <span class="status-badge" id="conn-badge">...</span>
-      <button class="btn-settings" onclick="openSettings()" title="ตั้งค่า">⚙️</button>
+  <div class="tb-top">
+    <div class="tb-logo">🏠 เยี่ยมบ้าน <span>จิกดู่วิทยา</span></div>
+    <div class="tb-teacher" id="tb-teacher">ยังไม่ได้ตั้งชื่อ</div>
+    <div class="tb-right">
+      <span class="s-badge s-local" id="conn-badge">⏳</span>
+      <button class="btn-gear" onclick="openSettings()">⚙️</button>
     </div>
   </div>
-  <div class="topbar-nav">
-    <div class="nav-tab active" onclick="showPage('dashboard')">📊 แดชบอร์ด</div>
-    <div class="nav-tab" onclick="showPage('form')">📝 กรอกฟอร์ม</div>
-    <div class="nav-tab" onclick="showPage('records')">📋 รายการ</div>
-    <div class="nav-tab" onclick="showPage('district')">📄 รายงานเขต</div>
+  <div class="tb-nav">
+    <div class="nav-tab active"  onclick="showPage('dashboard')">📊 แดชบอร์ด</div>
+    <div class="nav-tab"         onclick="showPage('form')">➕ กรอกข้อมูล</div>
+    <div class="nav-tab"         onclick="showPage('records')">📋 รายชื่อ</div>
+    <div class="nav-tab"         onclick="showPage('district')">📄 รายงานเขต</div>
+    <div class="nav-tab"         onclick="showPage('present')">🎯 นำเสนอ</div>
   </div>
 </div>
 
-<!-- ==================== DASHBOARD ==================== -->
-<div id="page-dashboard" class="page active">
-  <div id="setup-warning"></div>
-  <div id="dash-alert" style="display:none"></div>
+<!-- ════════════════════════════════════════
+     PAGE: DASHBOARD
+════════════════════════════════════════ -->
+<div class="page active" id="page-dashboard">
 
-  <div class="stats-grid">
-    <div class="stat-card"><div class="stat-label">รายงานทั้งหมด</div><div class="stat-value" id="s-total-reports">0</div><div class="stat-sub">ห้องเรียน</div></div>
-    <div class="stat-card green"><div class="stat-label">นักเรียนทั้งหมด</div><div class="stat-value" id="s-total-students">0</div><div class="stat-sub">คน</div></div>
-    <div class="stat-card"><div class="stat-label">ได้รับการเยี่ยมบ้าน</div><div class="stat-value" id="s-visited">0</div><div class="stat-sub" id="s-visited-pct">0%</div></div>
-    <div class="stat-card orange"><div class="stat-label">พฤติกรรมเสี่ยง</div><div class="stat-value" id="s-risk">0</div><div class="stat-sub">คน</div></div>
-    <div class="stat-card red"><div class="stat-label">ช่วยเหลือด่วน</div><div class="stat-value" id="s-urgent">0</div><div class="stat-sub">คน</div></div>
-    <div class="stat-card purple"><div class="stat-label">ปัญหาการเรียน</div><div class="stat-value" id="s-prob-learn">0</div><div class="stat-sub">คน</div></div>
+  <!-- Hero -->
+  <div class="db-hero">
+    <div class="db-hero-info">
+      <div class="db-hero-eyebrow">ภาพรวมทั้งโรงเรียน</div>
+      <div class="db-hero-title">🏠 โรงเรียนจิกดู่วิทยา</div>
+      <div class="db-pct-row">
+        <span class="db-pct-label">ความคืบหน้าการเยี่ยมบ้าน</span>
+        <span id="s-pct" class="db-pct-val">0%</span>
+      </div>
+      <div class="db-pbar-bg"><div class="db-pbar-fill" id="db-pbar"></div></div>
+      <div class="db-vis-row">
+        <span>✅ เยี่ยมแล้ว <strong id="s-vis">0</strong> คน</span>
+        <span>⏳ ยังไม่ได้ <strong id="s-nvis">0</strong> คน</span>
+      </div>
+    </div>
+    <div class="db-hero-deco" id="db-total-big">0</div>
   </div>
 
-  <div class="charts-grid">
-    <div class="chart-box"><h3>พฤติกรรมเสี่ยง</h3><div class="chart-container"><canvas id="chart-risk"></canvas></div></div>
-    <div class="chart-box"><h3>ความสัมพันธ์ครอบครัว</h3><div class="chart-container"><canvas id="chart-family"></canvas></div></div>
-    <div class="chart-box"><h3>ปัญหาที่พบ</h3><div class="chart-container"><canvas id="chart-problems"></canvas></div></div>
-    <div class="chart-box"><h3>สภาพแวดล้อม</h3><div class="chart-container"><canvas id="chart-env"></canvas></div></div>
+  <!-- Mini Stats -->
+  <div class="db-stats">
+    <div class="db-stat">
+      <div class="db-ico" style="background:#fde8ec;color:#c8102e">👥</div>
+      <div>
+        <div class="db-lbl">นักเรียนทั้งหมด</div>
+        <div class="db-val" id="s-total" style="color:var(--pri-d)">0</div>
+        <div class="db-sub">คน</div>
+      </div>
+    </div>
+    <div class="db-stat">
+      <div class="db-ico" style="background:#fef9c3;color:#b45309">⚠️</div>
+      <div>
+        <div class="db-lbl">พฤติกรรมเสี่ยง</div>
+        <div class="db-val" id="s-risk" style="color:#b45309">0</div>
+        <div class="db-sub">คน</div>
+      </div>
+    </div>
+    <div class="db-stat">
+      <div class="db-ico" style="background:#fde8ec;color:#b91c1c">🚨</div>
+      <div>
+        <div class="db-lbl">เร่งด่วน</div>
+        <div class="db-val" id="s-urg" style="color:#b91c1c">0</div>
+        <div class="db-sub">คน</div>
+      </div>
+    </div>
+    <div class="db-stat">
+      <div class="db-ico" style="background:#ede9fe;color:#7c3aed">🏫</div>
+      <div>
+        <div class="db-lbl">ชั้นเรียน</div>
+        <div class="db-val" style="color:#7c3aed">6</div>
+        <div class="db-sub">ชั้น</div>
+      </div>
+    </div>
   </div>
 
+  <!-- Charts -->
+  <div class="db-charts">
+    <div class="db-chart-box"><h3>⚠️ พฤติกรรมเสี่ยง</h3><div class="db-chart-c"><canvas id="c-risk"></canvas></div></div>
+    <div class="db-chart-box"><h3>📌 ปัญหาที่พบ</h3><div class="db-chart-c"><canvas id="c-prob"></canvas></div></div>
+    <div class="db-chart-box"><h3>👪 ความสัมพันธ์ครอบครัว</h3><div class="db-chart-c"><canvas id="c-fam"></canvas></div></div>
+    <div class="db-chart-box"><h3>🏠 สภาพบ้าน</h3><div class="db-chart-c"><canvas id="c-home"></canvas></div></div>
+    <div class="db-chart-box"><h3>🚗 การเดินทาง</h3><div class="db-chart-c"><canvas id="c-transport"></canvas></div></div>
+    <div class="db-chart-box"><h3>👨‍👩‍👧 สถานภาพบิดา-มารดา</h3><div class="db-chart-c"><canvas id="c-parstat"></canvas></div></div>
+  </div>
+
+  <!-- Grade Summary -->
   <div class="card">
-    <div class="card-title">🏫 สรุปแยกตามระดับชั้น ม.1–6</div>
-    <div id="grade-breakdown"></div>
+    <div class="card-title">🏫 สรุปรายชั้น (อัตโนมัติ)</div>
+    <div id="grade-summary"></div>
   </div>
 
-  <div class="card">
-    <div class="card-title">📋 รายงานล่าสุด</div>
-    <div id="recent-records"></div>
-  </div>
 </div>
 
-<!-- ==================== FORM ==================== -->
-<div id="page-form" class="page">
-  <div id="form-alert" style="display:none"></div>
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-    <div>
-      <h2 style="font-size:1.1rem;font-weight:800;color:var(--primary-dark)">📝 กรอกแบบสรุปการเยี่ยมบ้าน</h2>
-      <p style="font-size:.82rem;color:var(--text-muted)">แบบสรุปรายงานการเยี่ยมบ้านนักเรียน สพม.อุบลราชธานี อำนาจเจริญ</p>
-    </div>
-    <button class="btn btn-gray btn-sm" onclick="clearForm()">🗑 ล้างฟอร์ม</button>
-  </div>
-  <input type="hidden" id="edit-id" value="">
+<!-- ════════════════════════════════════════
+     PAGE: FORM
+════════════════════════════════════════ -->
+<div class="page" id="page-form">
+  <input type="hidden" id="edit-id">
+  <div class="alert al-ok"  id="f-alert"></div>
+  <div class="alert al-info" id="f-edit-alert"></div>
 
-  <!-- ส่วนที่ 1: ข้อมูลทั่วไป -->
-  <div class="form-section">
-    <div class="form-section-header">📌 ส่วนที่ 1 – ข้อมูลทั่วไป</div>
-    <div class="form-section-body">
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">ชื่อโรงเรียน<span class="req">*</span></label><input type="text" id="f-school" placeholder="ชื่อโรงเรียน"></div>
-        <div class="form-group"><label class="form-label">อำเภอ</label><input type="text" id="f-amphoe" placeholder="เช่น หัวตะพาน"></div>
-        <div class="form-group"><label class="form-label">จังหวัด</label><input type="text" id="f-province" placeholder="เช่น อำนาจเจริญ"></div>
-        <div class="form-group"><label class="form-label">ปีการศึกษา</label><input type="text" id="f-year" placeholder="เช่น 2568"></div>
-        <div class="form-group"><label class="form-label">ครั้งที่</label>
-          <select id="f-semester"><option value="1">ครั้งที่ 1</option><option value="2" selected>ครั้งที่ 2</option></select></div>
-        <div class="form-group"><label class="form-label">ระดับชั้น<span class="req">*</span></label>
-          <select id="f-grade-level">
-            <option value="">-- เลือกระดับชั้น --</option>
-            <option value="ม.1">ม.1</option>
-            <option value="ม.2">ม.2</option>
-            <option value="ม.3">ม.3</option>
-            <option value="ม.4">ม.4</option>
-            <option value="ม.5">ม.5</option>
-            <option value="ม.6">ม.6</option>
+  <!-- ส่วน 1: ข้อมูลนักเรียน -->
+  <div class="fsec">
+    <div class="fsec-hd">👤 ข้อมูลนักเรียน</div>
+    <div class="fbody">
+      <div class="finfo">🏫 <strong>โรงเรียนจิกดู่วิทยา</strong> &nbsp;|&nbsp; อ.หัวตะพาน &nbsp;|&nbsp; จ.อำนาจเจริญ</div>
+      <div class="fgrid">
+        <div class="fg">
+          <label>ชื่อ-นามสกุล นักเรียน *</label>
+          <input type="text" id="f-name" placeholder="เช่น เด็กชายสมชาย ใจดี">
+        </div>
+        <div class="fg">
+          <label>เลขที่</label>
+          <input type="number" id="f-student-no" placeholder="เช่น 1" min="1">
+        </div>
+        <div class="fg">
+          <label>เบอร์โทรนักเรียน</label>
+          <input type="tel" id="f-student-phone" placeholder="08X-XXXXXXX">
+        </div>
+        <div class="fg">
+          <label>ระดับชั้น</label>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+            <span id="f-grade-disp" style="font-size:1rem;font-weight:700;color:var(--pri-d);background:var(--pri-l);padding:6px 14px;border-radius:8px;border:1px solid #f5bcc6">–</span>
+            <span style="font-size:.76rem;color:var(--muted)">ตามโปรไฟล์ครู</span>
+          </div>
+        </div>
+        <div class="fg">
+          <label>ครูประจำชั้น</label>
+          <input type="text" id="f-teacher" readonly style="background:#f9fafb;color:var(--muted)">
+        </div>
+        <div class="fg">
+          <label>เพศ *</label>
+          <div class="pill-group" id="pg-gender">
+            <label class="pill" onclick="selPill('pg-gender','male')">  <input type="radio" name="gender" value="male">   ♂ ชาย</label>
+            <label class="pill" onclick="selPill('pg-gender','female')"><input type="radio" name="gender" value="female"> ♀ หญิง</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ส่วน 2: ผู้ปกครอง -->
+  <div class="fsec">
+    <div class="fsec-hd">👨‍👩‍👧 ข้อมูลผู้ปกครองและครอบครัว</div>
+    <div class="fbody">
+      <!-- บิดา -->
+      <div style="font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:6px;margin-top:2px">บิดา</div>
+      <div class="fgrid" style="margin-bottom:10px">
+        <div class="fg"><label>ชื่อ-นามสกุล บิดา</label><input type="text" id="f-father-name" placeholder="ชื่อ-นามสกุล"></div>
+        <div class="fg"><label>อาชีพบิดา</label><input type="text" id="f-father-job" placeholder="เช่น เกษตรกร"></div>
+        <div class="fg"><label>เบอร์โทรบิดา</label><input type="tel" id="f-father-phone" placeholder="08X-XXXXXXX"></div>
+      </div>
+      <!-- มารดา -->
+      <div style="font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:6px">มารดา</div>
+      <div class="fgrid" style="margin-bottom:10px">
+        <div class="fg"><label>ชื่อ-นามสกุล มารดา</label><input type="text" id="f-mother-name" placeholder="ชื่อ-นามสกุล"></div>
+        <div class="fg"><label>อาชีพมารดา</label><input type="text" id="f-mother-job" placeholder="เช่น เกษตรกร"></div>
+        <div class="fg"><label>เบอร์โทรมารดา</label><input type="tel" id="f-mother-phone" placeholder="08X-XXXXXXX"></div>
+      </div>
+      <!-- สถานภาพบิดา-มารดา -->
+      <div class="fg" style="margin-bottom:10px">
+        <label>สถานภาพบิดา-มารดา</label>
+        <div class="pill-group" id="pg-parstat">
+          <label class="pill" onclick="selPill('pg-parstat','together')">  <input type="radio" name="parstat" value="together">   อยู่ร่วมกัน</label>
+          <label class="pill" onclick="selPill('pg-parstat','separate')">  <input type="radio" name="parstat" value="separate">   แยกกันอยู่</label>
+          <label class="pill" onclick="selPill('pg-parstat','divorced')">  <input type="radio" name="parstat" value="divorced">   หย่าร้าง</label>
+          <label class="pill" onclick="selPill('pg-parstat','father_dead')"><input type="radio" name="parstat" value="father_dead">บิดาเสียชีวิต</label>
+          <label class="pill" onclick="selPill('pg-parstat','mother_dead')"><input type="radio" name="parstat" value="mother_dead">มารดาเสียชีวิต</label>
+          <label class="pill" onclick="selPill('pg-parstat','both_dead')"> <input type="radio" name="parstat" value="both_dead">  เสียชีวิตทั้งคู่</label>
+        </div>
+      </div>
+      <!-- ผู้ปกครอง (กรณีไม่ใช่บิดา-มารดา) -->
+      <div style="font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:6px">ผู้ปกครอง (กรณีไม่ใช่บิดา-มารดา)</div>
+      <div class="fgrid" style="margin-bottom:10px">
+        <div class="fg"><label>ชื่อ-นามสกุล ผู้ปกครอง</label><input type="text" id="f-parent-name" placeholder="เช่น นายสมศักดิ์ ใจดี"></div>
+        <div class="fg">
+          <label>ความสัมพันธ์</label>
+          <select id="f-parent-rel">
+            <option value="">-- เลือก --</option>
+            <option>ปู่/ย่า</option><option>ตา/ยาย</option><option>ลุง/ป้า/น้า/อา</option><option>พี่/น้อง</option><option>อื่นๆ</option>
           </select>
         </div>
-        <div class="form-group"><label class="form-label">ห้อง<span class="req">*</span></label><input type="text" id="f-room" placeholder="เช่น /1, /2"></div>
-        <div class="form-group"><label class="form-label">ครูที่ปรึกษา<span class="req">*</span></label><input type="text" id="f-teacher" placeholder="ชื่อ-นามสกุล"></div>
-        <div class="form-group"><label class="form-label">เบอร์โทรศัพท์</label><input type="text" id="f-phone" placeholder="เบอร์ติดต่อ"></div>
-        <div class="form-group"><label class="form-label">ระหว่างวันที่</label><input type="text" id="f-daterange" placeholder="เช่น 1 ม.ค. – 28 ก.พ. 2568"></div>
+        <div class="fg"><label>อาชีพผู้ปกครอง</label><input type="text" id="f-parent-job" placeholder="เช่น เกษตรกร"></div>
+        <div class="fg"><label>เบอร์โทรผู้ปกครอง</label><input type="tel" id="f-parent-phone" placeholder="08X-XXXXXXX"></div>
+        <div class="fg"><label>ที่อยู่ / หมู่บ้าน</label><input type="text" id="f-address" placeholder="เช่น บ้านเลขที่ 1 หมู่ 1"></div>
       </div>
-    </div>
-  </div>
-
-  <!-- ส่วนที่ 2: จำนวนนักเรียน -->
-  <div class="form-section">
-    <div class="form-section-header">👥 ส่วนที่ 2 – จำนวนนักเรียน</div>
-    <div class="form-section-body">
-      <div class="num-grid">
-        <div class="num-item"><label>นักเรียนทั้งหมดในห้อง</label><input type="number" id="f-total-students" min="0" value="0"></div>
-        <div class="num-item"><label>เยี่ยมบ้านได้ (ชาย)</label><input type="number" id="f-visited-male" min="0" value="0"></div>
-        <div class="num-item"><label>เยี่ยมบ้านได้ (หญิง)</label><input type="number" id="f-visited-female" min="0" value="0"></div>
-        <div class="num-item"><label>ไม่ได้รับการเยี่ยมบ้าน</label><input type="number" id="f-not-visited" min="0" value="0"></div>
-      </div>
-      <div style="margin-top:12px">
-        <label class="form-label" style="margin-bottom:7px;display:block">สาเหตุที่ไม่ได้ออกเยี่ยมบ้าน</label>
-        <div class="check-grid">
-          <label class="check-item"><input type="checkbox" id="nv-full"><span>เยี่ยมบ้านครบ 100%</span></label>
-          <label class="check-item"><input type="checkbox" id="nv-absent"><span>นักเรียนไม่มาเรียนนาน</span></label>
-          <label class="check-item"><input type="checkbox" id="nv-guardian-busy"><span>ผู้ปกครองติดงาน/ฤดูกาลทำนา</span></label>
-          <label class="check-item"><input type="checkbox" id="nv-cant-contact"><span>ติดต่อไม่ได้</span></label>
-          <label class="check-item"><input type="checkbox" id="nv-other"><span>อื่น ๆ ระบุ</span></label>
+      <!-- ผู้ปกครองต้องการให้โรงเรียนช่วย -->
+      <div class="fg" style="margin-bottom:10px">
+        <label>ผู้ปกครองต้องการให้โรงเรียนช่วยเหลือ</label>
+        <div class="pill-group">
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="needhelp" value="learn">    ด้านการเรียน</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="needhelp" value="behavior"> ด้านพฤติกรรม</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="needhelp" value="economy">  ด้านเศรษฐกิจ/ทุน</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="needhelp" value="other">    อื่นๆ</label>
         </div>
-        <input type="text" id="nv-other-text" placeholder="ระบุสาเหตุอื่น ๆ..." style="margin-top:7px">
+      </div>
+      <!-- ความห่วงใยผู้ปกครอง -->
+      <div class="fg">
+        <label>ความห่วงใยของผู้ปกครองที่มีต่อนักเรียน</label>
+        <textarea id="f-parent-concern" rows="2" placeholder="บันทึกสิ่งที่ผู้ปกครองห่วงใย..."></textarea>
       </div>
     </div>
   </div>
 
-  <!-- ส่วนที่ 3: ครอบครัว -->
-  <div class="form-section">
-    <div class="form-section-header">👨‍👩‍👧‍👦 ส่วนที่ 3 – ข้อมูลครอบครัว</div>
-    <div class="form-section-body">
-      <div class="num-grid">
-        <div class="num-item"><label>บิดา-มารดาเสียชีวิตทั้งคู่</label><input type="number" id="f-both-deceased" min="0" value="0"></div>
-        <div class="num-item"><label>บิดาหรือมารดาเสียชีวิต</label><input type="number" id="f-one-deceased" min="0" value="0"></div>
-        <div class="num-item"><label>บิดา-มารดาเลิกร้างกัน</label><input type="number" id="f-divorced" min="0" value="0"></div>
-        <div class="num-item"><label>ไม่ได้อาศัยกับบิดา-มารดา</label><input type="number" id="f-not-with-parents" min="0" value="0"></div>
-        <div class="num-item"><label>มีพี่น้องต่างบิดา-มารดา</label><input type="number" id="f-half-siblings" min="0" value="0"></div>
+  <!-- ส่วน 2.5: สถานะครัวเรือน -->
+  <div class="fsec">
+    <div class="fsec-hd">🏘️ สถานะครัวเรือน</div>
+    <div class="fbody">
+      <div class="fgrid" style="margin-bottom:10px">
+        <div class="fg"><label>จำนวนสมาชิกในครัวเรือน (คน)</label><input type="number" id="f-household-size" min="1" placeholder="เช่น 4"></div>
+        <div class="fg"><label>รายได้รวมครัวเรือน (บาท/เดือน)</label><input type="number" id="f-income" min="0" placeholder="เช่น 5000"></div>
+        <div class="fg"><label>เงินมาโรงเรียนวันละ (บาท)</label><input type="number" id="f-allowance" min="0" placeholder="เช่น 50"></div>
       </div>
-      <div style="margin-top:14px">
-        <label class="form-label" style="margin-bottom:7px;display:block">ความสัมพันธ์ของสมาชิกในครอบครัว</label>
-        <div class="num-grid">
-          <div class="num-item"><label>สนิทสนม/รักใคร่กันดี</label><input type="number" id="f-fam-close" min="0" value="0"></div>
-          <div class="num-item"><label>ขัดแย้งทะเลาะบางครั้ง</label><input type="number" id="f-fam-conflict-some" min="0" value="0"></div>
-          <div class="num-item"><label>ขัดแย้งทะเลาะบ่อยครั้ง</label><input type="number" id="f-fam-conflict-often" min="0" value="0"></div>
-          <div class="num-item"><label>ห่างเหิน</label><input type="number" id="f-fam-distant" min="0" value="0"></div>
-          <div class="num-item"><label>ทำร้ายร่างกายบางครั้ง</label><input type="number" id="f-fam-viol-some" min="0" value="0"></div>
-          <div class="num-item"><label>ทำร้ายร่างกายบ่อยครั้ง</label><input type="number" id="f-fam-viol-often" min="0" value="0"></div>
-          <div class="num-item"><label>ความสัมพันธ์อื่น ๆ</label><input type="number" id="f-fam-other" min="0" value="0"></div>
+      <div class="fg" style="margin-bottom:10px">
+        <label>ภาระพึ่งพิงในครัวเรือน</label>
+        <div class="pill-group">
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="burden" value="disabled">   มีคนพิการ</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="burden" value="elderly">    มีผู้สูงอายุ</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="burden" value="single_par"> พ่อ/แม่เลี้ยงเดี่ยว</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="burden" value="unemployed"> มีคนว่างงาน</label>
         </div>
-        <input type="text" id="f-fam-other-text" placeholder="ระบุความสัมพันธ์อื่น ๆ..." style="margin-top:7px">
+      </div>
+      <div class="fg">
+        <label>ประเภทที่อยู่อาศัย</label>
+        <div class="pill-group" id="pg-housetype">
+          <label class="pill" onclick="selPill('pg-housetype','own')">  <input type="radio" name="housetype" value="own">   บ้านตัวเอง</label>
+          <label class="pill" onclick="selPill('pg-housetype','rent')"> <input type="radio" name="housetype" value="rent">  บ้านเช่า</label>
+          <label class="pill" onclick="selPill('pg-housetype','other')"><input type="radio" name="housetype" value="other"> อาศัยผู้อื่น</label>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ส่วนที่ 4: สภาพแวดล้อม -->
-  <div class="form-section">
-    <div class="form-section-header">🏡 ส่วนที่ 4 – สภาพแวดล้อมที่อยู่อาศัย</div>
-    <div class="form-section-body">
-      <div class="num-grid">
-        <div class="num-item"><label>บ้านสภาพพอใช้ถึงดี</label><input type="number" id="f-house-good" min="0" value="0"></div>
-        <div class="num-item"><label>บ้านเก่าทรุดโทรม/ไม่มีความเป็นส่วนตัว</label><input type="number" id="f-house-old" min="0" value="0"></div>
-        <div class="num-item"><label>ใกล้แหล่งมั่วสุม/ชุมชนแออัด</label><input type="number" id="f-near-bad" min="0" value="0"></div>
+  <!-- ส่วน 3: การเยี่ยมบ้าน -->
+  <div class="fsec">
+    <div class="fsec-hd">🏠 การเยี่ยมบ้าน</div>
+    <div class="fbody">
+      <div class="fgrid">
+        <div class="fg">
+          <label>วันที่เยี่ยมบ้าน</label>
+          <input type="date" id="f-date">
+        </div>
+        <div class="fg">
+          <label>ปีการศึกษา</label>
+          <input type="text" id="f-year" placeholder="เช่น 2568">
+        </div>
+        <div class="fg">
+          <label>ภาคเรียน</label>
+          <select id="f-sem">
+            <option value="1">ภาคเรียนที่ 1</option>
+            <option value="2">ภาคเรียนที่ 2</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg" style="margin-top:11px">
+        <label>ผลการเยี่ยมบ้าน *</label>
+        <div class="pill-group" id="pg-visited">
+          <label class="pill" onclick="selPill('pg-visited','yes');toggleVisit(true)">
+            <input type="radio" name="visited" value="yes"> ✅ เยี่ยมได้
+          </label>
+          <label class="pill" onclick="selPill('pg-visited','no');toggleVisit(false)">
+            <input type="radio" name="visited" value="no"> ❌ ยังไม่ได้เยี่ยม
+          </label>
+        </div>
+      </div>
+      <!-- เหตุผลที่ไม่ได้เยี่ยม -->
+      <div id="nv-sec" style="display:none;margin-top:11px">
+        <div class="fg">
+          <label>เหตุผลที่ยังไม่ได้เยี่ยม</label>
+          <div class="pill-group">
+            <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="nv" value="full100">   เยี่ยมครบ 100%</label>
+            <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="nv" value="absent">   นักเรียนไม่มาเรียนเป็นเวลานาน</label>
+            <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="nv" value="busy">     ผู้ปกครองติดงาน/ฤดูกาลทำนา</label>
+            <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="nv" value="notfound"> ติดต่อนักเรียน/ผู้ปกครองไม่ได้</label>
+            <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="nv" value="moved">    ย้าย/จำหน่าย</label>
+            <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="nv" value="other">    อื่นๆ</label>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ส่วนที่ 5: พฤติกรรมเสี่ยง -->
-  <div class="form-section">
-    <div class="form-section-header">⚠️ ส่วนที่ 5 – พฤติกรรมเสี่ยงที่พบ</div>
-    <div class="form-section-body">
-      <div class="num-grid">
-        <div class="num-item"><label>ด้านสุขภาพอนามัย</label><input type="number" id="f-risk-health" min="0" value="0"></div>
-        <div class="num-item"><label>การใช้สารเสพติด</label><input type="number" id="f-risk-substance" min="0" value="0"></div>
-        <div class="num-item"><label>การใช้ความรุนแรง</label><input type="number" id="f-risk-violence" min="0" value="0"></div>
-        <div class="num-item"><label>การเดินทางมาเรียน</label><input type="number" id="f-risk-transport" min="0" value="0"></div>
-        <div class="num-item"><label>ด้านเพศ</label><input type="number" id="f-risk-sex" min="0" value="0"></div>
-        <div class="num-item"><label>ติดโทรศัพท์/เกม/โซเชียล</label><input type="number" id="f-risk-phone" min="0" value="0"></div>
-        <div class="num-item"><label>สวัสดิภาพและความปลอดภัย</label><input type="number" id="f-risk-safety" min="0" value="0"></div>
-        <div class="num-item"><label>พฤติกรรมเสี่ยงอื่น ๆ</label><input type="number" id="f-risk-other" min="0" value="0"></div>
-      </div>
-      <input type="text" id="f-risk-other-text" placeholder="ระบุพฤติกรรมเสี่ยงอื่น ๆ..." style="margin-top:7px">
-    </div>
-  </div>
-
-  <!-- ส่วนที่ 6: ปัญหา -->
-  <div class="form-section">
-    <div class="form-section-header">🔍 ส่วนที่ 6 – ปัญหาที่พบ</div>
-    <div class="form-section-body">
-      <div class="num-grid">
-        <div class="num-item"><label>เสี่ยง/มีปัญหาด้านการเรียน</label><input type="number" id="f-prob-learning" min="0" value="0"></div>
-        <div class="num-item"><label>ปัญหาด้านสุขภาพ</label><input type="number" id="f-prob-health" min="0" value="0"></div>
-        <div class="num-item"><label>ปัญหาด้านเศรษฐกิจ</label><input type="number" id="f-prob-economy" min="0" value="0"></div>
-        <div class="num-item"><label>ปัญหาสารเสพติด (กระท่อม/กัญชา/บุหรี่ไฟฟ้า)</label><input type="number" id="f-prob-substance" min="0" value="0"></div>
-        <div class="num-item"><label>ภาวะ/โรคซึมเศร้า</label><input type="number" id="f-prob-depression" min="0" value="0"></div>
-        <div class="num-item"><label>ปัญหาอื่น ๆ</label><input type="number" id="f-prob-other" min="0" value="0"></div>
-      </div>
-      <input type="text" id="f-prob-other-text" placeholder="ระบุปัญหาอื่น ๆ..." style="margin-top:7px">
-    </div>
-  </div>
-
-  <!-- ส่วนที่ 7: ช่วยเหลือด่วน -->
-  <div class="form-section">
-    <div class="form-section-header">🆘 ส่วนที่ 7 – การช่วยเหลือเร่งด่วน</div>
-    <div class="form-section-body">
-      <div class="num-grid" style="margin-bottom:10px">
-        <div class="num-item"><label>นักเรียนที่ต้องช่วยเหลือเร่งด่วน</label><input type="number" id="f-urgent" min="0" value="0"></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">ระบุความต้องการช่วยเหลือ</label>
-        <textarea id="f-urgent-detail" placeholder="อธิบายความต้องการช่วยเหลือ..."></textarea>
+  <!-- ส่วน 4: พฤติกรรมเสี่ยง (แสดงเมื่อเยี่ยมได้) -->
+  <div class="fsec" id="risk-sec">
+    <div class="fsec-hd">⚠️ พฤติกรรมเสี่ยง</div>
+    <div class="fbody">
+      <div class="fg">
+        <label>พบพฤติกรรมเสี่ยง (เลือกได้หลายข้อ)</label>
+        <div class="pill-group">
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="risk" value="health">    สุขภาพ</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="risk" value="substance"> สารเสพติด</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="risk" value="violence">  ความรุนแรง</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="risk" value="transport"> การเดินทาง</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="risk" value="sex">       เพศ</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="risk" value="phone">     โทรศัพท์/เกม/โซเชียล</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="risk" value="safety">    ความปลอดภัย</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="risk" value="other">     อื่นๆ</label>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ส่วนที่ 8: หน่วยงานร่วม -->
-  <div class="form-section">
-    <div class="form-section-header">🤝 ส่วนที่ 8 – หน่วยงาน/สหวิชาชีพร่วมเยี่ยมบ้าน</div>
-    <div class="form-section-body">
-      <div class="check-grid">
-        <label class="check-item"><input type="checkbox" id="p-social"><span>สำนักงานพัฒนาสังคมและความมั่นคงของมนุษย์</span></label>
-        <label class="check-item"><input type="checkbox" id="p-health"><span>หน่วยงานสาธารณสุข</span></label>
-        <label class="check-item"><input type="checkbox" id="p-none"><span>ไม่มีหน่วยงาน/สหวิชาชีพ/องค์กรร่วม</span></label>
-        <label class="check-item"><input type="checkbox" id="p-other"><span>อื่น ๆ ระบุ</span></label>
-      </div>
-      <input type="text" id="p-other-text" placeholder="ระบุหน่วยงานอื่น ๆ..." style="margin-top:7px">
-    </div>
-  </div>
-
-  <!-- ส่วนที่ 9: สรุปและข้อเสนอแนะ -->
-  <div class="form-section">
-    <div class="form-section-header">📝 ส่วนที่ 9 – ข้อมูลสรุปและข้อเสนอแนะ</div>
-    <div class="form-section-body" style="display:grid;gap:12px">
-      <div class="form-group"><label class="form-label">การนำข้อมูลเยี่ยมบ้านไปใช้ประโยชน์</label><textarea id="f-data-usage" placeholder="อธิบายการนำข้อมูลไปใช้..."></textarea></div>
-      <div class="form-group"><label class="form-label">ข้อห่วงใยของผู้ปกครองที่มีต่อนักเรียน</label><textarea id="f-parent-concerns" placeholder="ข้อห่วงใยของผู้ปกครอง..."></textarea></div>
-      <div class="form-group"><label class="form-label">ปัญหา/อุปสรรค/ข้อเสนอแนะ</label><textarea id="f-obstacles" placeholder="ปัญหา อุปสรรค หรือข้อเสนอแนะ..."></textarea></div>
-      <div class="form-group"><label class="form-label">ความคิดเห็นและข้อเสนอแนะ</label><textarea id="f-opinions" placeholder="ความคิดเห็นและข้อเสนอแนะเพิ่มเติม..."></textarea></div>
-    </div>
-  </div>
-
-  <!-- ส่วนที่ 10: ทุนการศึกษา -->
-  <div class="form-section">
-    <div class="form-section-header">🎓 ส่วนที่ 10 – ทุนการศึกษา (หากมีทุนครั้งต่อไป)</div>
-    <div class="form-section-body">
-      <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:10px">ระบุนักเรียน 3 อันดับที่ควรได้รับทุน (จากมากไปน้อย)</p>
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">อันดับที่ 1</label><input type="text" id="f-sch1" placeholder="ชื่อ-นามสกุล"></div>
-        <div class="form-group"><label class="form-label">อันดับที่ 2</label><input type="text" id="f-sch2" placeholder="ชื่อ-นามสกุล"></div>
-        <div class="form-group"><label class="form-label">อันดับที่ 3</label><input type="text" id="f-sch3" placeholder="ชื่อ-นามสกุล"></div>
+  <!-- ส่วน 5: ปัญหาที่พบ -->
+  <div class="fsec" id="prob-sec">
+    <div class="fsec-hd">📌 ปัญหาที่พบ</div>
+    <div class="fbody">
+      <div class="pill-group">
+        <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="prob" value="learning">   การเรียน</label>
+        <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="prob" value="health">     สุขภาพ</label>
+        <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="prob" value="economy">    เศรษฐกิจ</label>
+        <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="prob" value="substance">  สารเสพติด</label>
+        <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="prob" value="depression"> ซึมเศร้า</label>
+        <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="prob" value="other">      อื่นๆ</label>
       </div>
     </div>
   </div>
 
-  <div class="btn-actions">
-    <button class="btn btn-primary" onclick="saveRecord()">💾 บันทึกรายงาน</button>
-    <button class="btn btn-outline" onclick="clearForm()">🗑 ล้างฟอร์ม</button>
-    <button class="btn btn-gray" onclick="showPage('records')">📋 ดูรายการ</button>
+  <!-- ส่วน 6: ครอบครัวและสภาพบ้าน -->
+  <div class="fsec" id="env-sec">
+    <div class="fsec-hd">🏡 ครอบครัวและสภาพบ้าน</div>
+    <div class="fbody">
+      <div class="fg" style="margin-bottom:12px">
+        <label>สถานภาพครอบครัว (เลือกได้หลายข้อ)</label>
+        <div class="pill-group">
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="fambg" value="both_dead">    บิดาและมารดาเสียชีวิต</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="fambg" value="one_dead">     บิดาหรือมารดาเสียชีวิต</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="fambg" value="divorced">     บิดามารดาเลิกร้างกัน</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="fambg" value="not_with_par"> ไม่ได้อาศัยกับบิดา/มารดา</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="fambg" value="half_sib">     มีพี่น้องต่างบิดา/มารดา</label>
+        </div>
+      </div>
+      <div class="fg">
+        <label>ความสัมพันธ์ในครอบครัว</label>
+        <div class="pill-group" id="pg-fam">
+          <label class="pill" onclick="selPill('pg-fam','close')">        <input type="radio" name="fam" value="close">          สนิทสนม</label>
+          <label class="pill" onclick="selPill('pg-fam','conflict_some')"><input type="radio" name="fam" value="conflict_some">  ขัดแย้งบางครั้ง</label>
+          <label class="pill" onclick="selPill('pg-fam','conflict_often')"><input type="radio" name="fam" value="conflict_often"> ขัดแย้งบ่อย</label>
+          <label class="pill" onclick="selPill('pg-fam','distant')">      <input type="radio" name="fam" value="distant">         ห่างเหิน</label>
+          <label class="pill" onclick="selPill('pg-fam','viol_some')">    <input type="radio" name="fam" value="viol_some">       ทำร้ายบางครั้ง</label>
+          <label class="pill" onclick="selPill('pg-fam','viol_often')">   <input type="radio" name="fam" value="viol_often">      ทำร้ายบ่อย</label>
+          <label class="pill" onclick="selPill('pg-fam','other')">        <input type="radio" name="fam" value="other">           อื่นๆ</label>
+        </div>
+      </div>
+      <div class="fg" style="margin-top:12px">
+        <label>สภาพที่อยู่อาศัย (เลือกได้หลายข้อ)</label>
+        <div class="pill-group">
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="house" value="good">       บ้านพอใช้-ดี</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="house" value="old">        บ้านเก่า/ทรุดโทรม</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="house" value="material">   วัสดุพื้นบ้าน/ไม้ไผ่</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="house" value="no_toilet">  ไม่มีห้องส้วม</label>
+          <label class="pill" onclick="togCheck(this,event)"><input type="checkbox" name="house" value="bad_area">   ใกล้แหล่งมั่วสุม</label>
+        </div>
+      </div>
+      <!-- การเดินทาง -->
+      <div style="font-size:.8rem;font-weight:700;color:var(--muted);margin:14px 0 6px">การเดินทางมาโรงเรียน</div>
+      <div class="fgrid" style="margin-bottom:10px">
+        <div class="fg"><label>ระยะทาง (กม.)</label><input type="number" id="f-distance" min="0" step="0.1" placeholder="เช่น 5"></div>
+        <div class="fg"><label>เวลาเดินทาง (นาที)</label><input type="number" id="f-travel-time" min="0" placeholder="เช่น 15"></div>
+      </div>
+      <div class="fg">
+        <label>วิธีเดินทาง</label>
+        <div class="pill-group" id="pg-transport">
+          <label class="pill" onclick="selPill('pg-transport','parent_drive')"><input type="radio" name="transport" value="parent_drive"> ผู้ปกครองส่ง</label>
+          <label class="pill" onclick="selPill('pg-transport','motorbike')">   <input type="radio" name="transport" value="motorbike">    รถมอเตอร์ไซค์</label>
+          <label class="pill" onclick="selPill('pg-transport','bus')">         <input type="radio" name="transport" value="bus">         รถโดยสาร</label>
+          <label class="pill" onclick="selPill('pg-transport','school_bus')">  <input type="radio" name="transport" value="school_bus">   รถโรงเรียน</label>
+          <label class="pill" onclick="selPill('pg-transport','bicycle')">     <input type="radio" name="transport" value="bicycle">     รถจักรยาน</label>
+          <label class="pill" onclick="selPill('pg-transport','walk')">        <input type="radio" name="transport" value="walk">        เดิน</label>
+          <label class="pill" onclick="selPill('pg-transport','other')">       <input type="radio" name="transport" value="other">       อื่นๆ</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ส่วน 7: สรุป -->
+  <div class="fsec">
+    <div class="fsec-hd">🚨 สรุปและหมายเหตุ</div>
+    <div class="fbody">
+      <label class="pill" id="urg-pill" onclick="togUrgent(event)" style="width:auto;display:inline-flex;margin-bottom:12px">
+        <input type="checkbox" id="f-urgent"> 🚨 เร่งด่วน – ต้องดูแลพิเศษทันที
+      </label>
+      <div class="fg">
+        <label>หมายเหตุ / ข้อมูลเพิ่มเติม</label>
+        <textarea id="f-notes" placeholder="บันทึกเพิ่มเติม..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-pri" onclick="submitForm()">💾 บันทึกข้อมูล</button>
+    <button class="btn btn-gray" onclick="clearForm()">🗑 ล้างฟอร์ม</button>
   </div>
 </div>
 
-<!-- ==================== RECORDS ==================== -->
-<div id="page-records" class="page">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-    <div>
-      <h2 style="font-size:1.1rem;font-weight:800;color:var(--primary-dark)">📋 รายการรายงานการเยี่ยมบ้าน</h2>
-      <p style="font-size:.82rem;color:var(--text-muted)" id="records-count">ทั้งหมด 0 รายงาน</p>
+<!-- ════════════════════════════════════════
+     PAGE: RECORDS
+════════════════════════════════════════ -->
+<div class="page" id="page-records">
+  <div class="card" style="padding:12px 15px;margin-bottom:12px">
+    <div class="gtabs" id="rec-tabs">
+      <div class="gtab active" onclick="setGFilter('all',this)">ทั้งหมด</div>
+      <div class="gtab" onclick="setGFilter('ม.1',this)">ม.1</div>
+      <div class="gtab" onclick="setGFilter('ม.2',this)">ม.2</div>
+      <div class="gtab" onclick="setGFilter('ม.3',this)">ม.3</div>
+      <div class="gtab" onclick="setGFilter('ม.4',this)">ม.4</div>
+      <div class="gtab" onclick="setGFilter('ม.5',this)">ม.5</div>
+      <div class="gtab" onclick="setGFilter('ม.6',this)">ม.6</div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-success btn-sm" onclick="exportExcel()">📥 Export Excel</button>
-      <button class="btn btn-primary btn-sm" onclick="showPage('form')">➕ เพิ่มรายงาน</button>
+      <input type="text" id="rec-search" placeholder="🔍 ค้นหาชื่อนักเรียน..." oninput="renderRecords()"
+        style="flex:1;min-width:160px;padding:7px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-family:inherit;font-size:.88rem">
+      <button class="btn btn-suc btn-sm" onclick="exportExcel()">📥 Excel</button>
     </div>
   </div>
-  <div class="card"><div id="records-table-wrap"></div></div>
+  <div id="rec-table"></div>
 </div>
 
-<!-- ==================== DISTRICT REPORT ==================== -->
-<div id="page-district" class="page">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px" class="no-print">
-    <div>
-      <h2 style="font-size:1.1rem;font-weight:800;color:var(--primary-dark)">📄 รายงานเขต – สพม.อุบลราชธานี อำนาจเจริญ</h2>
-      <p style="font-size:.82rem;color:var(--text-muted)">สรุปรวมทุกห้องเรียน พิมพ์เป็น PDF ได้ทันที</p>
+<!-- ════════════════════════════════════════
+     PAGE: DISTRICT REPORT
+════════════════════════════════════════ -->
+<div class="page" id="page-district">
+  <!-- ตัวกรองและฟิลด์ระดับรายงาน -->
+  <div class="no-print card" style="padding:14px 16px;margin-bottom:12px">
+    <!-- แถว 1: ตัวกรอง -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--bdr)">
+      <label style="font-size:.83rem;font-weight:600;color:var(--muted)">ปีการศึกษา</label>
+      <select id="d-year" onchange="renderDistrict()" style="padding:5px 9px;border:1.5px solid var(--bdr);border-radius:7px;font-family:inherit;font-size:.86rem"></select>
+      <label style="font-size:.83rem;font-weight:600;color:var(--muted)">ภาคเรียน</label>
+      <select id="d-sem" onchange="renderDistrict()" style="padding:5px 9px;border:1.5px solid var(--bdr);border-radius:7px;font-family:inherit;font-size:.86rem">
+        <option value="all">ทุกภาค</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+      </select>
+      <button class="btn btn-pri btn-sm" onclick="window.print()">🖨️ พิมพ์ PDF</button>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-warning btn-sm" onclick="printDistrictReport()">🖨 พิมพ์ / PDF</button>
-      <button class="btn btn-success btn-sm" onclick="exportExcel()">📥 Excel</button>
+    <!-- แถว 2: ข้อมูลระดับรายงาน -->
+    <div style="font-size:.83rem;font-weight:700;color:var(--pri-d);margin-bottom:10px">📝 ข้อมูลระดับรายงาน (บันทึกอัตโนมัติ)</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:10px">
+      <div class="fg">
+        <label>ครั้งที่</label>
+        <input type="text" id="d-round" placeholder="เช่น 2" oninput="saveRptMeta()" style="padding:7px 10px;border:1.5px solid var(--bdr);border-radius:7px;font-family:inherit;font-size:.88rem">
+      </div>
+      <div class="fg">
+        <label>ชื่อผู้สรุปรายงาน</label>
+        <input type="text" id="d-reporter" placeholder="ชื่อ-นามสกุล" oninput="saveRptMeta()" style="padding:7px 10px;border:1.5px solid var(--bdr);border-radius:7px;font-family:inherit;font-size:.88rem">
+      </div>
+      <div class="fg">
+        <label>ตำแหน่ง</label>
+        <input type="text" id="d-reporter-pos" placeholder="เช่น ครูชำนาญการ" oninput="saveRptMeta()" style="padding:7px 10px;border:1.5px solid var(--bdr);border-radius:7px;font-family:inherit;font-size:.88rem">
+      </div>
+      <div class="fg">
+        <label>เบอร์โทรผู้สรุป</label>
+        <input type="text" id="d-reporter-phone" placeholder="08X-XXXXXXX" oninput="saveRptMeta()" style="padding:7px 10px;border:1.5px solid var(--bdr);border-radius:7px;font-family:inherit;font-size:.88rem">
+      </div>
+    </div>
+    <div class="fg" style="margin-bottom:8px">
+      <label>ข้อ 17 หน่วยงาน/สหวิชาชีพที่ร่วมเยี่ยมบ้าน</label>
+      <div class="pill-group" id="d-orgs" style="margin-top:4px">
+        <label class="pill" onclick="togDOrg(this,event)"><input type="checkbox" value="soc"> สนง.พัฒนาสังคมฯ</label>
+        <label class="pill" onclick="togDOrg(this,event)"><input type="checkbox" value="health"> หน่วยงานสาธารณสุข</label>
+        <label class="pill" onclick="togDOrg(this,event)"><input type="checkbox" value="other_org"> อื่นๆ</label>
+        <label class="pill" onclick="togDOrg(this,event)"><input type="checkbox" value="none"> ไม่มีหน่วยงานร่วม</label>
+      </div>
+      <input type="text" id="d-other-org" placeholder="ระบุหน่วยงานอื่นๆ..." oninput="saveRptMeta()" style="margin-top:6px;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:7px;font-family:inherit;font-size:.88rem;width:100%">
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:8px">
+      <div class="fg">
+        <label>ข้อ 15 ความต้องการช่วยเหลือเร่งด่วน (ระบุ)</label>
+        <textarea id="d-urgent-desc" rows="2" oninput="saveRptMeta()" placeholder="ระบุความต้องการ..." style="padding:7px 10px;border:1.5px solid var(--bdr);border-radius:7px;font-family:inherit;font-size:.88rem;resize:vertical"></textarea>
+      </div>
+      <div class="fg">
+        <label>ข้อ 16 นักเรียนที่ได้รับการช่วยเหลือ/ส่งต่อแล้ว (คน)</label>
+        <input type="number" id="d-helped-count" min="0" placeholder="0" oninput="saveRptMeta()" style="padding:7px 10px;border:1.5px solid var(--bdr);border-radius:7px;font-family:inherit;font-size:.88rem">
+      </div>
+      <div class="fg">
+        <label>ข้อ 18 การนำข้อมูลเยี่ยมบ้านไปใช้ประโยชน์</label>
+        <textarea id="d-usage" rows="2" oninput="saveRptMeta()" placeholder="ระบุ..." style="padding:7px 10px;border:1.5px solid var(--bdr);border-radius:7px;font-family:inherit;font-size:.88rem;resize:vertical"></textarea>
+      </div>
+      <div class="fg">
+        <label>ข้อ 19 ข้อห่วงใยของผู้ปกครองที่มีต่อนักเรียน</label>
+        <textarea id="d-parent-concern" rows="2" oninput="saveRptMeta()" placeholder="ระบุ..." style="padding:7px 10px;border:1.5px solid var(--bdr);border-radius:7px;font-family:inherit;font-size:.88rem;resize:vertical"></textarea>
+      </div>
+      <div class="fg">
+        <label>ข้อ 20 ปัญหา/อุปสรรค/ข้อเสนอแนะ</label>
+        <textarea id="d-issues" rows="2" oninput="saveRptMeta()" placeholder="ระบุ..." style="padding:7px 10px;border:1.5px solid var(--bdr);border-radius:7px;font-family:inherit;font-size:.88rem;resize:vertical"></textarea>
+      </div>
+      <div class="fg">
+        <label>ข้อ 21 ความคิดเห็นและข้อเสนอแนะเพิ่มเติม</label>
+        <textarea id="d-comments" rows="2" oninput="saveRptMeta()" placeholder="ระบุ..." style="padding:7px 10px;border:1.5px solid var(--bdr);border-radius:7px;font-family:inherit;font-size:.88rem;resize:vertical"></textarea>
+      </div>
     </div>
   </div>
-  <div class="card no-print" style="padding:14px 18px">
-    <div class="form-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
-      <div class="form-group"><label class="form-label">กรองโรงเรียน</label><select id="d-filter-school" onchange="renderDistrictReport()"><option value="">ทั้งหมด</option></select></div>
-      <div class="form-group"><label class="form-label">กรองครั้งที่</label>
-        <select id="d-filter-semester" onchange="renderDistrictReport()"><option value="">ทั้งหมด</option><option value="1">ครั้งที่ 1</option><option value="2">ครั้งที่ 2</option></select></div>
-      <div class="form-group"><label class="form-label">ปีการศึกษา</label><input type="text" id="d-filter-year" placeholder="เช่น 2568" oninput="renderDistrictReport()"></div>
-      <div class="form-group"><label class="form-label">ชื่อผู้สรุปรายงาน</label><input type="text" id="d-reporter" placeholder="ชื่อ-นามสกุล" oninput="renderDistrictReport()"></div>
-      <div class="form-group"><label class="form-label">ตำแหน่ง</label><input type="text" id="d-reporter-pos" placeholder="ตำแหน่ง" oninput="renderDistrictReport()"></div>
-      <div class="form-group"><label class="form-label">ผู้อำนวยการ</label><input type="text" id="d-principal" placeholder="ชื่อผู้อำนวยการ" oninput="renderDistrictReport()"></div>
+  <div id="district-out"></div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODALS
+════════════════════════════════════════ -->
+
+<!-- ════════════════════════════════════════
+     PAGE: PRESENT
+════════════════════════════════════════ -->
+<div class="page" id="page-present">
+  <div class="no-print" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+    <div style="font-size:.83rem;color:var(--muted)">เลือกชั้นเรียน</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap" id="pres-gtabs">
+      <button class="gtab active" onclick="setPresGrade('all',this)">ทุกชั้น</button>
+      <button class="gtab" onclick="setPresGrade('ม.1',this)">ม.1</button>
+      <button class="gtab" onclick="setPresGrade('ม.2',this)">ม.2</button>
+      <button class="gtab" onclick="setPresGrade('ม.3',this)">ม.3</button>
+      <button class="gtab" onclick="setPresGrade('ม.4',this)">ม.4</button>
+      <button class="gtab" onclick="setPresGrade('ม.5',this)">ม.5</button>
+      <button class="gtab" onclick="setPresGrade('ม.6',this)">ม.6</button>
     </div>
+    <button class="btn btn-pri btn-sm" onclick="toggleFullscreen()">⛶ เต็มหน้าจอ</button>
   </div>
-  <div id="print-area">
-    <div id="district-report-content" class="print-doc" style="background:#fff;padding:28px 40px;border-radius:10px;box-shadow:var(--shadow-md)"></div>
+  <div id="present-out"></div>
+</div>
+
+<!-- Modal: พิมพ์รายนักเรียน -->
+<div class="mo" id="mo-print-student">
+  <div class="mo-box" style="max-width:700px;padding:0">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--bdr)" class="no-print">
+      <span style="font-weight:700;color:var(--pri-d)">🖨️ พิมพ์ฟอร์มเยี่ยมบ้านรายนักเรียน</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-pri btn-sm" onclick="window.print()">🖨️ พิมพ์ / บันทึก PDF</button>
+        <button class="btn btn-gray btn-sm" onclick="closeMo('mo-print-student')">✕ ปิด</button>
+      </div>
+    </div>
+    <div id="student-print-body" style="padding:20px 24px;overflow-y:auto;max-height:80vh"></div>
   </div>
 </div>
 
-<!-- TEACHER WELCOME MODAL -->
-<div class="modal-overlay open" id="teacher-modal">
-  <div class="modal" style="max-width:400px;text-align:center">
-    <div style="font-size:2.5rem;margin-bottom:12px">👋</div>
-    <h3 style="font-size:1.2rem;margin-bottom:8px">ยินดีต้อนรับ!</h3>
-    <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:20px">กรุณาใส่ชื่อของท่านเพื่อเริ่มใช้งานระบบ<br>ชื่อนี้จะแสดงในรายงานของท่าน</p>
-    <div class="form-group" style="text-align:left;margin-bottom:14px">
-      <label class="form-label">ชื่อ-นามสกุล ครู<span class="req">*</span></label>
-      <input type="text" id="welcome-teacher-name" placeholder="เช่น นายสมชาย ใจดี" style="font-size:1rem">
-    </div>
-    <div class="form-group" style="text-align:left;margin-bottom:20px">
-      <label class="form-label">ระดับชั้นที่ดูแล<span class="req">*</span></label>
-      <select id="welcome-grade-level" style="font-size:1rem">
-        <option value="">-- เลือกระดับชั้น --</option>
-        <option value="ม.1">ม.1</option>
-        <option value="ม.2">ม.2</option>
-        <option value="ม.3">ม.3</option>
-        <option value="ม.4">ม.4</option>
-        <option value="ม.5">ม.5</option>
-        <option value="ม.6">ม.6</option>
+<!-- Teacher Welcome -->
+<div class="mo open" id="mo-teacher">
+  <div class="mo-box">
+    <h2>👋 ยินดีต้อนรับ</h2>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px">ระบบเยี่ยมบ้านนักเรียน โรงเรียนจิกดู่วิทยา<br>กรุณาเลือกชื่อครูก่อนเริ่มใช้งานครับ</p>
+    <div class="fg" style="margin-bottom:18px">
+      <label>เลือกชื่อครู *</label>
+      <select id="w-name" onchange="onSelectTeacher(this,'w-grade')" style="padding:8px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.9rem;font-family:inherit">
+        <option value="">-- เลือกชื่อครู --</option>
+        <optgroup label="ผู้บริหาร">
+          <option value="นายโกวิท สุพรรณ์" data-grade="ผบ.">นายโกวิท สุพรรณ์ (ผู้อำนวยการ)</option>
+        </optgroup>
+        <optgroup label="ม.1">
+          <option value="นางสาวพรอุมา จิตตัง"   data-grade="ม.1">นางสาวพรอุมา จิตตัง</option>
+          <option value="นางสาวอรวรรณ สุดาชม"   data-grade="ม.1">นางสาวอรวรรณ สุดาชม</option>
+        </optgroup>
+        <optgroup label="ม.2">
+          <option value="นายเทียนชัย ทาเงิน"     data-grade="ม.2">นายเทียนชัย ทาเงิน</option>
+          <option value="นายณัฐภัทร สังข์ขาว"    data-grade="ม.2">นายณัฐภัทร สังข์ขาว</option>
+          <option value="นางสาวอรอิริยา ศิริวาลย์" data-grade="ม.2">นางสาวอรอิริยา ศิริวาลย์</option>
+        </optgroup>
+        <optgroup label="ม.3">
+          <option value="นางสาววันทนีย์ ไชยมงคล"    data-grade="ม.3">นางสาววันทนีย์ ไชยมงคล</option>
+          <option value="นางสาวไอรินทร์ อัครศักดิ์ศรี" data-grade="ม.3">นางสาวไอรินทร์ อัครศักดิ์ศรี</option>
+        </optgroup>
+        <optgroup label="ม.4">
+          <option value="นายประสพชัย มหาวงศ์"    data-grade="ม.4">นายประสพชัย มหาวงศ์</option>
+          <option value="นางสาวจิราภรณ์ เชิงหอม" data-grade="ม.4">นางสาวจิราภรณ์ เชิงหอม</option>
+        </optgroup>
+        <optgroup label="ม.5">
+          <option value="นายมงคล แสงย้อย"      data-grade="ม.5">นายมงคล แสงย้อย</option>
+          <option value="นายปฏิรูป เธียรประมุข" data-grade="ม.5">นายปฏิรูป เธียรประมุข</option>
+        </optgroup>
+        <optgroup label="ม.6">
+          <option value="นายฉัตรชัย สนิทชัย" data-grade="ม.6">นายฉัตรชัย สนิทชัย</option>
+          <option value="นายวสันต์ สานัดถ์"  data-grade="ม.6">นายวสันต์ สานัดถ์</option>
+        </optgroup>
       </select>
     </div>
-    <button class="btn btn-primary" style="width:100%;font-size:1rem" onclick="saveTeacherWelcome()">🚀 เริ่มใช้งาน</button>
-    <p style="margin-top:10px;font-size:.78rem;color:var(--text-muted)">สามารถเปลี่ยนได้ภายหลังที่ ⚙️ ตั้งค่า</p>
+    <input type="hidden" id="w-grade">
+    <button class="btn btn-pri" style="width:100%" onclick="saveTeacher()">🚀 เริ่มใช้งาน</button>
   </div>
 </div>
 
-<!-- SETTINGS MODAL -->
-<div class="modal-overlay" id="settings-modal">
-  <div class="modal">
-    <h3>⚙️ ตั้งค่าระบบ</h3>
-    <div style="background:#eff6ff;border-radius:8px;padding:12px 14px;margin-bottom:14px">
-      <div style="font-weight:700;color:var(--primary-dark);margin-bottom:10px">👤 ข้อมูลครู</div>
-      <div class="settings-grid">
-        <div class="form-group"><label class="form-label">ชื่อ-นามสกุลครู</label><input type="text" id="cfg-teacher-name" placeholder="ชื่อครู"></div>
-        <div class="form-group"><label class="form-label">ระดับชั้นที่ดูแล</label>
-          <select id="cfg-teacher-grade">
-            <option value="">-- เลือก --</option>
-            <option value="ม.1">ม.1</option><option value="ม.2">ม.2</option>
-            <option value="ม.3">ม.3</option><option value="ม.4">ม.4</option>
-            <option value="ม.5">ม.5</option><option value="ม.6">ม.6</option>
-          </select>
-        </div>
-      </div>
+<!-- Settings -->
+<div class="mo" id="mo-settings">
+  <div class="mo-box">
+    <h2>⚙️ ตั้งค่า</h2>
+    <div class="fg">
+      <label>เลือกชื่อครู</label>
+      <select id="cfg-name" onchange="onSelectTeacher(this,'cfg-grade')" style="padding:8px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.9rem;font-family:inherit">
+        <option value="">-- เลือกชื่อครู --</option>
+        <optgroup label="ผู้บริหาร">
+          <option value="นายโกวิท สุพรรณ์" data-grade="ผบ.">นายโกวิท สุพรรณ์ (ผู้อำนวยการ)</option>
+        </optgroup>
+        <optgroup label="ม.1">
+          <option value="นางสาวพรอุมา จิตตัง"   data-grade="ม.1">นางสาวพรอุมา จิตตัง</option>
+          <option value="นางสาวอรวรรณ สุดาชม"   data-grade="ม.1">นางสาวอรวรรณ สุดาชม</option>
+        </optgroup>
+        <optgroup label="ม.2">
+          <option value="นายเทียนชัย ทาเงิน"     data-grade="ม.2">นายเทียนชัย ทาเงิน</option>
+          <option value="นายณัฐภัทร สังข์ขาว"    data-grade="ม.2">นายณัฐภัทร สังข์ขาว</option>
+          <option value="นางสาวอรอิริยา ศิริวาลย์" data-grade="ม.2">นางสาวอรอิริยา ศิริวาลย์</option>
+        </optgroup>
+        <optgroup label="ม.3">
+          <option value="นางสาววันทนีย์ ไชยมงคล"    data-grade="ม.3">นางสาววันทนีย์ ไชยมงคล</option>
+          <option value="นางสาวไอรินทร์ อัครศักดิ์ศรี" data-grade="ม.3">นางสาวไอรินทร์ อัครศักดิ์ศรี</option>
+        </optgroup>
+        <optgroup label="ม.4">
+          <option value="นายประสพชัย มหาวงศ์"    data-grade="ม.4">นายประสพชัย มหาวงศ์</option>
+          <option value="นางสาวจิราภรณ์ เชิงหอม" data-grade="ม.4">นางสาวจิราภรณ์ เชิงหอม</option>
+        </optgroup>
+        <optgroup label="ม.5">
+          <option value="นายมงคล แสงย้อย"      data-grade="ม.5">นายมงคล แสงย้อย</option>
+          <option value="นายปฏิรูป เธียรประมุข" data-grade="ม.5">นายปฏิรูป เธียรประมุข</option>
+        </optgroup>
+        <optgroup label="ม.6">
+          <option value="นายฉัตรชัย สนิทชัย" data-grade="ม.6">นายฉัตรชัย สนิทชัย</option>
+          <option value="นายวสันต์ สานัดถ์"  data-grade="ม.6">นายวสันต์ สานัดถ์</option>
+        </optgroup>
+      </select>
     </div>
-    <div class="settings-grid">
-      <div class="form-group"><label class="form-label">ชื่อโรงเรียน (ค่าเริ่มต้น)</label><input type="text" id="cfg-school" placeholder="ชื่อโรงเรียน"></div>
-      <div class="form-group"><label class="form-label">อำเภอ</label><input type="text" id="cfg-amphoe"></div>
-      <div class="form-group"><label class="form-label">จังหวัด</label><input type="text" id="cfg-province"></div>
-      <div class="form-group"><label class="form-label">ปีการศึกษา</label><input type="text" id="cfg-year" placeholder="2568"></div>
-      <div class="form-group"><label class="form-label">ผู้อำนวยการโรงเรียน</label><input type="text" id="cfg-principal"></div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-gray btn-sm" onclick="closeSettings()">ยกเลิก</button>
-      <button class="btn btn-primary btn-sm" onclick="saveSettings()">💾 บันทึก</button>
-    </div>
-    <hr style="margin:18px 0;border-color:var(--border)">
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-outline btn-sm" onclick="exportDataBackup()">📤 Backup JSON</button>
-      <button class="btn btn-outline btn-sm" onclick="document.getElementById('import-file').click()">📥 Restore JSON</button>
-      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importDataBackup(event)">
-    </div>
-    <div style="margin-top:12px">
-      <button class="btn btn-danger btn-sm" onclick="clearAllData()">🗑 ล้างข้อมูลทั้งหมด</button>
-    </div>
-  </div>
-</div>
-
-<!-- DELETE CONFIRM MODAL -->
-<div class="modal-overlay" id="delete-modal">
-  <div class="modal">
-    <h3>⚠️ ยืนยันการลบ</h3>
-    <p>คุณต้องการลบรายงานนี้ใช่หรือไม่? ไม่สามารถยกเลิกได้</p>
-    <div class="modal-actions">
-      <button class="btn btn-gray btn-sm" onclick="document.getElementById('delete-modal').classList.remove('open')">ยกเลิก</button>
-      <button class="btn btn-danger btn-sm" id="confirm-delete-btn">ยืนยันลบ</button>
+    <input type="hidden" id="cfg-grade">
+    <div class="fg"><label>ปีการศึกษา (default)</label><input type="text" id="cfg-year" placeholder="เช่น 2568"></div>
+    <div class="fg" style="margin-bottom:16px"><label>ชื่อผู้อำนวยการ</label><input type="text" id="cfg-principal"></div>
+    <div class="btn-row">
+      <button class="btn btn-pri" onclick="saveSettings()">💾 บันทึก</button>
+      <button class="btn btn-gray" onclick="closeMo('mo-settings')">ยกเลิก</button>
     </div>
   </div>
 </div>
 
+<!-- Delete Confirm -->
+<div class="mo" id="mo-del">
+  <div class="mo-box" style="max-width:320px">
+    <h2>🗑 ยืนยันการลบ</h2>
+    <p style="color:var(--muted);margin-bottom:18px">ต้องการลบข้อมูลนักเรียนคนนี้ใช่ไหมครับ?</p>
+    <div class="btn-row">
+      <button class="btn btn-dan" id="del-btn">ลบเลย</button>
+      <button class="btn btn-gray" onclick="closeMo('mo-del')">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════ -->
 <script>
-// ═══════════════════════════════════════
-// DATA LAYER  (Firebase + localStorage fallback)
-// ═══════════════════════════════════════
-const STORAGE_KEY = 'home_visit_records';
-const CONFIG_KEY  = 'home_visit_config';
-let _records = [];
+'use strict';
+
+// ── FIREBASE ──────────────────────────────
 let db = null;
-
 function initFirebase() {
-  if (!USE_FIREBASE) return;
+  if (!USE_FIREBASE) { setConn('local'); return; }
   try {
-    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.firestore();
-    setStatus('online');
-  } catch(e) {
-    console.error('Firebase init error:', e);
-    setStatus('offline');
-  }
+    setConn('online');
+  } catch(e) { setConn('offline'); }
 }
-
-async function loadRecords() {
-  if (USE_FIREBASE && db) {
-    try {
-      const snap = await db.collection('records').orderBy('createdAt','asc').get();
-      _records = snap.docs.map(d => {
-        const data = d.data();
-        // Convert Firestore Timestamp to ISO string
-        if (data.createdAt && data.createdAt.toDate) data.createdAt = data.createdAt.toDate().toISOString();
-        if (data.updatedAt && data.updatedAt.toDate) data.updatedAt = data.updatedAt.toDate().toISOString();
-        return { ...data, id: d.id };
-      });
-      setStatus('online');
-    } catch(e) {
-      console.error('Load error:', e);
-      setStatus('offline');
-      _records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    }
-  } else {
-    _records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  }
-}
-
-function getRecords() { return _records; }
-
-async function addRecord(data) {
-  if (USE_FIREBASE && db) {
-    const toSave = { ...data };
-    delete toSave.id;
-    toSave.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-    toSave.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
-    const ref = await db.collection('records').add(toSave);
-    data.id = ref.id;
-    data.createdAt = new Date().toISOString();
-  } else {
-    data.id = genId();
-    data.createdAt = new Date().toISOString();
-  }
-  data.updatedAt = new Date().toISOString();
-  _records.push(data);
-  if (!USE_FIREBASE) localStorage.setItem(STORAGE_KEY, JSON.stringify(_records));
-}
-
-async function updateRecord(data) {
-  data.updatedAt = new Date().toISOString();
-  if (USE_FIREBASE && db) {
-    const toSave = { ...data };
-    delete toSave.id;
-    toSave.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
-    await db.collection('records').doc(data.id).set(toSave);
-  }
-  const idx = _records.findIndex(r => r.id === data.id);
-  if (idx >= 0) _records[idx] = data;
-  if (!USE_FIREBASE) localStorage.setItem(STORAGE_KEY, JSON.stringify(_records));
-}
-
-async function removeRecord(id) {
-  if (USE_FIREBASE && db) {
-    await db.collection('records').doc(id).delete();
-  }
-  _records = _records.filter(r => r.id !== id);
-  if (!USE_FIREBASE) localStorage.setItem(STORAGE_KEY, JSON.stringify(_records));
-}
-
-function getConfig() { try { return JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}'); } catch { return {}; } }
-function saveConfigLocal(cfg) { localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); }
-function genId() { return Date.now().toString(36)+Math.random().toString(36).substr(2,5); }
-
-// ═══════════════════════════════════════
-// STATUS
-// ═══════════════════════════════════════
-function setStatus(state) {
+function setConn(s) {
   const el = document.getElementById('conn-badge');
-  if (!el) return;
-  if (!USE_FIREBASE) {
-    el.textContent = '💾 โหมดออฟไลน์';
-    el.className = 'status-badge status-local';
-  } else if (state === 'online') {
-    el.textContent = '🟢 Online (Firebase)';
-    el.className = 'status-badge status-online';
-  } else {
-    el.textContent = '🔴 Offline';
-    el.className = 'status-badge status-offline';
+  const m = { online:['🟢 Online','s-online'], offline:['🔴 Offline','s-offline'], local:['💾 Local','s-local'] };
+  el.className = 's-badge ' + (m[s]||m.local)[1];
+  el.textContent = (m[s]||m.local)[0];
+}
+
+// ── DATA ──────────────────────────────────
+let _recs = [];
+async function load() {
+  if (db) {
+    try {
+      const snap = await db.collection(COL).orderBy('ts','desc').get();
+      _recs = snap.docs.map(d => ({...d.data(), id: d.id}));
+      localStorage.setItem('sv_bk', JSON.stringify(_recs));
+      setConn('online'); return;
+    } catch(e) { setConn('offline'); }
   }
+  const raw = localStorage.getItem('sv_bk');
+  _recs = raw ? JSON.parse(raw) : [];
+}
+async function upsert(data) {
+  data.ts = data.ts || Date.now();
+  if (db) {
+    try {
+      if (data.id && !data.id.startsWith('loc_')) {
+        await db.collection(COL).doc(data.id).set(data);
+      } else {
+        data.id = '';
+        const ref = await db.collection(COL).add(data);
+        data.id = ref.id;
+        await ref.update({ id: ref.id });
+      }
+      setConn('online');
+    } catch(e) { setConn('offline'); localUpsert(data); }
+  } else { localUpsert(data); }
+  await load();
+}
+function localUpsert(data) {
+  if (!data.id) data.id = 'loc_' + Date.now();
+  const i = _recs.findIndex(r => r.id === data.id);
+  if (i >= 0) _recs[i] = data; else _recs.unshift(data);
+  localStorage.setItem('sv_bk', JSON.stringify(_recs));
+}
+async function del(id) {
+  if (db) { try { await db.collection(COL).doc(id).delete(); setConn('online'); } catch(e) { setConn('offline'); } }
+  _recs = _recs.filter(r => r.id !== id);
+  localStorage.setItem('sv_bk', JSON.stringify(_recs));
 }
 
-function showSetupWarning() {
-  const el = document.getElementById('setup-warning');
-  if (!USE_FIREBASE && el) {
-    el.innerHTML = `<div class="setup-banner">
-      <span style="font-size:1.5rem">⚠️</span>
-      <div>
-        <strong>โหมดออฟไลน์ – ข้อมูลเก็บเฉพาะในเครื่องนี้</strong>
-        <p>หากต้องการให้ครูหลายคนกรอกจากมือถือได้ กรุณาดูคู่มือ
-          <a href="คู่มือติดตั้ง-Firebase.html" target="_blank">คลิกที่นี่</a>
-          เพื่อตั้งค่า Firebase</p>
-      </div>
-    </div>`;
-  }
+// ── TEACHER ───────────────────────────────
+const tName  = () => localStorage.getItem('t_name')  || '';
+const tGrade = () => localStorage.getItem('t_grade') || '';
+// เมื่อเลือกชื่อครูจาก dropdown → auto-fill grade
+function onSelectTeacher(sel, gradeId) {
+  const opt = sel.options[sel.selectedIndex];
+  const g   = opt?.dataset?.grade || '';
+  const hiddenGrade = document.getElementById(gradeId);
+  if (hiddenGrade) hiddenGrade.value = g;
 }
-
-// ═══════════════════════════════════════
-// LOADING STATE
-// ═══════════════════════════════════════
-function showLoading(show, text) {
-  const el = document.getElementById('loading-overlay');
-  const tx = document.getElementById('loading-text');
-  if (show) { el.classList.add('show'); if (text && tx) tx.textContent = text; }
-  else el.classList.remove('show');
+function saveTeacher() {
+  const n = document.getElementById('w-name').value.trim();
+  const g = document.getElementById('w-grade').value;
+  if (!n) { alert('กรุณาเลือกชื่อครูครับ'); return; }
+  if (!g) { alert('ระบบหาชั้นไม่พบ กรุณาเลือกชื่ออีกครั้งครับ'); return; }
+  localStorage.setItem('t_name', n);
+  localStorage.setItem('t_grade', g);
+  closeMo('mo-teacher');
+  updateTopbar();
+  applyTeacher();
 }
-
-// ═══════════════════════════════════════
-// TEACHER NAME
-// ═══════════════════════════════════════
-function getTeacherName() { return localStorage.getItem('teacher_name') || ''; }
-function getTeacherGrade() { return localStorage.getItem('teacher_grade') || ''; }
-
-function saveTeacherWelcome() {
-  const name = document.getElementById('welcome-teacher-name').value.trim();
-  const grade = document.getElementById('welcome-grade-level').value;
-  if (!name) { alert('กรุณาใส่ชื่อครับ'); return; }
-  if (!grade) { alert('กรุณาเลือกระดับชั้นครับ'); return; }
-  localStorage.setItem('teacher_name', name);
-  localStorage.setItem('teacher_grade', grade);
-  document.getElementById('teacher-modal').classList.remove('open');
-  updateTopbarTeacher();
-  applyConfigToForm();
+function checkTeacher() {
+  if (!tName()) document.getElementById('mo-teacher').classList.add('open');
+  else { closeMo('mo-teacher'); updateTopbar(); }
 }
-
-function updateTopbarTeacher() {
-  const name = getTeacherName();
-  const grade = getTeacherGrade();
-  const el = document.getElementById('topbar-teacher');
-  if (el && name) {
-    el.innerHTML = `👤 ${name} <span class="grade-badge">${grade}</span>`;
-  }
+function updateTopbar() {
+  const el = document.getElementById('tb-teacher');
+  const n = tName(), g = tGrade();
+  if (el && n) el.innerHTML = `👤 ${n} <span class="g-badge">${g}</span>`;
 }
-
-function checkTeacherModal() {
-  if (!getTeacherName()) {
-    document.getElementById('teacher-modal').classList.add('open');
-  } else {
-    document.getElementById('teacher-modal').classList.remove('open');
-    updateTopbarTeacher();
-  }
+function applyTeacher() {
+  const g = tGrade();
+  document.getElementById('f-teacher').value = tName();
+  document.getElementById('f-grade-disp').textContent = g || '–';
+  const cfg = getCfg();
+  if (cfg.year) document.getElementById('f-year').value = cfg.year;
 }
+const getCfg = () => JSON.parse(localStorage.getItem('sv_cfg') || '{}');
 
-// ═══════════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════════
+// ── SETTINGS ──────────────────────────────
+function openSettings() {
+  const cfg = getCfg();
+  // pre-select teacher in dropdown
+  const nameSel = document.getElementById('cfg-name');
+  nameSel.value = tName();
+  document.getElementById('cfg-grade').value = tGrade();
+  document.getElementById('cfg-year').value      = cfg.year || '';
+  document.getElementById('cfg-principal').value = cfg.principal || PRINCIPAL;
+  document.getElementById('mo-settings').classList.add('open');
+}
+function saveSettings() {
+  const nameSel = document.getElementById('cfg-name');
+  const n = nameSel.value.trim();
+  // grade comes from hidden field (auto-filled by onSelectTeacher) or existing saved value
+  const gHidden = document.getElementById('cfg-grade').value;
+  const g = gHidden || tGrade();
+  if (n) localStorage.setItem('t_name', n);
+  if (g) localStorage.setItem('t_grade', g);
+  const cfg = getCfg();
+  cfg.year      = document.getElementById('cfg-year').value.trim();
+  cfg.principal = document.getElementById('cfg-principal').value.trim();
+  localStorage.setItem('sv_cfg', JSON.stringify(cfg));
+  closeMo('mo-settings');
+  updateTopbar();
+  applyTeacher();
+  renderDash();
+}
+function closeMo(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── NAVIGATION ────────────────────────────
 async function showPage(name) {
-  showLoading(true, 'กำลังโหลดข้อมูล...');
-  await loadRecords();
-  showLoading(false);
+  showLd(true);
+  await load();
+  showLd(false);
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
-  const idx = ['dashboard','form','records','district'].indexOf(name);
-  document.querySelectorAll('.nav-tab')[idx].classList.add('active');
-  if (name==='dashboard') renderDashboard();
-  if (name==='records')   renderRecordsTable();
-  if (name==='district')  { populateDistrictFilters(); renderDistrictReport(); }
-  window.scrollTo(0,0);
+  document.getElementById('page-' + name).classList.add('active');
+  const idx = ['dashboard','form','records','district','present'].indexOf(name);
+  document.querySelectorAll('.nav-tab')[idx]?.classList.add('active');
+  if (name === 'dashboard') renderDash();
+  if (name === 'records')   renderRecords();
+  if (name === 'form')      applyTeacher();
+  if (name === 'district')  { fillYearSel(); loadRptMeta(); renderDistrict(); }
+  if (name === 'present')   renderPresent();
+  window.scrollTo(0, 0);
+}
+function showLd(v, txt) {
+  document.getElementById('ld').classList.toggle('show', v);
+  if (txt) document.getElementById('ld-txt').textContent = txt;
 }
 
-// ═══════════════════════════════════════
-// SETTINGS
-// ═══════════════════════════════════════
-function openSettings() {
-  const cfg = getConfig();
-  ['school','amphoe','province','year','principal'].forEach(k => {
-    const el = document.getElementById('cfg-'+k);
-    if (el) el.value = cfg[k] || '';
+// ── FORM HELPERS ──────────────────────────
+function selPill(groupId, val) {
+  document.getElementById(groupId).querySelectorAll('.pill').forEach(p => {
+    const inp = p.querySelector('input');
+    const match = inp && inp.value === val;
+    p.classList.remove('on','on-g','on-r');
+    if (match) {
+      inp.checked = true;
+      if (groupId === 'pg-visited') p.classList.add(val === 'yes' ? 'on-g' : 'on-r');
+      else p.classList.add('on');
+    }
   });
-  const tn = document.getElementById('cfg-teacher-name');
-  const tg = document.getElementById('cfg-teacher-grade');
-  if (tn) tn.value = getTeacherName();
-  if (tg) tg.value = getTeacherGrade();
-  document.getElementById('settings-modal').classList.add('open');
 }
-function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
-function saveSettings() {
-  const teacherName = document.getElementById('cfg-teacher-name').value.trim();
-  const teacherGrade = document.getElementById('cfg-teacher-grade').value;
-  if (teacherName) { localStorage.setItem('teacher_name', teacherName); }
-  if (teacherGrade) { localStorage.setItem('teacher_grade', teacherGrade); }
-  const cfg = {
-    school: document.getElementById('cfg-school').value,
-    amphoe: document.getElementById('cfg-amphoe').value,
-    province: document.getElementById('cfg-province').value,
-    year: document.getElementById('cfg-year').value,
-    principal: document.getElementById('cfg-principal').value,
-  };
-  saveConfigLocal(cfg);
-  updateTopbarTeacher();
-  applyConfigToForm();
-  closeSettings();
-  showAlert('dash-alert','success','✅ บันทึกการตั้งค่าเรียบร้อย');
+function togCheck(el, e) {
+  if (e) e.preventDefault();
+  el.classList.toggle('on');
+  el.querySelector('input').checked = el.classList.contains('on');
 }
+function togUrgent(e) {
+  if (e) e.preventDefault();
+  const cb = document.getElementById('f-urgent');
+  const p  = document.getElementById('urg-pill');
+  cb.checked = !cb.checked;
+  p.classList.toggle('on', cb.checked);
+}
+function toggleVisit(visited) {
+  document.getElementById('nv-sec').style.display   = visited ? 'none'  : 'block';
+  document.getElementById('risk-sec').style.display = visited ? 'block' : 'none';
+  document.getElementById('prob-sec').style.display = visited ? 'block' : 'none';
+  document.getElementById('env-sec').style.display  = visited ? 'block' : 'none';
+}
+const radioVal = name => (document.querySelector(`input[name="${name}"]:checked`) || {}).value || '';
+const checked  = name => [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(e => e.value);
 
-// ═══════════════════════════════════════
-// FORM
-// ═══════════════════════════════════════
-function applyConfigToForm() {
-  const cfg = getConfig();
-  if (cfg.school)   document.getElementById('f-school').value   = cfg.school;
-  if (cfg.amphoe)   document.getElementById('f-amphoe').value   = cfg.amphoe;
-  if (cfg.province) document.getElementById('f-province').value = cfg.province;
-  if (cfg.year)     document.getElementById('f-year').value     = cfg.year;
-  // ใส่ชื่อครูและชั้นเรียนอัตโนมัติ
-  const tname = getTeacherName();
-  const tgrade = getTeacherGrade();
-  if (tname) document.getElementById('f-teacher').value = tname;
-  if (tgrade) {
-    const el = document.getElementById('f-grade-level');
-    if (el) el.value = tgrade;
-  }
-}
+// ── GET / SET FORM DATA ───────────────────
+function gv(id) { const e=document.getElementById(id); return e?e.value.trim():''; }
+function gn(id) { const e=document.getElementById(id); return e?parseFloat(e.value)||0:0; }
 
 function getFormData() {
-  const n = id => parseInt(document.getElementById(id)?.value)||0;
-  const v = id => document.getElementById(id)?.value.trim()||'';
-  const c = id => document.getElementById(id)?.checked||false;
+  const risks = checked('risk'), probs = checked('prob');
   return {
-    id: v('edit-id')||'',
-    school:v('f-school'), amphoe:v('f-amphoe'), province:v('f-province'),
-    year:v('f-year'), semester:v('f-semester'),
-    gradeLevel:v('f-grade-level'), room:v('f-room'),
-    grade: v('f-grade-level') ? (v('f-grade-level') + (v('f-room') ? v('f-room') : '')) : '',
-    teacher:v('f-teacher'), phone:v('f-phone'), dateRange:v('f-daterange'),
-    totalStudents:n('f-total-students'), visitedMale:n('f-visited-male'),
-    visitedFemale:n('f-visited-female'), notVisited:n('f-not-visited'),
-    notVisitedReasons:{ full100:c('nv-full'), absent:c('nv-absent'),
-      guardianBusy:c('nv-guardian-busy'), cantContact:c('nv-cant-contact'),
-      other:c('nv-other'), otherText:v('nv-other-text') },
-    bothDeceased:n('f-both-deceased'), oneDeceased:n('f-one-deceased'),
-    divorced:n('f-divorced'), notWithParents:n('f-not-with-parents'), halfSiblings:n('f-half-siblings'),
-    famClose:n('f-fam-close'), famConflictSome:n('f-fam-conflict-some'),
-    famConflictOften:n('f-fam-conflict-often'), famDistant:n('f-fam-distant'),
-    famViolSome:n('f-fam-viol-some'), famViolOften:n('f-fam-viol-often'), famOther:n('f-fam-other'),
-    famOtherText:v('f-fam-other-text'),
-    houseGood:n('f-house-good'), houseOld:n('f-house-old'), nearBad:n('f-near-bad'),
-    riskHealth:n('f-risk-health'), riskSubstance:n('f-risk-substance'),
-    riskViolence:n('f-risk-violence'), riskTransport:n('f-risk-transport'),
-    riskSex:n('f-risk-sex'), riskPhone:n('f-risk-phone'),
-    riskSafety:n('f-risk-safety'), riskOther:n('f-risk-other'), riskOtherText:v('f-risk-other-text'),
-    probLearning:n('f-prob-learning'), probHealth:n('f-prob-health'),
-    probEconomy:n('f-prob-economy'), probSubstance:n('f-prob-substance'),
-    probDepression:n('f-prob-depression'), probOther:n('f-prob-other'), probOtherText:v('f-prob-other-text'),
-    urgent:n('f-urgent'), urgentDetail:v('f-urgent-detail'),
-    partnerSocial:c('p-social'), partnerHealth:c('p-health'),
-    partnerNone:c('p-none'), partnerOther:c('p-other'), partnerOtherText:v('p-other-text'),
-    dataUsage:v('f-data-usage'), parentConcerns:v('f-parent-concerns'),
-    obstacles:v('f-obstacles'), opinions:v('f-opinions'),
-    scholarship1:v('f-sch1'), scholarship2:v('f-sch2'), scholarship3:v('f-sch3'),
+    id:          document.getElementById('edit-id').value || '',
+    studentName: gv('f-name'),
+    studentNo:   gv('f-student-no'),
+    studentPhone:gv('f-student-phone'),
+    gender:      radioVal('gender'),
+    gradeLevel:  tGrade(),
+    teacher:     tName(),
+    // บิดา-มารดา
+    fatherName:  gv('f-father-name'), fatherJob: gv('f-father-job'), fatherPhone: gv('f-father-phone'),
+    motherName:  gv('f-mother-name'), motherJob: gv('f-mother-job'), motherPhone: gv('f-mother-phone'),
+    parStatus:   radioVal('parstat'),
+    // ผู้ปกครอง
+    parentName:  gv('f-parent-name'), parentRel: gv('f-parent-rel'),
+    parentJob:   gv('f-parent-job'),  parentPhone: gv('f-parent-phone'),
+    address:     gv('f-address'),
+    needHelp:    checked('needhelp'),
+    parentConcern: gv('f-parent-concern'),
+    // ครัวเรือน
+    householdSize: gn('f-household-size'),
+    income:      gn('f-income'),
+    allowance:   gn('f-allowance'),
+    burden:      checked('burden'),
+    houseType:   radioVal('housetype'),
+    // การเยี่ยมบ้าน
+    visitDate:   gv('f-date'),
+    year:        gv('f-year'),
+    semester:    document.getElementById('f-sem').value,
+    visited:     radioVal('visited') === 'yes',
+    nvReasons:   checked('nv'),
+    // เสี่ยง
+    rH: risks.includes('health')    ? 1:0, rS: risks.includes('substance') ? 1:0,
+    rV: risks.includes('violence')  ? 1:0, rT: risks.includes('transport') ? 1:0,
+    rX: risks.includes('sex')       ? 1:0, rP: risks.includes('phone')     ? 1:0,
+    rSf:risks.includes('safety')    ? 1:0, rO: risks.includes('other')     ? 1:0,
+    // ปัญหา
+    pL: probs.includes('learning')  ? 1:0, pH: probs.includes('health')    ? 1:0,
+    pE: probs.includes('economy')   ? 1:0, pS: probs.includes('substance') ? 1:0,
+    pD: probs.includes('depression')? 1:0, pO: probs.includes('other')     ? 1:0,
+    // ครอบครัว
+    famBg:   checked('fambg'),
+    family:  radioVal('fam'),
+    // บ้าน
+    house:   checked('house'),
+    // การเดินทาง
+    transport:   radioVal('transport'),
+    distance:    gn('f-distance'),
+    travelTime:  gn('f-travel-time'),
+    urgent:  document.getElementById('f-urgent').checked,
+    notes:   gv('f-notes'),
+    school:  SCHOOL, amphoe: AMPHOE, province: PROVINCE,
+    ts:      Date.now()
   };
 }
 
 function setFormData(r) {
-  const sv = (id,val) => { const el=document.getElementById(id); if(el) el.value=val||''; };
-  const sc = (id,val) => { const el=document.getElementById(id); if(el) el.checked=!!val; };
-  sv('edit-id',r.id); sv('f-school',r.school); sv('f-amphoe',r.amphoe); sv('f-province',r.province);
-  sv('f-year',r.year); sv('f-semester',r.semester);
-  sv('f-grade-level',r.gradeLevel||''); sv('f-room',r.room||'');
-  sv('f-teacher',r.teacher); sv('f-phone',r.phone); sv('f-daterange',r.dateRange);
-  sv('f-total-students',r.totalStudents); sv('f-visited-male',r.visitedMale);
-  sv('f-visited-female',r.visitedFemale); sv('f-not-visited',r.notVisited);
-  if(r.notVisitedReasons){
-    sc('nv-full',r.notVisitedReasons.full100); sc('nv-absent',r.notVisitedReasons.absent);
-    sc('nv-guardian-busy',r.notVisitedReasons.guardianBusy); sc('nv-cant-contact',r.notVisitedReasons.cantContact);
-    sc('nv-other',r.notVisitedReasons.other); sv('nv-other-text',r.notVisitedReasons.otherText);
-  }
-  sv('f-both-deceased',r.bothDeceased); sv('f-one-deceased',r.oneDeceased);
-  sv('f-divorced',r.divorced); sv('f-not-with-parents',r.notWithParents); sv('f-half-siblings',r.halfSiblings);
-  sv('f-fam-close',r.famClose); sv('f-fam-conflict-some',r.famConflictSome);
-  sv('f-fam-conflict-often',r.famConflictOften); sv('f-fam-distant',r.famDistant);
-  sv('f-fam-viol-some',r.famViolSome); sv('f-fam-viol-often',r.famViolOften);
-  sv('f-fam-other',r.famOther); sv('f-fam-other-text',r.famOtherText);
-  sv('f-house-good',r.houseGood); sv('f-house-old',r.houseOld); sv('f-near-bad',r.nearBad);
-  sv('f-risk-health',r.riskHealth); sv('f-risk-substance',r.riskSubstance);
-  sv('f-risk-violence',r.riskViolence); sv('f-risk-transport',r.riskTransport);
-  sv('f-risk-sex',r.riskSex); sv('f-risk-phone',r.riskPhone);
-  sv('f-risk-safety',r.riskSafety); sv('f-risk-other',r.riskOther); sv('f-risk-other-text',r.riskOtherText);
-  sv('f-prob-learning',r.probLearning); sv('f-prob-health',r.probHealth);
-  sv('f-prob-economy',r.probEconomy); sv('f-prob-substance',r.probSubstance);
-  sv('f-prob-depression',r.probDepression); sv('f-prob-other',r.probOther); sv('f-prob-other-text',r.probOtherText);
-  sv('f-urgent',r.urgent); sv('f-urgent-detail',r.urgentDetail);
-  sc('p-social',r.partnerSocial); sc('p-health',r.partnerHealth);
-  sc('p-none',r.partnerNone); sc('p-other',r.partnerOther); sv('p-other-text',r.partnerOtherText);
-  sv('f-data-usage',r.dataUsage); sv('f-parent-concerns',r.parentConcerns);
-  sv('f-obstacles',r.obstacles); sv('f-opinions',r.opinions);
-  sv('f-sch1',r.scholarship1); sv('f-sch2',r.scholarship2); sv('f-sch3',r.scholarship3);
-}
-
-async function saveRecord() {
-  const data = getFormData();
-  if (!data.school)      { showAlert('form-alert','danger','⚠️ กรุณาระบุชื่อโรงเรียน'); return; }
-  if (!data.gradeLevel)  { showAlert('form-alert','danger','⚠️ กรุณาเลือกระดับชั้น'); return; }
-  if (!data.teacher)     { showAlert('form-alert','danger','⚠️ กรุณาระบุชื่อครูที่ปรึกษา'); return; }
-  showLoading(true,'กำลังบันทึก...');
-  try {
-    const editId = data.id;
-    if (editId) {
-      await updateRecord(data);
-    } else {
-      await addRecord(data);
-    }
-    showLoading(false);
-    showAlert('form-alert','success','✅ บันทึกรายงานเรียบร้อยแล้ว!');
-    clearForm();
-  } catch(e) {
-    showLoading(false);
-    showAlert('form-alert','danger','❌ บันทึกไม่สำเร็จ: '+e.message);
-  }
-  window.scrollTo(0,0);
+  const sv = (id,val) => { const e=document.getElementById(id); if(e) e.value=val||''; };
+  sv('edit-id', r.id);
+  sv('f-name', r.studentName);       sv('f-student-no', r.studentNo);   sv('f-student-phone', r.studentPhone);
+  sv('f-father-name', r.fatherName); sv('f-father-job', r.fatherJob);   sv('f-father-phone', r.fatherPhone);
+  sv('f-mother-name', r.motherName); sv('f-mother-job', r.motherJob);   sv('f-mother-phone', r.motherPhone);
+  sv('f-parent-name', r.parentName); sv('f-parent-rel', r.parentRel);   sv('f-parent-job', r.parentJob);
+  sv('f-parent-phone', r.parentPhone); sv('f-address', r.address);
+  sv('f-parent-concern', r.parentConcern);
+  if (r.householdSize) sv('f-household-size', r.householdSize);
+  if (r.income)        sv('f-income', r.income);
+  if (r.allowance)     sv('f-allowance', r.allowance);
+  sv('f-date', r.visitDate); sv('f-year', r.year);
+  sv('f-sem', r.semester||'1');
+  sv('f-notes', r.notes);
+  if (r.distance)   sv('f-distance', r.distance);
+  if (r.travelTime) sv('f-travel-time', r.travelTime);
+  // radios
+  if (r.gender)    selPill('pg-gender', r.gender);
+  if (r.parStatus) selPill('pg-parstat', r.parStatus);
+  if (r.houseType) selPill('pg-housetype', r.houseType);
+  if (r.transport) selPill('pg-transport', r.transport);
+  const vis = r.visited ? 'yes' : 'no';
+  selPill('pg-visited', vis); toggleVisit(r.visited);
+  if (r.family) selPill('pg-fam', r.family);
+  // checkboxes
+  const riskMap = {health:'rH',substance:'rS',violence:'rV',transport:'rT',sex:'rX',phone:'rP',safety:'rSf',other:'rO'};
+  const probMap = {learning:'pL',health:'pH',economy:'pE',substance:'pS',depression:'pD',other:'pO'};
+  ['nv','risk','prob','fambg','burden','needhelp','house'].forEach(name => {
+    document.querySelectorAll(`input[name="${name}"]`).forEach(cb => {
+      let on = false;
+      if (name==='nv')       on = (r.nvReasons||[]).includes(cb.value);
+      if (name==='risk')     on = r[riskMap[cb.value]]===1;
+      if (name==='prob')     on = r[probMap[cb.value]]===1;
+      if (name==='fambg')    on = (r.famBg||[]).includes(cb.value);
+      if (name==='burden')   on = (r.burden||[]).includes(cb.value);
+      if (name==='needhelp') on = (r.needHelp||[]).includes(cb.value);
+      if (name==='house')    on = (r.house||[]).includes(cb.value);
+      cb.checked = on;
+      cb.closest('.pill')?.classList.toggle('on', on);
+    });
+  });
+  const uc = !!r.urgent;
+  document.getElementById('f-urgent').checked = uc;
+  document.getElementById('urg-pill').classList.toggle('on', uc);
+  applyTeacher();
 }
 
 function clearForm() {
-  document.getElementById('edit-id').value='';
-  document.querySelectorAll('#page-form input[type=text],#page-form input[type=number],#page-form textarea').forEach(el=>{
-    el.value = el.type==='number' ? 0 : '';
+  document.getElementById('edit-id').value = '';
+  ['f-name','f-student-no','f-student-phone',
+   'f-father-name','f-father-job','f-father-phone',
+   'f-mother-name','f-mother-job','f-mother-phone',
+   'f-parent-name','f-parent-phone','f-parent-job','f-address','f-parent-concern',
+   'f-household-size','f-income','f-allowance',
+   'f-date','f-notes','f-distance','f-travel-time'
+  ].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
+  document.getElementById('f-parent-rel').value = '';
+  document.getElementById('f-sem').value = '1';
+  ['pg-gender','pg-visited','pg-fam','pg-parstat','pg-housetype','pg-transport'].forEach(gid => {
+    document.getElementById(gid)?.querySelectorAll('.pill').forEach(p => {
+      p.classList.remove('on','on-g','on-r');
+      const inp = p.querySelector('input'); if (inp) inp.checked = false;
+    });
   });
-  document.querySelectorAll('#page-form select').forEach(el=>{
-    el.selectedIndex = el.id==='f-semester' ? 1 : 0;
+  document.querySelectorAll('input[name="nv"],input[name="risk"],input[name="prob"],input[name="fambg"],input[name="burden"],input[name="needhelp"],input[name="house"]').forEach(cb => {
+    cb.checked = false;
+    cb.closest('.pill')?.classList.remove('on');
   });
-  document.querySelectorAll('#page-form input[type=checkbox]').forEach(el=>el.checked=false);
-  applyConfigToForm();
+  document.getElementById('f-urgent').checked = false;
+  document.getElementById('urg-pill').classList.remove('on');
+  document.getElementById('nv-sec').style.display = 'none';
+  ['risk-sec','prob-sec','env-sec'].forEach(id => document.getElementById(id).style.display = 'block');
+  document.getElementById('f-edit-alert').style.display = 'none';
+  applyTeacher();
 }
 
+// ── SUBMIT ────────────────────────────────
+async function submitForm() {
+  const data = getFormData();
+  if (!data.studentName) { alert('กรุณาใส่ชื่อนักเรียนครับ'); return; }
+  if (!data.gradeLevel)  { alert('กรุณาตั้งค่าระดับชั้นในโปรไฟล์ครูก่อนครับ'); return; }
+  if (radioVal('visited') === '') { alert('กรุณาเลือกผลการเยี่ยมบ้านครับ'); return; }
+  showLd(true, 'กำลังบันทึก...');
+  await upsert(data);
+  showLd(false);
+  const al = document.getElementById('f-alert');
+  al.className = 'alert al-ok'; al.textContent = '✅ บันทึกเรียบร้อยแล้ว!'; al.style.display = 'flex';
+  setTimeout(() => al.style.display = 'none', 3500);
+  clearForm();
+  window.scrollTo(0, 0);
+}
 function editRecord(id) {
-  const r = _records.find(x=>x.id===id);
-  if (!r) return;
+  const r = _recs.find(x => x.id === id); if (!r) return;
   setFormData(r);
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-form').classList.add('active');
-  document.querySelectorAll('.nav-tab')[1].classList.add('active');
-  showAlert('form-alert','info','✏️ กำลังแก้ไขรายงาน – กด "บันทึกรายงาน" เพื่ออัปเดต');
-  window.scrollTo(0,0);
+  document.querySelectorAll('.nav-tab')[1]?.classList.add('active');
+  const al = document.getElementById('f-edit-alert');
+  al.className = 'alert al-info'; al.textContent = '✏️ กำลังแก้ไข – กด "บันทึกข้อมูล" เพื่ออัปเดต'; al.style.display = 'flex';
+  window.scrollTo(0, 0);
 }
-
-function confirmDelete(id) {
-  document.getElementById('confirm-delete-btn').onclick = async () => {
-    document.getElementById('delete-modal').classList.remove('open');
-    showLoading(true,'กำลังลบ...');
-    await removeRecord(id);
-    showLoading(false);
-    renderRecordsTable();
-    renderDashboard();
+function confirmDel(id) {
+  document.getElementById('del-btn').onclick = async () => {
+    closeMo('mo-del'); showLd(true, 'กำลังลบ...');
+    await del(id); showLd(false);
+    renderRecords(); renderDash();
   };
-  document.getElementById('delete-modal').classList.add('open');
+  document.getElementById('mo-del').classList.add('open');
 }
 
-// ═══════════════════════════════════════
-// RECORDS TABLE
-// ═══════════════════════════════════════
-function renderRecordsTable() {
-  const records = getRecords();
-  document.getElementById('records-count').textContent = `ทั้งหมด ${records.length} รายงาน`;
-  const wrap = document.getElementById('records-table-wrap');
-  if (!records.length) {
-    wrap.innerHTML=`<div class="empty-state"><div class="empty-state-icon">📋</div><p>ยังไม่มีรายงาน<br><strong>คลิก "เพิ่มรายงาน"</strong> เพื่อเริ่มกรอก</p></div>`;
-    return;
-  }
-  const rows = records.slice().reverse().map(r=>{
-    const vis = (r.visitedMale||0)+(r.visitedFemale||0);
-    const pct = r.totalStudents>0 ? Math.round(vis/r.totalStudents*100) : 0;
-    const dt = r.createdAt ? new Date(r.createdAt).toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}) : '-';
-    return `<tr>
-      <td><strong>${r.grade||'-'}</strong></td>
-      <td>${r.school||'-'}</td>
-      <td>${r.teacher||'-'}</td>
-      <td>ครั้งที่ ${r.semester||'-'} / ${r.year||'-'}</td>
-      <td>${r.totalStudents||0}</td>
-      <td><span class="badge ${pct>=80?'badge-green':pct>=50?'badge-blue':'badge-orange'}">${vis} (${pct}%)</span></td>
-      <td>${r.urgent||0}</td>
-      <td>${dt}</td>
-      <td>
-        <button class="btn btn-outline btn-sm" onclick="editRecord('${r.id}')">✏️</button>
-        <button class="btn btn-danger btn-sm" style="margin-left:3px" onclick="confirmDelete('${r.id}')">🗑</button>
-      </td>
-    </tr>`;
-  }).join('');
-  wrap.innerHTML=`<div class="table-wrap"><table>
-    <thead><tr><th>ชั้น/ห้อง</th><th>โรงเรียน</th><th>ครูที่ปรึกษา</th><th>ครั้งที่/ปี</th><th>ทั้งหมด</th><th>เยี่ยมบ้าน</th><th>ด่วน</th><th>วันที่บันทึก</th><th>จัดการ</th></tr></thead>
-    <tbody>${rows}</tbody></table></div>`;
-}
+// ── DASHBOARD ─────────────────────────────
+const charts = {};
+function renderDash() {
+  const recs = _recs;
+  const total  = recs.length;
+  const vis    = recs.filter(r => r.visited).length;
+  const nvis   = total - vis;
+  const risk   = recs.filter(r => riskCount(r) > 0).length;
+  const urg    = recs.filter(r => r.urgent).length;
+  const pct    = total ? (vis / total * 100).toFixed(1) : 0;
 
-// ═══════════════════════════════════════
-// DASHBOARD
-// ═══════════════════════════════════════
-let chartInstances = {};
-function renderDashboard() {
-  const recs = getRecords();
-  let totStudents=0,vis=0,visM=0,visF=0,risk=0,urgent=0,probLearn=0;
-  let rH=0,rS=0,rV=0,rT=0,rSx=0,rP=0,rSf=0,rO=0;
-  let pH=0,pE=0,pSb=0,pDp=0,pO=0;
-  let fC=0,fCS=0,fCO=0,fD=0,fVS=0,fVO=0,fO=0;
-  let eG=0,eOld=0,eBad=0;
-  recs.forEach(r=>{
-    totStudents+=r.totalStudents||0;
-    visM+=r.visitedMale||0; visF+=r.visitedFemale||0;
-    urgent+=r.urgent||0; probLearn+=r.probLearning||0;
-    rH+=r.riskHealth||0; rS+=r.riskSubstance||0; rV+=r.riskViolence||0;
-    rT+=r.riskTransport||0; rSx+=r.riskSex||0; rP+=r.riskPhone||0;
-    rSf+=r.riskSafety||0; rO+=r.riskOther||0;
-    pH+=r.probHealth||0; pE+=r.probEconomy||0; pSb+=r.probSubstance||0;
-    pDp+=r.probDepression||0; pO+=r.probOther||0;
-    fC+=r.famClose||0; fCS+=r.famConflictSome||0; fCO+=r.famConflictOften||0;
-    fD+=r.famDistant||0; fVS+=r.famViolSome||0; fVO+=r.famViolOften||0; fO+=r.famOther||0;
-    eG+=r.houseGood||0; eOld+=r.houseOld||0; eBad+=r.nearBad||0;
-  });
-  vis = visM+visF;
-  risk = rH+rS+rV+rT+rSx+rP+rSf+rO;
-  const pct = totStudents>0 ? (vis/totStudents*100).toFixed(1) : 0;
-  document.getElementById('s-total-reports').textContent = recs.length;
-  document.getElementById('s-total-students').textContent = totStudents;
-  document.getElementById('s-visited').textContent = vis;
-  document.getElementById('s-visited-pct').textContent = `${pct}%`;
-  document.getElementById('s-risk').textContent = risk;
-  document.getElementById('s-urgent').textContent = urgent;
-  document.getElementById('s-prob-learn').textContent = probLearn;
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-vis').textContent   = vis;
+  document.getElementById('s-pct').textContent   = pct + '%';
+  document.getElementById('s-nvis').textContent  = nvis;
+  document.getElementById('s-risk').textContent  = risk;
+  document.getElementById('s-urg').textContent   = urg;
+  const pbarEl = document.getElementById('db-pbar');
+  if (pbarEl) pbarEl.style.width = pct + '%';
+  const decoEl = document.getElementById('db-total-big');
+  if (decoEl) decoEl.textContent = total;
 
-  makeBar('chart-risk',
-    ['สุขภาพ','สารเสพติด','ความรุนแรง','การเดินทาง','เพศ','ติดโทรศัพท์','ความปลอดภัย','อื่นๆ'],
-    [rH,rS,rV,rT,rSx,rP,rSf,rO],
+  const s = f => recs.reduce((a,r) => a + (r[f]||0), 0);
+  makeBar('c-risk',
+    ['สุขภาพ','สารเสพติด','ความรุนแรง','เดินทาง','เพศ','โทรศัพท์','ปลอดภัย','อื่นๆ'],
+    ['rH','rS','rV','rT','rX','rP','rSf','rO'].map(s),
     ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6','#14b8a6','#94a3b8']);
-  makePie('chart-family',
-    ['สนิทสนม','ขัดแย้งบางครั้ง','ขัดแย้งบ่อย','ห่างเหิน','ทำร้ายบางครั้ง','ทำร้ายบ่อย','อื่นๆ'],
-    [fC,fCS,fCO,fD,fVS,fVO,fO],
-    ['#22c55e','#f59e0b','#ef4444','#94a3b8','#f97316','#dc2626','#8b5cf6']);
-  makeBar('chart-problems',
+  makeBar('c-prob',
     ['การเรียน','สุขภาพ','เศรษฐกิจ','สารเสพติด','ซึมเศร้า','อื่นๆ'],
-    [probLearn,pH,pE,pSb,pDp,pO],
+    ['pL','pH','pE','pS','pD','pO'].map(s),
     ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#94a3b8']);
-  makeBar('chart-env',['บ้านพอใช้-ดี','บ้านเก่า/ทรุดโทรม','ใกล้แหล่งมั่วสุม'],
-    [eG,eOld,eBad],['#22c55e','#f59e0b','#ef4444']);
+  const famKeys = ['close','conflict_some','conflict_often','distant','viol_some','viol_often','other'];
+  const famLbls = ['สนิทสนม','ขัดแย้งบ้าง','ขัดแย้งบ่อย','ห่างเหิน','ทำร้ายบ้าง','ทำร้ายบ่อย','อื่นๆ'];
+  makePie('c-fam', famLbls, famKeys.map(k => recs.filter(r => r.family === k).length),
+    ['#22c55e','#f59e0b','#ef4444','#94a3b8','#f97316','#dc2626','#8b5cf6']);
+  makePie('c-home',
+    ['พอใช้-ดี','เก่า/ทรุดโทรม','ก่ออิฐ/ไม้ผุ','ไม่มีส้วม','ใกล้มั่วสุม'],
+    ['good','old','material','no_toilet','bad_area'].map(k => recs.filter(r => (r.house||[]).includes(k)).length),
+    ['#22c55e','#f59e0b','#f97316','#94a3b8','#ef4444']);
+  makePie('c-transport',
+    ['ผู้ปกครองส่ง','มอเตอร์ไซค์','รถโดยสาร','รถโรงเรียน','จักรยาน','เดิน','อื่นๆ'],
+    ['parent_drive','motorbike','bus','school_bus','bicycle','walk','other'].map(k => recs.filter(r => r.transport === k).length),
+    ['#22c55e','#f97316','#3b82f6','#06b6d4','#8b5cf6','#14b8a6','#94a3b8']);
+  makePie('c-parstat',
+    ['อยู่ด้วยกัน','แยกกันอยู่','หย่าร้าง','บิดาเสียชีวิต','มารดาเสียชีวิต','เสียชีวิตทั้งคู่'],
+    ['together','separate','divorced','father_dead','mother_dead','both_dead'].map(k => recs.filter(r => r.parStatus === k).length),
+    ['#22c55e','#f59e0b','#f97316','#94a3b8','#8b5cf6','#ef4444']);
 
-  renderGradeBreakdown(recs);
-
-  const recent = recs.slice(-5).reverse();
-  const el = document.getElementById('recent-records');
-  if (!recent.length) {
-    el.innerHTML=`<div class="empty-state"><div class="empty-state-icon">📊</div><p>ยังไม่มีข้อมูล</p></div>`;
-  } else {
-    el.innerHTML=`<div class="table-wrap"><table><thead><tr><th>ชั้น/ห้อง</th><th>ครู</th><th>เยี่ยมบ้าน</th><th>ด่วน</th><th></th></tr></thead><tbody>
-      ${recent.map(r=>`<tr>
-        <td><strong>${r.grade}</strong> – ${r.school}</td>
-        <td>${r.teacher}</td>
-        <td>${(r.visitedMale||0)+(r.visitedFemale||0)} / ${r.totalStudents||0} คน</td>
-        <td>${r.urgent||0} คน</td>
-        <td><button class="btn btn-outline btn-sm" onclick="editRecord('${r.id}')">✏️</button></td>
-      </tr>`).join('')}
-    </tbody></table></div>`;
-  }
+  renderGradeSummary(recs);
 }
-function renderGradeBreakdown(recs) {
-  const el = document.getElementById('grade-breakdown');
-  if (!el) return;
-  const grades = ['ม.1','ม.2','ม.3','ม.4','ม.5','ม.6'];
-  const rows = grades.map(g => {
-    const grRecs = recs.filter(r => r.gradeLevel === g || (r.grade && r.grade.startsWith(g)));
-    if (!grRecs.length) return null;
-    const total = grRecs.reduce((s,r)=>s+(r.totalStudents||0),0);
-    const visited = grRecs.reduce((s,r)=>s+(r.visitedMale||0)+(r.visitedFemale||0),0);
-    const risk = grRecs.reduce((s,r)=>s+(r.riskHealth||0)+(r.riskSubstance||0)+(r.riskViolence||0)+(r.riskTransport||0)+(r.riskSex||0)+(r.riskPhone||0)+(r.riskSafety||0)+(r.riskOther||0),0);
-    const urgent = grRecs.reduce((s,r)=>s+(r.urgent||0),0);
-    const pct = total>0 ? (visited/total*100).toFixed(1) : '0.0';
-    const barColor = parseFloat(pct)>=80 ? '#22c55e' : parseFloat(pct)>=50 ? '#f59e0b' : '#ef4444';
+function riskCount(r) {
+  return (r.rH||0)+(r.rS||0)+(r.rV||0)+(r.rT||0)+(r.rX||0)+(r.rP||0)+(r.rSf||0)+(r.rO||0);
+}
+function renderGradeSummary(recs) {
+  const el = document.getElementById('grade-summary'); if (!el) return;
+  const rows = GRADES.map(g => {
+    const gr = recs.filter(r => r.gradeLevel === g);
+    if (!gr.length) return null;
+    const total = gr.length;
+    const visM  = gr.filter(r => r.visited && r.gender === 'male').length;
+    const visF  = gr.filter(r => r.visited && r.gender === 'female').length;
+    const vis   = visM + visF;
+    const risk  = gr.filter(r => riskCount(r) > 0).length;
+    const urg   = gr.filter(r => r.urgent).length;
+    const pct   = (vis / total * 100).toFixed(1);
+    const col   = parseFloat(pct) >= 80 ? '#22c55e' : parseFloat(pct) >= 50 ? '#f59e0b' : '#ef4444';
+    const tchr  = gr.find(r => r.teacher)?.teacher || '–';
     return `<tr>
       <td><strong>${g}</strong></td>
-      <td style="text-align:center">${grRecs.length} รายงาน</td>
+      <td style="font-size:.8rem;color:var(--muted)">${tchr}</td>
       <td style="text-align:center">${total}</td>
-      <td style="text-align:center">${visited}</td>
+      <td style="text-align:center">${visM}</td>
+      <td style="text-align:center">${visF}</td>
+      <td style="text-align:center;font-weight:700">${vis}</td>
       <td>
-        <div style="display:flex;align-items:center;gap:6px">
-          <div style="flex:1;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden">
-            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px"></div>
-          </div>
-          <span style="font-size:.8rem;color:${barColor};font-weight:700;min-width:38px">${pct}%</span>
+        <div style="display:flex;align-items:center;gap:5px">
+          <div class="pbar"><div class="pfill" style="width:${pct}%;background:${col}"></div></div>
+          <span style="font-size:.76rem;font-weight:700;color:${col};min-width:34px">${pct}%</span>
         </div>
       </td>
-      <td style="text-align:center;color:#ef4444;font-weight:700">${risk}</td>
-      <td style="text-align:center;color:#f97316;font-weight:700">${urgent}</td>
+      <td style="text-align:center;color:#ef4444;font-weight:700">${risk||'–'}</td>
+      <td style="text-align:center;color:#f97316;font-weight:700">${urg||'–'}</td>
     </tr>`;
   }).filter(Boolean);
+
   if (!rows.length) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><p>ยังไม่มีข้อมูล</p></div>`;
+    el.innerHTML = `<div class="empty"><div class="empty-ico">📊</div><p>ยังไม่มีข้อมูล — กด "➕ กรอกข้อมูล" เพื่อเริ่มต้น</p></div>`;
     return;
   }
-  el.innerHTML = `<div class="table-wrap"><table>
+  el.innerHTML = `<div class="tw"><table>
     <thead><tr>
-      <th>ชั้น</th><th style="text-align:center">รายงาน</th>
-      <th style="text-align:center">นักเรียนทั้งหมด</th>
+      <th>ชั้น</th><th>ครูประจำชั้น</th>
+      <th style="text-align:center">ทั้งหมด</th>
+      <th style="text-align:center">ชาย✅</th>
+      <th style="text-align:center">หญิง✅</th>
       <th style="text-align:center">เยี่ยมแล้ว</th>
       <th>ความคืบหน้า</th>
       <th style="text-align:center">เสี่ยง</th>
@@ -1105,313 +1379,649 @@ function renderGradeBreakdown(recs) {
     <tbody>${rows.join('')}</tbody>
   </table></div>`;
 }
-
-function makeBar(id,labels,data,colors){
-  const ctx=document.getElementById(id); if(!ctx) return;
-  if(chartInstances[id]) chartInstances[id].destroy();
-  chartInstances[id]=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:4}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+function makeBar(id, labels, data, colors) {
+  const ctx = document.getElementById(id); if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, { type:'bar', data:{ labels, datasets:[{ data, backgroundColor:colors, borderRadius:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ stepSize:1 } } } } });
 }
-function makePie(id,labels,data,colors){
-  const ctx=document.getElementById(id); if(!ctx) return;
-  if(chartInstances[id]) chartInstances[id].destroy();
-  chartInstances[id]=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}});
-}
-
-// ═══════════════════════════════════════
-// DISTRICT REPORT
-// ═══════════════════════════════════════
-function populateDistrictFilters() {
-  const schools = [...new Set(getRecords().map(r=>r.school).filter(Boolean))];
-  const sel = document.getElementById('d-filter-school');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">ทั้งหมด</option>'+schools.map(s=>`<option value="${s}"${s===cur?' selected':''}>${s}</option>`).join('');
-  const cfg = getConfig();
-  if (!document.getElementById('d-principal').value && cfg.principal)
-    document.getElementById('d-principal').value = cfg.principal;
+function makePie(id, labels, data, colors) {
+  const ctx = document.getElementById(id); if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, { type:'doughnut', data:{ labels, datasets:[{ data, backgroundColor:colors }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ font:{ size:10 } } } } } });
 }
 
-function getFilteredRecords() {
-  const sc = document.getElementById('d-filter-school').value;
-  const sem = document.getElementById('d-filter-semester').value;
-  const yr = document.getElementById('d-filter-year').value;
-  return getRecords().filter(r=>(!sc||r.school===sc)&&(!sem||r.semester===sem)&&(!yr||r.year===yr));
+// ── RECORDS TABLE ─────────────────────────
+let _gFilter = 'all';
+function setGFilter(g, el) {
+  _gFilter = g;
+  document.querySelectorAll('#rec-tabs .gtab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderRecords();
 }
-
-function ag(recs,k){ return recs.reduce((s,r)=>s+(r[k]||0),0); }
-function pc(n,d){ return d>0?(n/d*100).toFixed(2):'0.00'; }
-
-function renderDistrictReport() {
-  const recs = getFilteredRecords();
-  const cfg = getConfig();
-  const reporter = document.getElementById('d-reporter').value || '............................................';
-  const reporterPos = document.getElementById('d-reporter-pos').value || '............................................';
-  const principal = document.getElementById('d-principal').value || cfg.principal || '............................................';
+function renderRecords() {
+  const q = (document.getElementById('rec-search')?.value || '').toLowerCase();
+  let recs = _recs;
+  if (_gFilter !== 'all') recs = recs.filter(r => r.gradeLevel === _gFilter);
+  if (q) recs = recs.filter(r => (r.studentName||'').toLowerCase().includes(q) || (r.parentName||'').toLowerCase().includes(q));
+  const el = document.getElementById('rec-table');
   if (!recs.length) {
-    document.getElementById('district-report-content').innerHTML=`<div class="empty-state"><div class="empty-state-icon">📄</div><p>ยังไม่มีข้อมูลสำหรับตัวกรองที่เลือก</p></div>`;
-    return;
+    el.innerHTML = `<div class="empty"><div class="empty-ico">📋</div><p>ไม่พบข้อมูล</p></div>`; return;
   }
-  const school = recs[0].school||cfg.school||'...................................................................';
-  const amphoe = recs[0].amphoe||cfg.amphoe||'';
-  const province = recs[0].province||cfg.province||'';
-  const year = recs[0].year||cfg.year||'2568';
-  const semester = recs[0].semester||'2';
-  const totalStudents = ag(recs,'totalStudents');
-  const visitedMale = ag(recs,'visitedMale');
-  const visitedFemale = ag(recs,'visitedFemale');
-  const visited = visitedMale+visitedFemale;
-  const notVisited = ag(recs,'notVisited');
-  const nvArr=[];
-  let nvFull=0,nvAbs=0,nvGrd=0,nvCnt=0,nvOth=0;
-  recs.forEach(r=>{
-    if(r.notVisitedReasons){
-      if(r.notVisitedReasons.full100) nvFull++;
-      if(r.notVisitedReasons.absent) nvAbs++;
-      if(r.notVisitedReasons.guardianBusy) nvGrd++;
-      if(r.notVisitedReasons.cantContact) nvCnt++;
-      if(r.notVisitedReasons.other) nvOth++;
-    }
-  });
-  if(nvFull) nvArr.push('เยี่ยมบ้านครบ 100%');
-  if(nvAbs) nvArr.push('นักเรียนไม่มาเรียนเป็นเวลานาน');
-  if(nvGrd) nvArr.push('ผู้ปกครองติดงาน/ฤดูกาลทำนา');
-  if(nvCnt) nvArr.push('ติดต่อนักเรียน/ผู้ปกครองไม่ได้');
-  if(nvOth){ const o=recs.map(r=>r.notVisitedReasons?.otherText).filter(Boolean); nvArr.push('อื่น ๆ'+(o.length?': '+o.join(', '):''));}
-  const partnerList=[];
-  if(recs.some(r=>r.partnerSocial)) partnerList.push('สำนักงานพัฒนาสังคมและความมั่นคงของมนุษย์');
-  if(recs.some(r=>r.partnerHealth)) partnerList.push('หน่วยงานสาธารณสุข');
-  const pOthers=recs.map(r=>r.partnerOtherText).filter(Boolean);
-  if(pOthers.length) partnerList.push('อื่น ๆ: '+pOthers.join(', '));
-  if(!partnerList.length) partnerList.push('ไม่มีหน่วยงาน/สหวิชาชีพ/องค์กรร่วม');
-  const joinText=k=>recs.map(r=>r[k]).filter(Boolean).join('\n')||'–';
-  const totalRisk = ag(recs,'riskHealth')+ag(recs,'riskSubstance')+ag(recs,'riskViolence')+ag(recs,'riskTransport')+ag(recs,'riskSex')+ag(recs,'riskPhone')+ag(recs,'riskSafety')+ag(recs,'riskOther');
-  const dateRange = recs.map(r=>r.dateRange).filter(Boolean).join(', ') || '...................................................................';
+  el.innerHTML = `<div class="tw"><table>
+    <thead><tr>
+      <th>ชื่อนักเรียน</th><th>เพศ</th><th>ชั้น</th><th>ผู้ปกครอง</th><th>เบอร์</th>
+      <th>วันที่เยี่ยม</th><th>ผล</th><th style="text-align:center">เสี่ยง</th><th style="text-align:center">ด่วน</th><th></th>
+    </tr></thead>
+    <tbody>${recs.map(r => {
+      const rc = riskCount(r);
+      return `<tr>
+        <td><strong>${r.studentName||'–'}</strong></td>
+        <td>${r.gender==='male'?'♂ ชาย':r.gender==='female'?'♀ หญิง':'–'}</td>
+        <td>${r.gradeLevel||'–'}</td>
+        <td style="font-size:.8rem">${r.parentName||'–'}${r.parentRel?' ('+r.parentRel+')':''}</td>
+        <td style="font-size:.8rem">${r.parentPhone||'–'}</td>
+        <td style="font-size:.8rem">${r.visitDate||'–'}</td>
+        <td>${r.visited ? '<span class="bv">✅ เยี่ยมแล้ว</span>' : '<span class="bnv">❌ ยังไม่ได้</span>'}</td>
+        <td style="text-align:center;color:${rc>0?'#ef4444':'var(--muted)'};font-weight:${rc>0?700:400}">${rc>0?rc:'–'}</td>
+        <td style="text-align:center">${r.urgent ? '<span class="bur">🚨 ด่วน</span>' : '–'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-out btn-sm" onclick="editRecord('${r.id}')">✏️</button>
+          <button class="btn btn-sm" style="background:#fde8ec;color:#9b0a23;border:1px solid #f5bcc6;margin-left:3px" onclick="printStudent('${r.id}')">🖨️</button>
+          <button class="btn btn-sm" style="background:#fde8e8;color:#9b1c1c;border:none;margin-left:3px" onclick="confirmDel('${r.id}')">🗑</button>
+        </td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
+}
 
-  document.getElementById('district-report-content').innerHTML = `
-<div class="doc-header">
-  <div class="doc-title">แบบสรุปรายงานการเยี่ยมบ้านนักเรียนของสถานศึกษาในสังกัด สพม.อุบลราชธานี อำนาจเจริญ</div>
-  <div class="doc-line" style="margin-top:8px">โรงเรียน<span class="dot-line">&nbsp;${school}&nbsp;</span>
-    ${amphoe?`อำเภอ<span class="dot-line">&nbsp;${amphoe}&nbsp;</span>`:''}
-    ${province?`จังหวัด<span class="dot-line">&nbsp;${province}&nbsp;</span>`:''}
+// ── REPORT META (localStorage) ────────────
+function getRptMeta() { return JSON.parse(localStorage.getItem('rpt_meta')||'{}'); }
+function saveRptMeta() {
+  const m = {
+    round:         document.getElementById('d-round')?.value||'',
+    reporter:      document.getElementById('d-reporter')?.value||'',
+    reporterPos:   document.getElementById('d-reporter-pos')?.value||'',
+    reporterPhone: document.getElementById('d-reporter-phone')?.value||'',
+    orgs:          [...document.querySelectorAll('#d-orgs input:checked')].map(e=>e.value),
+    otherOrg:      document.getElementById('d-other-org')?.value||'',
+    urgentDesc:    document.getElementById('d-urgent-desc')?.value||'',
+    helpedCount:   document.getElementById('d-helped-count')?.value||'',
+    usage:         document.getElementById('d-usage')?.value||'',
+    parentConcern: document.getElementById('d-parent-concern')?.value||'',
+    issues:        document.getElementById('d-issues')?.value||'',
+    comments:      document.getElementById('d-comments')?.value||''
+  };
+  localStorage.setItem('rpt_meta', JSON.stringify(m));
+  renderDistrict();
+}
+function togDOrg(el, e) {
+  if (e) e.preventDefault();
+  el.classList.toggle('on');
+  el.querySelector('input').checked = el.classList.contains('on');
+  saveRptMeta();
+}
+function loadRptMeta() {
+  const m = getRptMeta();
+  const sv = (id, val) => { const el=document.getElementById(id); if(el&&val) el.value=val; };
+  sv('d-round', m.round); sv('d-reporter', m.reporter);
+  sv('d-reporter-pos', m.reporterPos); sv('d-reporter-phone', m.reporterPhone);
+  sv('d-other-org', m.otherOrg); sv('d-urgent-desc', m.urgentDesc);
+  sv('d-helped-count', m.helpedCount);
+  sv('d-usage', m.usage); sv('d-parent-concern', m.parentConcern);
+  sv('d-issues', m.issues); sv('d-comments', m.comments);
+  if (m.orgs) {
+    document.querySelectorAll('#d-orgs input').forEach(cb => {
+      const on = m.orgs.includes(cb.value);
+      cb.checked = on;
+      cb.closest('.pill')?.classList.toggle('on', on);
+    });
+  }
+}
+
+// ── DISTRICT REPORT ───────────────────────
+function fillYearSel() {
+  const years = [...new Set(_recs.map(r => r.year).filter(Boolean))].sort().reverse();
+  const sel = document.getElementById('d-year');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="all">ทุกปี</option>' + years.map(y => `<option value="${y}"${y===cur?' selected':''}>${y}</option>`).join('');
+}
+function aggByGrade() {
+  const yr  = document.getElementById('d-year')?.value  || 'all';
+  const sem = document.getElementById('d-sem')?.value   || 'all';
+  let recs = _recs;
+  if (yr  !== 'all') recs = recs.filter(r => r.year === yr);
+  if (sem !== 'all') recs = recs.filter(r => r.semester === sem);
+  return GRADES.map(g => {
+    const gr = recs.filter(r => r.gradeLevel === g);
+    const total = gr.length;
+    const visM  = gr.filter(r => r.visited && r.gender === 'male').length;
+    const visF  = gr.filter(r => r.visited && r.gender === 'female').length;
+    const vis   = visM + visF;
+    const nvis  = total - vis;
+    const risk  = gr.filter(r => riskCount(r) > 0).length;
+    const urg   = gr.filter(r => r.urgent).length;
+    const prob  = gr.filter(r => (r.pL||0)+(r.pH||0)+(r.pE||0)+(r.pS||0)+(r.pD||0)+(r.pO||0) > 0).length;
+    const tchr  = gr.find(r => r.teacher)?.teacher || '–';
+    // parStatus counts
+    const psCount = k => gr.filter(r => r.parStatus === k).length;
+    const psTogether   = psCount('together');
+    const psSeparate   = psCount('separate');
+    const psDivorced   = psCount('divorced');
+    const psFatherDead = psCount('father_dead');
+    const psMotherDead = psCount('mother_dead');
+    const psBothDead   = psCount('both_dead');
+    // burden counts
+    const bdCount = k => gr.filter(r => (r.burden||[]).includes(k)).length;
+    const bdDisabled   = bdCount('disabled');
+    const bdElderly    = bdCount('elderly');
+    const bdSinglePar  = bdCount('single_par');
+    const bdUnemployed = bdCount('unemployed');
+    return { grade:g, total, visM, visF, vis, nvis, risk, urg, prob, tchr,
+      psTogether, psSeparate, psDivorced, psFatherDead, psMotherDead, psBothDead,
+      bdDisabled, bdElderly, bdSinglePar, bdUnemployed };
+  });
+}
+function renderDistrict() {
+  const rows = aggByGrade();
+  const cfg  = getCfg();
+  const meta = getRptMeta();
+  const yr   = document.getElementById('d-year')?.value  || 'all';
+  const sem  = document.getElementById('d-sem')?.value   || 'all';
+
+  let recs = _recs;
+  if (yr  !== 'all') recs = recs.filter(r => r.year === yr);
+  if (sem !== 'all') recs = recs.filter(r => r.semester === sem);
+
+  // ตัวเลขรวม
+  const tT   = recs.length;
+  const tM   = recs.filter(r => r.gender === 'male').length;
+  const tF   = recs.filter(r => r.gender === 'female').length;
+  const tVM  = recs.filter(r => r.visited && r.gender === 'male').length;
+  const tVF  = recs.filter(r => r.visited && r.gender === 'female').length;
+  const tV   = recs.filter(r => r.visited).length;
+  const tNV  = tT - tV;
+  const pctV = tT ? (tV/tT*100).toFixed(1) : '0.0';
+  const pctNV= tT ? (tNV/tT*100).toFixed(1): '0.0';
+
+  // สาเหตุไม่ได้เยี่ยม
+  const nvC = k => recs.filter(r => !r.visited && (r.nvReasons||[]).includes(k)).length;
+  const nv100     = nvC('full100');
+  const nvAbsent  = nvC('absent');
+  const nvBusy    = nvC('busy');
+  const nvNotfound= nvC('notfound');
+  const nvMoved   = nvC('moved');
+  const nvOther   = nvC('other');
+
+  // ข้อมูลครอบครัว (famBg)
+  const fbC = k => recs.filter(r => (r.famBg||[]).includes(k)).length;
+
+  // ความสัมพันธ์ครอบครัว
+  const famC = k => recs.filter(r => r.family === k).length;
+
+  // สภาพบ้าน (3 หมวดตามฟอร์มเขต)
+  const hGood    = recs.filter(r => (r.house||[]).includes('good')).length;
+  const hOld     = recs.filter(r => (r.house||[]).some(h=>['old','material','no_toilet'].includes(h))).length;
+  const hBad     = recs.filter(r => (r.house||[]).includes('bad_area')).length;
+
+  // พฤติกรรมเสี่ยง
+  const rH=recs.filter(r=>r.rH).length, rS=recs.filter(r=>r.rS).length;
+  const rV=recs.filter(r=>r.rV).length, rT=recs.filter(r=>r.rT).length;
+  const rX=recs.filter(r=>r.rX).length, rP=recs.filter(r=>r.rP).length;
+  const rSf=recs.filter(r=>r.rSf).length, rO=recs.filter(r=>r.rO).length;
+  const tRisk = recs.filter(r => riskCount(r)>0).length;
+
+  // ปัญหา
+  const pL=recs.filter(r=>r.pL).length, pH=recs.filter(r=>r.pH).length;
+  const pE=recs.filter(r=>r.pE).length, pS=recs.filter(r=>r.pS).length;
+  const pD=recs.filter(r=>r.pD).length, pO=recs.filter(r=>r.pO).length;
+  const tUrg = recs.filter(r=>r.urgent).length;
+
+  // หน่วยงานร่วม
+  const orgMap = {soc:'สำนักงานพัฒนาสังคมและความมั่นคงของมนุษย์', health:'หน่วยงานสาธารณสุข', other_org:'อื่นๆ', none:'ไม่มีหน่วยงาน/สหวิชาชีพ/องค์กรร่วม'};
+
+  // ช่วงวันที่
+  const dates = recs.map(r=>r.visitDate).filter(Boolean).sort();
+  const dateRange = dates.length ? (dates[0]===dates[dates.length-1] ? dates[0] : `${dates[0]} ถึง ${dates[dates.length-1]}`) : '.................';
+
+  const S = s => `<span style="display:inline-block;min-width:28px;text-align:right;font-weight:700">${s}</span>`;
+  const row = (label, val) => `<div style="padding:3px 0;border-bottom:1px dotted #ddd;display:flex;justify-content:space-between;align-items:baseline">
+    <span>${label}</span><span style="white-space:nowrap">จำนวน ${S(val)} คน</span></div>`;
+  const chk = (checked, label) => `<span style="margin-right:16px;white-space:nowrap">${checked?'☑':'☐'} ${label}</span>`;
+  const blankLine = n => `<div style="border-bottom:1px solid #999;min-height:22px;margin-bottom:4px">${n||''}</div>`;
+
+  document.getElementById('district-out').innerHTML = `
+<div style="background:#fff;padding:28px 32px;border-radius:10px;box-shadow:var(--sh);font-size:13.5px;line-height:1.8;color:#111;font-family:'TH SarabunPSK','Sarabun','Noto Sans Thai',Arial,sans-serif">
+
+  <!-- หัว -->
+  <div class="rpt-head" style="text-align:center;margin-bottom:14px;border-bottom:1.5px solid #000;padding-bottom:8px">
+    <div style="font-size:16px;font-weight:800;letter-spacing:.01em">แบบสรุปรายงานการเยี่ยมบ้านนักเรียนของสถานศึกษาในสังกัด สพม.อุบลราชธานี อำนาจเจริญ</div>
+    <div style="margin-top:4px">โรงเรียน<u>${SCHOOL}</u> &nbsp;&nbsp;&nbsp; ครั้งที่ <u>&nbsp;${meta.round||'........'}&nbsp;</u> &nbsp;&nbsp;&nbsp; ปีการศึกษา <u>&nbsp;${yr!=='all'?yr:'........'}&nbsp;</u></div>
+    <div>ระหว่างวันที่ <u>&nbsp;${dateRange}&nbsp;</u></div>
   </div>
-  <div class="doc-line">ครั้งที่ <strong>${semester}</strong> &nbsp; ปีการศึกษา <strong>${year}</strong></div>
-  <div class="doc-line">ระหว่างวันที่ <span class="dot-line">&nbsp;${dateRange}&nbsp;</span></div>
-</div>
-<hr style="margin:12px 0;border:1px solid #ccc">
-<div class="doc-section">
-  <div class="doc-line">จำนวนนักเรียนทั้งหมดของสถานศึกษา <strong>${totalStudents}</strong> คน เป็นชาย <strong>${visitedMale}</strong> คน หญิง <strong>${visitedFemale}</strong> คน</div>
-  <div class="doc-line">จำนวนนักเรียนที่ออกเยี่ยมบ้าน <strong>${visited}</strong> คน คิดเป็นร้อยละ <strong>${pc(visited,totalStudents)}</strong></div>
-  <div class="doc-line" style="padding-left:18px">เป็นชาย <strong>${visitedMale}</strong> คน หญิง <strong>${visitedFemale}</strong> คน</div>
-  <div class="doc-line">จำนวนนักเรียนที่ไม่ได้ออกเยี่ยมบ้าน <strong>${notVisited}</strong> คน คิดเป็นร้อยละ <strong>${pc(notVisited,totalStudents)}</strong></div>
-  <div class="doc-line">สาเหตุที่ไม่ได้ออกเยี่ยมบ้าน: <strong>${nvArr.length?nvArr.join(', '):'ไม่ระบุ'}</strong></div>
-</div>
-<div class="doc-section">
-  <div class="doc-section-title">ข้อมูลครอบครัว</div>
-  <div class="doc-item">พบว่านักเรียนที่บิดาและมารดาเสียชีวิต จำนวน <strong>${ag(recs,'bothDeceased')}</strong> คน</div>
-  <div class="doc-item">พบว่านักเรียนที่มีบิดาหรือมารดาเสียชีวิต จำนวน <strong>${ag(recs,'oneDeceased')}</strong> คน</div>
-  <div class="doc-item">พบว่านักเรียนที่บิดาและมารดาเลิกร้างกัน จำนวน <strong>${ag(recs,'divorced')}</strong> คน</div>
-  <div class="doc-item">พบว่านักเรียนมิได้อาศัยอยู่กับบิดาหรือมารดา จำนวน <strong>${ag(recs,'notWithParents')}</strong> คน</div>
-  <div class="doc-item">พบว่านักเรียนมีพี่น้องที่เกิดจากต่างบิดาและมารดา จำนวน <strong>${ag(recs,'halfSiblings')}</strong> คน</div>
-</div>
-<div class="doc-section">
-  <div class="doc-section-title">ความสัมพันธ์ของสมาชิกในครอบครัว</div>
-  <div class="doc-item">สนิทสนม/รักใคร่กันดี จำนวน <strong>${ag(recs,'famClose')}</strong> คน</div>
-  <div class="doc-item">ขัดแย้งทะเลาะกันบางครั้ง จำนวน <strong>${ag(recs,'famConflictSome')}</strong> คน</div>
-  <div class="doc-item">ขัดแย้งทะเลาะกันบ่อยครั้ง จำนวน <strong>${ag(recs,'famConflictOften')}</strong> คน</div>
-  <div class="doc-item">ห่างเหิน จำนวน <strong>${ag(recs,'famDistant')}</strong> คน</div>
-  <div class="doc-item">ขัดแย้งและทำร้ายร่างกายบางครั้ง จำนวน <strong>${ag(recs,'famViolSome')}</strong> คน</div>
-  <div class="doc-item">ขัดแย้งและทำร้ายร่างกายบ่อยครั้ง จำนวน <strong>${ag(recs,'famViolOften')}</strong> คน</div>
-  <div class="doc-item">อื่น ๆ จำนวน <strong>${ag(recs,'famOther')}</strong> คน</div>
-</div>
-<div class="doc-section">
-  <div class="doc-section-title">สภาพแวดล้อมที่อยู่อาศัย</div>
-  <div class="doc-item">สภาพตัวบ้านพอใช้ถึงดี จำนวน <strong>${ag(recs,'houseGood')}</strong> คน</div>
-  <div class="doc-item">สภาพตัวบ้านเก่าทรุดโทรม/ไม่มีความเป็นส่วนตัว จำนวน <strong>${ag(recs,'houseOld')}</strong> คน</div>
-  <div class="doc-item">สภาพแวดล้อมใกล้แหล่งมั่วสุม/สถานบันเทิง/ชุมชนแออัด จำนวน <strong>${ag(recs,'nearBad')}</strong> คน</div>
-</div>
-<div class="doc-section">
-  <div class="doc-section-title">พฤติกรรมความเสี่ยง</div>
-  <div class="doc-item">สุขภาพอนามัย จำนวน <strong>${ag(recs,'riskHealth')}</strong> คน</div>
-  <div class="doc-item">พฤติกรรมการใช้สารเสพติด จำนวน <strong>${ag(recs,'riskSubstance')}</strong> คน</div>
-  <div class="doc-item">พฤติกรรมการใช้ความรุนแรง จำนวน <strong>${ag(recs,'riskViolence')}</strong> คน</div>
-  <div class="doc-item">การเดินทางมาเรียน จำนวน <strong>${ag(recs,'riskTransport')}</strong> คน</div>
-  <div class="doc-item">ด้านเพศ จำนวน <strong>${ag(recs,'riskSex')}</strong> คน</div>
-  <div class="doc-item">พฤติกรรมการใช้โทรศัพท์ ติดเกม/ติดโซเชียล จำนวน <strong>${ag(recs,'riskPhone')}</strong> คน</div>
-  <div class="doc-item">สวัสดิภาพและความปลอดภัย จำนวน <strong>${ag(recs,'riskSafety')}</strong> คน</div>
-  <div class="doc-item">อื่น ๆ จำนวน <strong>${ag(recs,'riskOther')}</strong> คน</div>
-  <div class="doc-item"><strong>คิดเป็นจำนวนทั้งสิ้น ${totalRisk} คน</strong></div>
-</div>
-<div class="doc-section">
-  <div class="doc-section-title">ปัญหาที่พบ</div>
-  <div class="doc-item">พบว่านักเรียนเสี่ยงหรือมีปัญหาด้านการเรียน จำนวน <strong>${ag(recs,'probLearning')}</strong> คน</div>
-  <div class="doc-item">พบว่านักเรียนมีปัญหาด้านสุขภาพ จำนวน <strong>${ag(recs,'probHealth')}</strong> คน</div>
-  <div class="doc-item">พบว่านักเรียนมีปัญหาด้านเศรษฐกิจ จำนวน <strong>${ag(recs,'probEconomy')}</strong> คน</div>
-  <div class="doc-item">พบว่านักเรียนมีปัญหาการใช้สารเสพติด จำนวน <strong>${ag(recs,'probSubstance')}</strong> คน</div>
-  <div class="doc-item">พบว่านักเรียนมีภาวะซึมเศร้า/โรคซึมเศร้า จำนวน <strong>${ag(recs,'probDepression')}</strong> คน</div>
-  <div class="doc-item">พบว่านักเรียนมีปัญหาอื่น ๆ จำนวน <strong>${ag(recs,'probOther')}</strong> คน</div>
-</div>
-<div class="doc-section">
-  <div class="doc-section-title">การช่วยเหลือเร่งด่วน</div>
-  <div class="doc-item">นักเรียนที่ต้องได้รับการช่วยเหลือเร่งด่วน จำนวน <strong>${ag(recs,'urgent')}</strong> คน</div>
-  <div class="doc-item">ระบุความต้องการ: ${joinText('urgentDetail')}</div>
-</div>
-<div class="doc-section">
-  <div class="doc-section-title">หน่วยงาน/สหวิชาชีพ/องค์กรที่ร่วมเยี่ยมบ้าน</div>
-  <div class="doc-item">${partnerList.join(', ')}</div>
-</div>
-<div class="doc-section">
-  <div class="doc-section-title">การนำข้อมูลเยี่ยมบ้านนักเรียนไปใช้ประโยชน์</div>
-  <div class="doc-item" style="white-space:pre-line">${joinText('dataUsage')}</div>
-</div>
-<div class="doc-section">
-  <div class="doc-section-title">ข้อห่วงใยของผู้ปกครองที่มีต่อนักเรียน</div>
-  <div class="doc-item" style="white-space:pre-line">${joinText('parentConcerns')}</div>
-</div>
-<div class="doc-section">
-  <div class="doc-section-title">ปัญหา/อุปสรรค/ข้อเสนอแนะ</div>
-  <div class="doc-item" style="white-space:pre-line">${joinText('obstacles')}</div>
-</div>
-<div class="doc-section">
-  <div class="doc-section-title">ความคิดเห็นและข้อเสนอแนะ</div>
-  <div class="doc-item" style="white-space:pre-line">${joinText('opinions')}</div>
-</div>
-<div class="doc-section">
-  <div class="doc-section-title">รูปภาพประกอบ 2 – 4 รูป</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:7px">
-    <div class="photo-placeholder">รูปภาพที่ 1</div><div class="photo-placeholder">รูปภาพที่ 2</div>
-    <div class="photo-placeholder">รูปภาพที่ 3</div><div class="photo-placeholder">รูปภาพที่ 4</div>
+
+  <!-- ข้อ 1 -->
+  <div style="margin-bottom:6px"><strong>1.</strong> จำนวนนักเรียนทั้งหมดของสถานศึกษา ${S(tT)} คน &nbsp; เป็นชาย ${S(tM)} คน &nbsp; หญิง ${S(tF)} คน</div>
+
+  <!-- ข้อ 2 -->
+  <div style="margin-bottom:6px"><strong>2.</strong> จำนวนนักเรียนที่ออกเยี่ยมบ้าน ${S(tV)} คน &nbsp; คิดเป็นร้อยละ <u>${pctV}</u> &nbsp;&nbsp; เป็นชาย ${S(tVM)} คน &nbsp; หญิง ${S(tVF)} คน</div>
+
+  <!-- ข้อ 3 -->
+  <div style="margin-bottom:6px"><strong>3.</strong> จำนวนนักเรียนที่ไม่ได้ออกเยี่ยมบ้าน ${S(tNV)} คน &nbsp; คิดเป็นร้อยละ <u>${pctNV}</u></div>
+
+  <!-- ข้อ 4 -->
+  <div style="margin-bottom:8px">
+    <div><strong>4.</strong> สาเหตุที่ไม่ได้ออกเยี่ยมบ้าน</div>
+    <div style="padding-left:16px">
+      ${chk(nv100===0&&tNV===0,'ไม่มี เนื่องจากเยี่ยมบ้านครบ 100%')} ${chk(nvAbsent>0,'นักเรียนไม่มาเรียนเป็นเวลานาน')} <br>
+      ${chk(nvBusy>0,'ผู้ปกครองติดงาน/ฤดูกาลทำนา ไม่สะดวก')} ${chk(nvNotfound>0,'ติดต่อนักเรียน/ผู้ปกครองนักเรียนไม่ได้')} <br>
+      ${chk(nvMoved>0,'อื่น ๆ ระบุ')} ${nvMoved>0||nvOther>0 ? '......................................................................' : ''}
+    </div>
   </div>
-</div>
-<div style="margin-top:40px">
-  <div style="font-weight:bold;margin-bottom:7px">ผู้สรุปรายงานการเยี่ยมบ้านนักเรียนของสถานศึกษา</div>
-  <div class="doc-line">ชื่อ – นามสกุล <span class="dot-line">&nbsp;${reporter}&nbsp;</span></div>
-  <div class="doc-line">ตำแหน่ง <span class="dot-line">&nbsp;${reporterPos}&nbsp;</span> หมายเลขโทรศัพท์ <span class="dot-line">&nbsp;.................................&nbsp;</span></div>
-  <div class="doc-sign-row">
-    <div class="doc-sign-block"><div style="margin-bottom:44px">ลงชื่อ</div><div class="doc-sign-line"></div><div>(${reporter})</div><div>ผู้รายงาน</div></div>
-    <div class="doc-sign-block"><div style="margin-bottom:44px">ลงชื่อ</div><div class="doc-sign-line"></div><div>(${principal})</div><div>ผู้อำนวยการโรงเรียน${school}</div></div>
+
+  <!-- ข้อ 5 -->
+  <div style="margin-bottom:8px">
+    <div><strong>5.</strong> ข้อมูลครอบครัว</div>
+    <div style="padding-left:16px">
+      ${row('พบว่านักเรียนที่บิดาและมารดาเสียชีวิต', fbC('both_dead'))}
+      ${row('พบว่านักเรียนที่มีบิดาหรือมารดาเสียชีวิต', fbC('one_dead'))}
+      ${row('พบว่านักเรียนที่บิดาและมารดาเลิกร้างกัน', fbC('divorced'))}
+      ${row('พบว่านักเรียนมิได้อาศัยอยู่กับบิดาหรือมารดาของตนเอง', fbC('not_with_par'))}
+      ${row('พบว่านักเรียนมีพี่น้องที่เกิดจากต่างบิดาและมารดา', fbC('half_sib'))}
+    </div>
   </div>
+
+  <!-- ข้อ 6 -->
+  <div style="margin-bottom:8px">
+    <div><strong>6.</strong> ความสัมพันธ์ของสมาชิกในครอบครัว</div>
+    <div style="padding-left:16px">
+      ${row('สนิทสนม/รักใคร่กันดี', famC('close'))}
+      ${row('ขัดแย้งทะเลาะกันบางครั้ง', famC('conflict_some'))}
+      ${row('ขัดแย้งทะเลาะกันบ่อยครั้ง', famC('conflict_often'))}
+      ${row('ห่างเหิน', famC('distant'))}
+      ${row('ขัดแย้งและทำร้ายร่างกายบางครั้ง', famC('viol_some'))}
+      ${row('ขัดแย้งและทำร้ายร่างกายบ่อยครั้ง', famC('viol_often'))}
+      ${row('อื่น ๆ', famC('other'))}
+    </div>
+  </div>
+
+  <!-- ข้อ 7 -->
+  <div style="margin-bottom:8px">
+    <div><strong>7.</strong> สภาพแวดล้อมที่อยู่อาศัย</div>
+    <div style="padding-left:16px">
+      ${row('สภาพตัวบ้านพอใช้ถึงดี', hGood)}
+      ${row('สภาพตัวบ้านเก่าทรุดโทรม/ไม่มีความเป็นส่วนตัว', hOld)}
+      ${row('สภาพแวดล้อมใกล้แหล่งมั่วสุม/สถานบันเทิง/ชุมชนแออัด', hBad)}
+    </div>
+  </div>
+
+  <!-- ข้อ 8 -->
+  <div style="margin-bottom:8px">
+    <div><strong>8.</strong> พบว่านักเรียนพฤติกรรมความเสี่ยง</div>
+    <div style="padding-left:16px">
+      ${row('สุขภาพอนามัย', rH)}
+      ${row('พฤติกรรมการใช้สารเสพติด', rS)}
+      ${row('พฤติกรรมการใช้ความรุนแรง', rV)}
+      ${row('การเดินทางมาเรียน', rT)}
+      ${row('ด้านเพศ', rX)}
+      ${row('พฤติกรรมการใช้โทรศัพท์ ติดเกม/ติดโซเชียล', rP)}
+      ${row('สวัสดิภาพและความปลอดภัย', rSf)}
+      ${row('อื่น ๆ', rO)}
+      <div style="margin-top:4px;font-weight:700">คิดเป็นจำนวนทั้งสิ้น ${S(tRisk)} คน</div>
+    </div>
+  </div>
+
+  <!-- ข้อ 9-14 -->
+  <div style="margin-bottom:6px"><strong>9.</strong>&nbsp; พบว่านักเรียนเสี่ยงหรือมีปัญหาด้านการเรียน &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; จำนวน ${S(pL)} คน</div>
+  <div style="margin-bottom:6px"><strong>10.</strong> พบว่านักเรียนมีปัญหาด้านสุขภาพ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; จำนวน ${S(pH)} คน</div>
+  <div style="margin-bottom:6px"><strong>11.</strong> พบว่านักเรียนมีปัญหาด้านเศรษฐกิจ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; จำนวน ${S(pE)} คน</div>
+  <div style="margin-bottom:6px"><strong>12.</strong> พบว่านักเรียนมีปัญหาการใช้สารเสพติด เช่น น้ำกระท่อม กัญชา บุหรี่ไฟฟ้า &nbsp; จำนวน ${S(pS)} คน</div>
+  <div style="margin-bottom:6px"><strong>13.</strong> พบว่านักเรียนมีปัญหาภาวะซึมเศร้า/โรคซึมเศร้า &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; จำนวน ${S(pD)} คน</div>
+  <div style="margin-bottom:8px"><strong>14.</strong> พบว่านักเรียนมีปัญหาอื่น ๆ ระบุ ......................................................................&nbsp; จำนวน ${S(pO)} คน</div>
+
+  <!-- ข้อ 15 -->
+  <div style="margin-bottom:8px">
+    <strong>15.</strong> นักเรียนที่ต้องได้รับการช่วยเหลือเร่งด่วน ${S(tUrg)} คน <br>
+    <span style="padding-left:20px">ระบุความต้องการช่วยเหลือ</span><br>
+    <div style="padding-left:20px">${blankLine(meta.urgentDesc)}</div>
+  </div>
+
+  <!-- ข้อ 16 -->
+  <div style="margin-bottom:8px">
+    <strong>16.</strong> ภาคเรียนที่ผ่านมา นักเรียนที่ต้องการได้รับการช่วยเหลือเร่งด่วน ได้รับการช่วยเหลือ/ส่งต่อการช่วยเหลือ ส่งผลให้ดีขึ้นแล้ว
+    &nbsp; จำนวน ${S(meta.helpedCount||0)} คน
+  </div>
+
+  <!-- ข้อ 17 -->
+  <div style="margin-bottom:8px">
+    <div><strong>17.</strong> หน่วยงาน/สหวิชาชีพ/องค์กร ที่ร่วมเยี่ยมบ้าน</div>
+    <div style="padding-left:20px">
+      ${chk((meta.orgs||[]).includes('soc'), 'สำนักงานพัฒนาสังคมและความมั่นคงของมนุษย์')}<br>
+      ${chk((meta.orgs||[]).includes('health'), 'หน่วยงานสาธารณสุข')}<br>
+      ${chk((meta.orgs||[]).includes('other_org'), 'อื่น ๆ ระบุ')} ${meta.otherOrg||'.................................'}<br>
+      ${chk((meta.orgs||[]).includes('none'), 'ไม่มีหน่วยงาน/สหวิชาชีพ/องค์กรร่วม')}
+    </div>
+  </div>
+
+  <!-- ข้อ 18 -->
+  <div style="margin-bottom:8px">
+    <div><strong>18.</strong> การนำข้อมูลเยี่ยมบ้านนักเรียนไปใช้ประโยชน์ อย่างไร</div>
+    <div style="padding-left:20px">${blankLine(meta.usage)}${blankLine()}</div>
+  </div>
+
+  <!-- ข้อ 19 -->
+  <div style="margin-bottom:8px">
+    <div><strong>19.</strong> ข้อห่วงใยของผู้ปกครองที่มีต่อนักเรียน</div>
+    <div style="padding-left:20px">${blankLine(meta.parentConcern)}${blankLine()}</div>
+  </div>
+
+  <!-- ข้อ 20 -->
+  <div style="margin-bottom:8px">
+    <div><strong>20.</strong> ปัญหา/อุปสรรค/ข้อเสนอแนะ</div>
+    <div style="padding-left:20px">${blankLine(meta.issues)}${blankLine()}</div>
+  </div>
+
+  <!-- ข้อ 21 -->
+  <div style="margin-bottom:8px">
+    <div><strong>21.</strong> ความคิดเห็นและข้อเสนอแนะ</div>
+    <div style="padding-left:20px">${blankLine(meta.comments)}${blankLine()}${blankLine()}</div>
+  </div>
+
+  <!-- ข้อ 22 -->
+  <div style="margin-bottom:16px"><strong>22.</strong> รูปภาพประกอบ 2 - 4 รูป (แนบเพิ่มเติม)</div>
+
+  <!-- ข้อ 23 -->
+  <div style="margin-bottom:20px">
+    <div><strong>23.</strong> ผู้สรุปรายงานการเยี่ยมบ้านนักเรียนของสถานศึกษา</div>
+    <div style="padding-left:20px">
+      <div>ชื่อ – นามสกุล ${blankLine(meta.reporter)}</div>
+      <div>ตำแหน่ง <u>${meta.reporterPos||'......................................'}</u> &nbsp;&nbsp; หมายเลขโทรศัพท์ <u>${meta.reporterPhone||'......................................'}</u></div>
+    </div>
+  </div>
+
+  <!-- ลายเซ็น -->
+  <div class="sig-section" style="display:flex;justify-content:flex-end;margin-top:28px">
+    <div style="text-align:center;min-width:260px">
+      <div style="font-size:13px;margin-bottom:6px">ลงชื่อ .......................................................... ผู้รับรองข้อมูล</div>
+      <div style="font-size:13px">(${PRINCIPAL})</div>
+      <div style="font-size:12px;color:#555">ผู้อำนวยการโรงเรียน${SCHOOL}</div>
+    </div>
+  </div>
+
 </div>`;
 }
-function printDistrictReport(){ window.print(); }
 
-// ═══════════════════════════════════════
-// EXCEL EXPORT
-// ═══════════════════════════════════════
+// ── EXCEL EXPORT ──────────────────────────
 function exportExcel() {
-  const recs = getRecords();
-  if (!recs.length) { alert('ยังไม่มีข้อมูล'); return; }
-  const headers=['โรงเรียน','อำเภอ','จังหวัด','ปีการศึกษา','ครั้งที่','ชั้น/ห้อง','ครูที่ปรึกษา','เบอร์โทร','ช่วงวันที่','นักเรียนทั้งหมด','เยี่ยม(ชาย)','เยี่ยม(หญิง)','เยี่ยมรวม','%เยี่ยม','ไม่ได้เยี่ยม','บิดา-มารดาเสียทั้งคู่','บิดาหรือมารดาเสีย','เลิกร้าง','ไม่อยู่กับพ่อแม่','พี่น้องต่างพ่อแม่','ครอบครัวสนิทสนม','ขัดแย้งบางครั้ง','ขัดแย้งบ่อย','ห่างเหิน','ทำร้ายบางครั้ง','ทำร้ายบ่อย','ความสัมพันธ์อื่น','บ้านพอใช้-ดี','บ้านเก่า','ใกล้มั่วสุม','เสี่ยงสุขภาพ','เสี่ยงสารเสพติด','เสี่ยงรุนแรง','เสี่ยงเดินทาง','เสี่ยงเพศ','ติดโทรศัพท์','เสี่ยงความปลอดภัย','เสี่ยงอื่น','ปัญหาการเรียน','ปัญหาสุขภาพ','ปัญหาเศรษฐกิจ','ปัญหาสารเสพติด','ซึมเศร้า','ปัญหาอื่น','ช่วยเหลือด่วน','รายละเอียดด่วน','การนำข้อมูลไปใช้','ข้อห่วงใยผปค.','ปัญหา-อุปสรรค','ความคิดเห็น','ทุนอันดับ1','ทุนอันดับ2','ทุนอันดับ3','วันที่บันทึก'];
-  const rows=recs.map(r=>{
-    const vis=(r.visitedMale||0)+(r.visitedFemale||0);
-    const pct=r.totalStudents>0?(vis/r.totalStudents*100).toFixed(2):0;
-    const dt=r.createdAt?new Date(r.createdAt).toLocaleDateString('th-TH'):'';
-    return [r.school,r.amphoe,r.province,r.year,r.semester,r.grade,r.teacher,r.phone,r.dateRange,
-      r.totalStudents,r.visitedMale,r.visitedFemale,vis,pct,r.notVisited,
-      r.bothDeceased,r.oneDeceased,r.divorced,r.notWithParents,r.halfSiblings,
-      r.famClose,r.famConflictSome,r.famConflictOften,r.famDistant,r.famViolSome,r.famViolOften,r.famOther,
-      r.houseGood,r.houseOld,r.nearBad,
-      r.riskHealth,r.riskSubstance,r.riskViolence,r.riskTransport,r.riskSex,r.riskPhone,r.riskSafety,r.riskOther,
-      r.probLearning,r.probHealth,r.probEconomy,r.probSubstance,r.probDepression,r.probOther,
-      r.urgent,r.urgentDetail,r.dataUsage,r.parentConcerns,r.obstacles,r.opinions,
-      r.scholarship1,r.scholarship2,r.scholarship3,dt];
-  });
-  const wb=XLSX.utils.book_new();
-  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
-  ws['!cols']=headers.map((_,i)=>({wch:i<3?20:i<9?14:10}));
-  XLSX.utils.book_append_sheet(wb,ws,'ข้อมูลเยี่ยมบ้าน');
-  const cfg=getConfig();
-  const sch=cfg.school||(recs[0]?.school||'โรงเรียน');
-  const total=ag(recs,'totalStudents'); const vis2=ag(recs,'visitedMale')+ag(recs,'visitedFemale');
-  const ws2=XLSX.utils.aoa_to_sheet([['หัวข้อ','จำนวน(คน)','ร้อยละ'],
-    ['นักเรียนทั้งหมด',total,'100'],['ได้รับการเยี่ยมบ้าน',vis2,pc(vis2,total)],
-    ['ไม่ได้รับการเยี่ยมบ้าน',ag(recs,'notVisited'),pc(ag(recs,'notVisited'),total)],[],
-    ['ข้อมูลครอบครัว'],['บิดา-มารดาเสียชีวิตทั้งคู่',ag(recs,'bothDeceased'),pc(ag(recs,'bothDeceased'),vis2)],
-    ['บิดาหรือมารดาเสียชีวิต',ag(recs,'oneDeceased'),pc(ag(recs,'oneDeceased'),vis2)],
-    ['บิดา-มารดาเลิกร้าง',ag(recs,'divorced'),pc(ag(recs,'divorced'),vis2)],[],
-    ['พฤติกรรมเสี่ยง'],['สุขภาพอนามัย',ag(recs,'riskHealth'),pc(ag(recs,'riskHealth'),vis2)],
-    ['สารเสพติด',ag(recs,'riskSubstance'),pc(ag(recs,'riskSubstance'),vis2)],
-    ['ติดโทรศัพท์/เกม',ag(recs,'riskPhone'),pc(ag(recs,'riskPhone'),vis2)],[],
-    ['ปัญหาที่พบ'],['ด้านการเรียน',ag(recs,'probLearning'),pc(ag(recs,'probLearning'),vis2)],
-    ['ด้านสุขภาพ',ag(recs,'probHealth'),pc(ag(recs,'probHealth'),vis2)],
-    ['ด้านเศรษฐกิจ',ag(recs,'probEconomy'),pc(ag(recs,'probEconomy'),vis2)],
-    ['ภาวะซึมเศร้า',ag(recs,'probDepression'),pc(ag(recs,'probDepression'),vis2)],[],
-    ['ต้องช่วยเหลือเร่งด่วน',ag(recs,'urgent'),pc(ag(recs,'urgent'),vis2)]]);
-  ws2['!cols']=[{wch:35},{wch:14},{wch:12}];
-  XLSX.utils.book_append_sheet(wb,ws2,'สรุปภาพรวม');
-  XLSX.writeFile(wb,`รายงานเยี่ยมบ้าน_${sch}_${recs[0]?.year||''}.xlsx`);
+  let recs = _gFilter === 'all' ? _recs : _recs.filter(r => r.gradeLevel === _gFilter);
+  if (!recs.length) { alert('ไม่มีข้อมูลที่จะ export ครับ'); return; }
+  const parStatLabel = {'together':'อยู่ด้วยกัน','separate':'แยกกันอยู่','divorced':'หย่าร้าง','father_dead':'บิดาเสียชีวิต','mother_dead':'มารดาเสียชีวิต','both_dead':'เสียชีวิตทั้งคู่'};
+  const transportLabel = {'parent_drive':'ผู้ปกครองส่ง','motorbike':'รถมอเตอร์ไซค์','bus':'รถโดยสาร','school_bus':'รถโรงเรียน','bicycle':'รถจักรยาน','walk':'เดิน','other':'อื่นๆ'};
+  const sheet1 = recs.map(r => ({
+    'ชื่อนักเรียน': r.studentName||'', 'เลขที่': r.studentNo||'', 'เบอร์โทรนักเรียน': r.studentPhone||'',
+    'เพศ': r.gender==='male'?'ชาย':r.gender==='female'?'หญิง':'', 'ระดับชั้น': r.gradeLevel||'', 'ครูประจำชั้น': r.teacher||'',
+    'ชื่อบิดา': r.fatherName||'', 'อาชีพบิดา': r.fatherJob||'', 'เบอร์บิดา': r.fatherPhone||'',
+    'ชื่อมารดา': r.motherName||'', 'อาชีพมารดา': r.motherJob||'', 'เบอร์มารดา': r.motherPhone||'',
+    'สถานภาพบิดา-มารดา': parStatLabel[r.parStatus]||r.parStatus||'',
+    'ชื่อผู้ปกครอง': r.parentName||'', 'ความสัมพันธ์': r.parentRel||'', 'อาชีพผู้ปกครอง': r.parentJob||'',
+    'เบอร์ผู้ปกครอง': r.parentPhone||'', 'ที่อยู่': r.address||'',
+    'ต้องการความช่วยเหลือ': (r.needHelp||[]).join(', '), 'ความห่วงใยผู้ปกครอง': r.parentConcern||'',
+    'จำนวนสมาชิก': r.householdSize||0, 'รายได้ครัวเรือน': r.income||0, 'ค่าใช้จ่ายนักเรียน': r.allowance||0,
+    'ภาระพิเศษ': (r.burden||[]).join(', '), 'ลักษณะที่อยู่อาศัย': r.houseType||'',
+    'วันที่เยี่ยม': r.visitDate||'', 'ปีการศึกษา': r.year||'', 'ภาคเรียน': r.semester||'',
+    'เยี่ยมได้': r.visited?'ใช่':'ไม่ใช่',
+    'เสี่ยงสุขภาพ': r.rH||0, 'เสี่ยงสารเสพติด': r.rS||0, 'เสี่ยงความรุนแรง': r.rV||0,
+    'เสี่ยงการเดินทาง': r.rT||0, 'เสี่ยงเพศ': r.rX||0, 'เสี่ยงโทรศัพท์/เกม': r.rP||0,
+    'เสี่ยงความปลอดภัย': r.rSf||0,
+    'ปัญหาการเรียน': r.pL||0, 'ปัญหาสุขภาพ': r.pH||0, 'ปัญหาเศรษฐกิจ': r.pE||0,
+    'ปัญหาสารเสพติด': r.pS||0, 'ปัญหาซึมเศร้า': r.pD||0,
+    'ครอบครัวเสียชีวิตทั้งคู่': (r.famBg||[]).includes('both_dead')?1:0,
+    'บิดา/มารดาเสียชีวิต': (r.famBg||[]).includes('one_dead')?1:0,
+    'บิดามารดาเลิกร้าง': (r.famBg||[]).includes('divorced')?1:0,
+    'ไม่อาศัยกับบิดา/มารดา': (r.famBg||[]).includes('not_with_par')?1:0,
+    'พี่น้องต่างบิดา/มารดา': (r.famBg||[]).includes('half_sib')?1:0,
+    'ความสัมพันธ์ครอบครัว': r.family||'', 'สภาพบ้าน': (r.house||[]).join(', '),
+    'การเดินทาง': transportLabel[r.transport]||r.transport||'',
+    'ระยะทาง (กม.)': r.distance||0, 'เวลาเดินทาง (นาที)': r.travelTime||0,
+    'เร่งด่วน': r.urgent?'ใช่':'ไม่ใช่', 'หมายเหตุ': r.notes||''
+  }));
+  const agg = aggByGrade();
+  const sheet2 = agg.filter(g => g.total > 0).map(g => ({
+    'ชั้น': g.grade, 'ครูประจำชั้น': g.tchr, 'นักเรียนทั้งหมด': g.total,
+    'เยี่ยมได้ (ชาย)': g.visM, 'เยี่ยมได้ (หญิง)': g.visF, 'เยี่ยมได้ (รวม)': g.vis,
+    'ยังไม่ได้เยี่ยม': g.nvis, 'มีปัญหา/เสี่ยง': g.risk, 'เร่งด่วน': g.urg,
+    'อยู่ด้วยกัน': g.psTogether, 'แยกกันอยู่': g.psSeparate, 'หย่าร้าง': g.psDivorced,
+    'บิดาเสียชีวิต': g.psFatherDead, 'มารดาเสียชีวิต': g.psMotherDead, 'เสียชีวิตทั้งคู่': g.psBothDead,
+    'มีผู้พิการในบ้าน': g.bdDisabled, 'มีผู้สูงอายุในบ้าน': g.bdElderly,
+    'พ่อ/แม่เลี้ยงเดี่ยว': g.bdSinglePar, 'ตกงาน/ว่างงาน': g.bdUnemployed
+  }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheet1), 'รายบุคคล');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheet2), 'สรุปรายชั้น');
+  XLSX.writeFile(wb, `เยี่ยมบ้าน_จิกดู่วิทยา_${new Date().toLocaleDateString('th-TH')}.xlsx`);
 }
 
-// ═══════════════════════════════════════
-// BACKUP / RESTORE
-// ═══════════════════════════════════════
-function exportDataBackup() {
-  const data={records:getRecords(),config:getConfig(),exportDate:new Date().toISOString()};
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download=`backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
-}
-function importDataBackup(e) {
-  const file=e.target.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=async ev=>{
-    try {
-      const data=JSON.parse(ev.target.result);
-      if(USE_FIREBASE && db && data.records) {
-        showLoading(true,'กำลัง Import...');
-        for(const r of data.records) { const d={...r}; delete d.id; await db.collection('records').add(d); }
-        await loadRecords();
-        showLoading(false);
-      } else if (data.records) {
-        localStorage.setItem(STORAGE_KEY,JSON.stringify(data.records));
-        _records=data.records;
-      }
-      if(data.config) saveConfigLocal(data.config);
-      closeSettings(); renderDashboard();
-      alert(`✅ นำเข้าสำเร็จ: ${data.records?.length||0} รายการ`);
-    } catch{ alert('❌ ไฟล์ไม่ถูกต้อง'); }
-  };
-  reader.readAsText(file);
-  e.target.value='';
-}
-async function clearAllData() {
-  if(!confirm('⚠️ ยืนยันลบข้อมูลทั้งหมด?')) return;
-  if(USE_FIREBASE && db) {
-    showLoading(true,'กำลังลบข้อมูล...');
-    const snap=await db.collection('records').get();
-    for(const d of snap.docs) await d.ref.delete();
-    showLoading(false);
-  }
-  localStorage.removeItem(STORAGE_KEY);
-  _records=[];
-  closeSettings(); renderDashboard();
-  alert('ลบข้อมูลทั้งหมดเรียบร้อย');
+// ── PRINT STUDENT FORM ────────────────────
+function printStudent(id) {
+  const r = _recs.find(x => x.id === id); if (!r) return;
+  const chk = (v, lbl) => `<span style="margin-right:12px;white-space:nowrap">${v?'☑':'☐'} ${lbl}</span>`;
+  const row = (lbl, val) => `<tr><td style="width:35%;font-weight:600;padding:4px 8px;border:0.5px solid #ccc;background:#fafafa;font-size:12px">${lbl}</td><td style="padding:4px 8px;border:0.5px solid #ccc;font-size:12px">${val||'–'}</td></tr>`;
+  const parStatTh = {together:'อยู่ด้วยกัน',separate:'แยกกันอยู่',divorced:'หย่าร้าง',father_dead:'บิดาเสียชีวิต',mother_dead:'มารดาเสียชีวิต',both_dead:'เสียชีวิตทั้งคู่'};
+  const transTh = {parent_drive:'ผู้ปกครองส่ง',motorbike:'รถมอเตอร์ไซค์',bus:'รถโดยสาร',school_bus:'รถโรงเรียน',bicycle:'รถจักรยาน',walk:'เดิน',other:'อื่นๆ'};
+  const famTh = {close:'สนิทสนม',conflict_some:'ขัดแย้งบางครั้ง',conflict_often:'ขัดแย้งบ่อย',distant:'ห่างเหิน',viol_some:'ทำร้ายบางครั้ง',viol_often:'ทำร้ายบ่อย',other:'อื่นๆ'};
+  const houseTh = {good:'พอใช้-ดี',old:'เก่า/ทรุดโทรม',material:'วัสดุพื้นบ้าน',no_toilet:'ไม่มีห้องส้วม',bad_area:'ใกล้แหล่งมั่วสุม'};
+  const sec = (title, color, content) => `
+    <div style="margin-bottom:10px">
+      <div style="background:${color};color:#fff;padding:5px 10px;font-weight:700;font-size:12px;border-radius:4px 4px 0 0">${title}</div>
+      <table style="width:100%;border-collapse:collapse;border:0.5px solid #ccc;border-top:none">${content}</table>
+    </div>`;
+  document.getElementById('student-print-body').innerHTML = `
+<div style="font-family:'TH SarabunPSK','Sarabun',Arial,sans-serif;font-size:13px;color:#111">
+  <div style="text-align:center;border-bottom:2px solid #9b0a23;padding-bottom:8px;margin-bottom:12px">
+    <div style="font-size:16px;font-weight:800;color:#9b0a23">บันทึกการเยี่ยมบ้านนักเรียน</div>
+    <div style="font-size:12px;margin-top:2px">${SCHOOL} | อ.${AMPHOE} | จ.${PROVINCE}</div>
+    <div style="font-size:11px;color:#666">ปีการศึกษา ${r.year||'–'} ภาคเรียนที่ ${r.semester||'–'} | วันที่เยี่ยม ${r.visitDate||'–'}</div>
+  </div>
+  ${sec('👤 ข้อมูลนักเรียน','#9b0a23',`
+    ${row('ชื่อ-นามสกุล','<strong>'+(r.studentName||'–')+'</strong>')}
+    ${row('เลขที่ / ชั้น',(r.studentNo||'–')+' | '+(r.gradeLevel||'–'))}
+    ${row('เพศ',r.gender==='male'?'♂ ชาย':r.gender==='female'?'♀ หญิง':'–')}
+    ${row('ครูประจำชั้น',r.teacher||'–')}
+    ${row('เบอร์โทรนักเรียน',r.studentPhone||'–')}
+  `)}
+  ${sec('👨‍👩‍👧 ข้อมูลครอบครัว','#7c3aed',`
+    ${row('บิดา',(r.fatherName||'–')+' | อาชีพ: '+(r.fatherJob||'–')+' | โทร: '+(r.fatherPhone||'–'))}
+    ${row('มารดา',(r.motherName||'–')+' | อาชีพ: '+(r.motherJob||'–')+' | โทร: '+(r.motherPhone||'–'))}
+    ${row('สถานภาพบิดา-มารดา',parStatTh[r.parStatus]||r.parStatus||'–')}
+    ${row('ผู้ปกครอง',(r.parentName||'–')+' ('+(r.parentRel||'–')+')')}
+    ${row('อาชีพ / เบอร์โทรผู้ปกครอง',(r.parentJob||'–')+' | '+(r.parentPhone||'–'))}
+    ${row('ที่อยู่',r.address||'–')}
+    ${row('ความห่วงใยผู้ปกครอง',r.parentConcern||'–')}
+  `)}
+  ${sec('🏠 สถานะครัวเรือน','#0369a1',`
+    ${row('จำนวนสมาชิก',(r.householdSize||'–')+' คน')}
+    ${row('รายได้รวม/เดือน',r.income?(r.income.toLocaleString()+' บาท'):'–')}
+    ${row('เงินมาโรงเรียน/วัน',r.allowance?(r.allowance+' บาท'):'–')}
+    ${row('ภาระพิเศษ',(r.burden||[]).length?(r.burden||[]).join(', '):'–')}
+    ${row('สภาพบ้าน',(r.house||[]).map(h=>houseTh[h]||h).join(', ')||'–')}
+  `)}
+  ${sec('🚶 การเดินทาง','#0891b2',`
+    ${row('พาหนะ',transTh[r.transport]||r.transport||'–')}
+    ${row('ระยะทาง / เวลา',(r.distance||'–')+' กม. | '+(r.travelTime||'–')+' นาที')}
+  `)}
+  <div style="margin-bottom:10px">
+    <div style="background:${r.visited?'#15803d':'#b91c1c'};color:#fff;padding:5px 10px;font-weight:700;font-size:12px;border-radius:4px 4px 0 0">
+      🏡 ผลการเยี่ยมบ้าน — ${r.visited?'✅ เยี่ยมได้':'❌ ยังไม่ได้เยี่ยม'}
+    </div>
+    ${!r.visited&&(r.nvReasons||[]).length?'<div style="padding:6px 10px;border:0.5px solid #ccc;font-size:12px">สาเหตุ: '+(r.nvReasons||[]).join(', ')+'</div>':''}
+  </div>
+  ${sec('⚠️ พฤติกรรมเสี่ยง','#c2410c',`
+    <tr><td colspan="2" style="padding:6px 8px;border:0.5px solid #ccc;font-size:12px">
+      ${chk(r.rH,'สุขภาพ')}${chk(r.rS,'สารเสพติด')}${chk(r.rV,'ความรุนแรง')}${chk(r.rT,'การเดินทาง')}<br>
+      ${chk(r.rX,'เพศ')}${chk(r.rP,'โทรศัพท์/เกม')}${chk(r.rSf,'ความปลอดภัย')}${chk(r.rO,'อื่นๆ')}
+    </td></tr>
+  `)}
+  ${sec('📚 ปัญหาที่พบ','#7c3aed',`
+    <tr><td colspan="2" style="padding:6px 8px;border:0.5px solid #ccc;font-size:12px">
+      ${chk(r.pL,'การเรียน')}${chk(r.pH,'สุขภาพ')}${chk(r.pE,'เศรษฐกิจ')}
+      ${chk(r.pS,'สารเสพติด')}${chk(r.pD,'ซึมเศร้า')}${chk(r.pO,'อื่นๆ')}
+    </td></tr>
+  `)}
+  ${sec('👪 ครอบครัวและบ้าน','#047857',`
+    ${row('ความสัมพันธ์ในครอบครัว',famTh[r.family]||r.family||'–')}
+    ${row('ข้อมูลครอบครัว',(r.famBg||[]).length?(r.famBg||[]).join(', '):'–')}
+  `)}
+  ${r.urgent?'<div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:12px"><strong style="color:#9b1c1c">🚨 กรณีเร่งด่วน — ต้องดูแลพิเศษทันที</strong></div>':''}
+  ${r.notes?'<div style="border:0.5px solid #ccc;border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:12px"><strong>หมายเหตุ:</strong> '+r.notes+'</div>':''}
+  <div style="display:flex;justify-content:space-between;margin-top:20px;gap:20px">
+    <div style="text-align:center;flex:1">
+      <div style="font-size:11px;margin-bottom:28px">ลงชื่อ ........................................</div>
+      <div style="font-size:11px">(${r.teacher||'...................................'})</div>
+      <div style="font-size:10px;color:#666">ครูประจำชั้น ${r.gradeLevel||''}</div>
+    </div>
+    <div style="text-align:center;flex:1">
+      <div style="font-size:11px;margin-bottom:28px">ลงชื่อ ........................................</div>
+      <div style="font-size:11px">(${PRINCIPAL})</div>
+      <div style="font-size:10px;color:#666">ผู้อำนวยการโรงเรียน${SCHOOL}</div>
+    </div>
+  </div>
+</div>`;
+  document.getElementById('mo-print-student').classList.add('open');
 }
 
-// ═══════════════════════════════════════
-// UTILS
-// ═══════════════════════════════════════
-function showAlert(id,type,msg) {
-  const el=document.getElementById(id); if(!el) return;
-  el.className=`alert alert-${type}`; el.textContent=msg; el.style.display='flex';
-  setTimeout(()=>el.style.display='none',4000);
+// ── PRESENT PAGE ───────────────────────────
+let _presGrade = 'all';
+function setPresGrade(g, el) {
+  _presGrade = g;
+  document.querySelectorAll('#pres-gtabs .gtab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderPresent();
+}
+function toggleFullscreen() {
+  const el = document.getElementById('page-present');
+  if (!document.fullscreenElement) el.requestFullscreen?.();
+  else document.exitFullscreen?.();
+}
+function renderPresent() {
+  let recs = _presGrade === 'all' ? _recs : _recs.filter(r => r.gradeLevel === _presGrade);
+  const total = recs.length, vis = recs.filter(r=>r.visited).length;
+  const nvis = total-vis, risk = recs.filter(r=>riskCount(r)>0).length;
+  const urg = recs.filter(r=>r.urgent).length;
+  const pct = total?Math.round(vis/total*100):0;
+  const male = recs.filter(r=>r.gender==='male').length;
+  const female = recs.filter(r=>r.gender==='female').length;
+  const gradeRows = GRADES.map(g => {
+    const gr = _recs.filter(r=>r.gradeLevel===g);
+    if (!gr.length) return '';
+    const gv = gr.filter(r=>r.visited).length;
+    const gp = Math.round(gv/gr.length*100);
+    const gr_r = gr.filter(r=>riskCount(r)>0).length;
+    const gr_u = gr.filter(r=>r.urgent).length;
+    const col = gp>=80?'#15803d':gp>=50?'#b45309':'#b91c1c';
+    const tchr = gr.find(r=>r.teacher)?.teacher||'–';
+    return `<div style="background:#fff;border:1px solid var(--bdr);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px">
+      <div style="font-size:1.3rem;font-weight:800;color:var(--pri-d);min-width:40px">${g}</div>
+      <div style="flex:1">
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:5px">${tchr}</div>
+        <div style="height:10px;background:var(--bdr);border-radius:5px;overflow:hidden">
+          <div style="height:100%;width:${gp}%;background:${col};border-radius:5px"></div>
+        </div>
+      </div>
+      <div style="text-align:right;min-width:100px">
+        <div style="font-size:1.4rem;font-weight:800;color:${col}">${gp}%</div>
+        <div style="font-size:.72rem;color:var(--muted)">${gv}/${gr.length} คน</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;min-width:70px">
+        ${gr_r?`<span style="background:#fef2f2;color:#b91c1c;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:700">⚠️ ${gr_r}</span>`:''}
+        ${gr_u?`<span style="background:#fff7ed;color:#c2410c;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:700">🚨 ${gr_u}</span>`:''}
+      </div>
+    </div>`;
+  }).filter(Boolean).join('');
+  const urgRecs = recs.filter(r=>r.urgent);
+  const urgList = urgRecs.length ? urgRecs.map(r=>`
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:.9rem">${r.studentName||'–'} <span style="font-size:.75rem;color:var(--muted)">${r.gradeLevel}</span></div>
+        <div style="font-size:.78rem;color:var(--muted)">ผู้ปกครอง: ${r.parentName||'–'} | โทร: ${r.parentPhone||'–'}</div>
+        ${r.notes?`<div style="font-size:.76rem;color:#b91c1c;margin-top:2px">📝 ${r.notes}</div>`:''}
+      </div>
+      <button class="btn btn-sm btn-out" onclick="printStudent('${r.id}')">🖨️</button>
+    </div>`).join('') : '<div style="color:var(--muted);font-size:.88rem;padding:10px">ไม่มีกรณีเร่งด่วน ✅</div>';
+  document.getElementById('present-out').innerHTML = `
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px">
+    ${[['นักเรียนทั้งหมด',total,'–','var(--pri)','👥'],['ชาย / หญิง',male+' / '+female,'–','#0369a1','⚥'],
+       ['เยี่ยมบ้านแล้ว',vis,pct+'%','#15803d','✅'],['ยังไม่ได้เยี่ยม',nvis,total?Math.round(nvis/total*100)+'%':'0%','#b45309','⏳'],
+       ['พฤติกรรมเสี่ยง',risk,total?Math.round(risk/total*100)+'%':'0%','#b91c1c','⚠️'],['กรณีเร่งด่วน',urg,'–','#7c3aed','🚨']
+    ].map(([l,v,sub,c,ic])=>`<div style="background:#fff;border:1px solid var(--bdr);border-top:3px solid ${c};border-radius:10px;padding:14px 15px">
+      <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em">${ic} ${l}</div>
+      <div style="font-size:2rem;font-weight:800;color:${c};line-height:1.1;margin-top:4px">${v}</div>
+      ${sub!=='–'?`<div style="font-size:.72rem;color:var(--muted);margin-top:2px">${sub}</div>`:''}
+    </div>`).join('')}
+  </div>
+  <div style="background:#fff;border:1px solid var(--bdr);border-radius:10px;padding:16px 18px;margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-weight:700;font-size:.9rem">ความคืบหน้าการเยี่ยมบ้าน${_presGrade==='all'?'รวม':' '+_presGrade}</span>
+      <span style="font-size:1.6rem;font-weight:800;color:${pct>=80?'#15803d':pct>=50?'#b45309':'#b91c1c'}">${pct}%</span>
+    </div>
+    <div style="height:18px;background:var(--bdr);border-radius:9px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:${pct>=80?'#15803d':pct>=50?'#f59e0b':'#b91c1c'};border-radius:9px;display:flex;align-items:center;padding-left:8px">
+        ${pct>10?`<span style="color:#fff;font-size:.72rem;font-weight:700">${vis} คน</span>`:''}
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-top:4px">
+      <span>เยี่ยมแล้ว ${vis} คน</span><span>ยังไม่ได้ ${nvis} คน</span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+    <div style="background:#fff;border:1px solid var(--bdr);border-radius:10px;padding:16px 18px">
+      <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);margin-bottom:12px;border-bottom:2px solid var(--pri-l);padding-bottom:6px">🏫 ความคืบหน้ารายชั้น</div>
+      <div style="display:flex;flex-direction:column;gap:8px">${gradeRows||'<div style="color:var(--muted)">ไม่มีข้อมูล</div>'}</div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--bdr);border-radius:10px;padding:16px 18px">
+      <div style="font-weight:700;font-size:.88rem;color:#b91c1c;margin-bottom:12px;border-bottom:2px solid #fecaca;padding-bottom:6px">🚨 กรณีเร่งด่วน (${urgRecs.length} คน)</div>
+      <div style="display:flex;flex-direction:column;gap:8px;max-height:360px;overflow-y:auto">${urgList}</div>
+    </div>
+  </div>
+  <div style="background:#fff;border:1px solid var(--bdr);border-radius:10px;padding:16px 18px">
+    <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);margin-bottom:12px;border-bottom:2px solid var(--pri-l);padding-bottom:6px">📊 สรุปปัญหาและความเสี่ยง</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">
+      ${[['การเรียน',recs.filter(r=>r.pL).length,'#3b82f6'],['สุขภาพ',recs.filter(r=>r.pH).length,'#22c55e'],
+         ['เศรษฐกิจ',recs.filter(r=>r.pE).length,'#f59e0b'],['สารเสพติด',recs.filter(r=>r.pS).length,'#ef4444'],
+         ['ซึมเศร้า',recs.filter(r=>r.pD).length,'#8b5cf6'],['โทรศัพท์/เกม',recs.filter(r=>r.rP).length,'#f97316']
+      ].map(([l,v,c])=>{const p=total?Math.round(v/total*100):0;return `
+        <div style="border:1px solid var(--bdr);border-radius:8px;padding:10px 12px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
+            <span style="font-size:.8rem;font-weight:600">${l}</span>
+            <span style="font-size:1.1rem;font-weight:800;color:${c}">${v}</span>
+          </div>
+          <div style="height:6px;background:var(--bdr);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${p}%;background:${c};border-radius:3px"></div>
+          </div>
+          <div style="font-size:.68rem;color:var(--muted);margin-top:3px">${p}% ของทั้งหมด</div>
+        </div>`;}).join('')}
+    </div>
+  </div>`;
 }
 
-// ═══════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════
-document.addEventListener('DOMContentLoaded', async ()=>{
+// ── INIT ──────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
   initFirebase();
-  if(!USE_FIREBASE) setStatus('local');
-  showSetupWarning();
-  showLoading(true,'กำลังโหลดข้อมูล...');
-  await loadRecords();
-  showLoading(false);
-  applyConfigToForm();
-  renderDashboard();
-  checkTeacherModal();
-  document.querySelectorAll('.modal-overlay').forEach(o=>{
-    o.addEventListener('click',e=>{ if(e.target===o && o.id!=='teacher-modal') o.classList.remove('open'); });
+  showLd(true, 'กำลังโหลดข้อมูล...');
+  await load();
+  showLd(false);
+  const cfg = getCfg();
+  if (!cfg.year) {
+    cfg.year = String(new Date().getFullYear() + 543);
+    localStorage.setItem('sv_cfg', JSON.stringify(cfg));
+  }
+  renderDash();
+  checkTeacher();
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  if (cfg.year) document.getElementById('f-year').value = cfg.year;
+  document.querySelectorAll('.mo').forEach(o => {
+    o.addEventListener('click', e => {
+      if (e.target === o && o.id !== 'mo-teacher') closeMo(o.id);
+    });
   });
 });
 </script>
