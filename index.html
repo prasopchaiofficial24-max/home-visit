@@ -19,6 +19,7 @@ const SCHOOL   = 'โรงเรียนจิกดู่วิทยา';
 const AMPHOE   = 'หัวตะพาน';
 const PROVINCE = 'อำนาจเจริญ';
 const GRADES    = ['ม.1','ม.2','ม.3','ม.4','ม.5','ม.6'];
+const GRADE_TOTALS = {'ม.1':19,'ม.2':12,'ม.3':23,'ม.4':6,'ม.5':14,'ม.6':7}; // จำนวนนักเรียนจริงแต่ละชั้น
 const COL       = 'studentVisits';
 const PRINCIPAL = 'นายโกวิท สุพรรณ์';
 </script>
@@ -821,29 +822,30 @@ tbody tr{transition:background .1s}
           <option value="นายโกวิท สุพรรณ์" data-grade="ผบ.">นายโกวิท สุพรรณ์ (ผู้อำนวยการ)</option>
         </optgroup>
         <optgroup label="ม.1">
-          <option value="นางสาวพรอุมา จิตตัง"   data-grade="ม.1">นางสาวพรอุมา จิตตัง</option>
-          <option value="นางสาวอรวรรณ สุดาชม"   data-grade="ม.1">นางสาวอรวรรณ สุดาชม</option>
+          <option value="นางสาววันทนีย์ ไชยมงคล"      data-grade="ม.1">นางสาววันทนีย์ ไชยมงคล</option>
+          <option value="นางสาวไอรินทร์ อัครศักดิ์ศรี"  data-grade="ม.1">นางสาวไอรินทร์ อัครศักดิ์ศรี</option>
+          <option value="นางสาวอนัญญา หามทอง"         data-grade="ม.1">นางสาวอนัญญา หามทอง</option>
         </optgroup>
         <optgroup label="ม.2">
-          <option value="นายเทียนชัย ทาเงิน"     data-grade="ม.2">นายเทียนชัย ทาเงิน</option>
-          <option value="นายณัฐภัทร สังข์ขาว"    data-grade="ม.2">นายณัฐภัทร สังข์ขาว</option>
-          <option value="นางสาวอรอิริยา ศิริวาลย์" data-grade="ม.2">นางสาวอรอิริยา ศิริวาลย์</option>
+          <option value="นางสาวพรอุมา จิตตัง"   data-grade="ม.2">นางสาวพรอุมา จิตตัง</option>
+          <option value="นางสาวอรวรรณ สุดาชม"   data-grade="ม.2">นางสาวอรวรรณ สุดาชม</option>
         </optgroup>
         <optgroup label="ม.3">
-          <option value="นางสาววันทนีย์ ไชยมงคล"    data-grade="ม.3">นางสาววันทนีย์ ไชยมงคล</option>
-          <option value="นางสาวไอรินทร์ อัครศักดิ์ศรี" data-grade="ม.3">นางสาวไอรินทร์ อัครศักดิ์ศรี</option>
+          <option value="นายเทียนชัย ทาเงิน"      data-grade="ม.3">นายเทียนชัย ทาเงิน</option>
+          <option value="นายณัฐภัทร สังข์ขาว"     data-grade="ม.3">นายณัฐภัทร สังข์ขาว</option>
+          <option value="นางสาวอรอิริยา ศิริวาลย์"  data-grade="ม.3">นางสาวอรอิริยา ศิริวาลย์</option>
         </optgroup>
         <optgroup label="ม.4">
-          <option value="นายประสพชัย มหาวงศ์"    data-grade="ม.4">นายประสพชัย มหาวงศ์</option>
-          <option value="นางสาวจิราภรณ์ เชิงหอม" data-grade="ม.4">นางสาวจิราภรณ์ เชิงหอม</option>
+          <option value="นายฉัตรชัย สนิทชัย" data-grade="ม.4">นายฉัตรชัย สนิทชัย</option>
+          <option value="นายวสันต์ สานัดถ์"  data-grade="ม.4">นายวสันต์ สานัดถ์</option>
         </optgroup>
         <optgroup label="ม.5">
-          <option value="นายมงคล แสงย้อย"      data-grade="ม.5">นายมงคล แสงย้อย</option>
-          <option value="นายปฏิรูป เธียรประมุข" data-grade="ม.5">นายปฏิรูป เธียรประมุข</option>
+          <option value="นายประสพชัย มหาวงศ์"     data-grade="ม.5">นายประสพชัย มหาวงศ์</option>
+          <option value="นางสาวจิราภรณ์ เชิงหอม"  data-grade="ม.5">นางสาวจิราภรณ์ เชิงหอม</option>
         </optgroup>
         <optgroup label="ม.6">
-          <option value="นายฉัตรชัย สนิทชัย" data-grade="ม.6">นายฉัตรชัย สนิทชัย</option>
-          <option value="นายวสันต์ สานัดถ์"  data-grade="ม.6">นายวสันต์ สานัดถ์</option>
+          <option value="นายมงคล แสงย้อย"       data-grade="ม.6">นายมงคล แสงย้อย</option>
+          <option value="นายปฏิรูป เธียรประมุข"  data-grade="ม.6">นายปฏิรูป เธียรประมุข</option>
         </optgroup>
       </select>
     </div>
@@ -864,35 +866,36 @@ tbody tr{transition:background .1s}
           <option value="นายโกวิท สุพรรณ์" data-grade="ผบ.">นายโกวิท สุพรรณ์ (ผู้อำนวยการ)</option>
         </optgroup>
         <optgroup label="ม.1">
-          <option value="นางสาวพรอุมา จิตตัง"   data-grade="ม.1">นางสาวพรอุมา จิตตัง</option>
-          <option value="นางสาวอรวรรณ สุดาชม"   data-grade="ม.1">นางสาวอรวรรณ สุดาชม</option>
+          <option value="นางสาววันทนีย์ ไชยมงคล"      data-grade="ม.1">นางสาววันทนีย์ ไชยมงคล</option>
+          <option value="นางสาวไอรินทร์ อัครศักดิ์ศรี"  data-grade="ม.1">นางสาวไอรินทร์ อัครศักดิ์ศรี</option>
+          <option value="นางสาวอนัญญา หามทอง"         data-grade="ม.1">นางสาวอนัญญา หามทอง</option>
         </optgroup>
         <optgroup label="ม.2">
-          <option value="นายเทียนชัย ทาเงิน"     data-grade="ม.2">นายเทียนชัย ทาเงิน</option>
-          <option value="นายณัฐภัทร สังข์ขาว"    data-grade="ม.2">นายณัฐภัทร สังข์ขาว</option>
-          <option value="นางสาวอรอิริยา ศิริวาลย์" data-grade="ม.2">นางสาวอรอิริยา ศิริวาลย์</option>
+          <option value="นางสาวพรอุมา จิตตัง"   data-grade="ม.2">นางสาวพรอุมา จิตตัง</option>
+          <option value="นางสาวอรวรรณ สุดาชม"   data-grade="ม.2">นางสาวอรวรรณ สุดาชม</option>
         </optgroup>
         <optgroup label="ม.3">
-          <option value="นางสาววันทนีย์ ไชยมงคล"    data-grade="ม.3">นางสาววันทนีย์ ไชยมงคล</option>
-          <option value="นางสาวไอรินทร์ อัครศักดิ์ศรี" data-grade="ม.3">นางสาวไอรินทร์ อัครศักดิ์ศรี</option>
+          <option value="นายเทียนชัย ทาเงิน"      data-grade="ม.3">นายเทียนชัย ทาเงิน</option>
+          <option value="นายณัฐภัทร สังข์ขาว"     data-grade="ม.3">นายณัฐภัทร สังข์ขาว</option>
+          <option value="นางสาวอรอิริยา ศิริวาลย์"  data-grade="ม.3">นางสาวอรอิริยา ศิริวาลย์</option>
         </optgroup>
         <optgroup label="ม.4">
-          <option value="นายประสพชัย มหาวงศ์"    data-grade="ม.4">นายประสพชัย มหาวงศ์</option>
-          <option value="นางสาวจิราภรณ์ เชิงหอม" data-grade="ม.4">นางสาวจิราภรณ์ เชิงหอม</option>
+          <option value="นายฉัตรชัย สนิทชัย" data-grade="ม.4">นายฉัตรชัย สนิทชัย</option>
+          <option value="นายวสันต์ สานัดถ์"  data-grade="ม.4">นายวสันต์ สานัดถ์</option>
         </optgroup>
         <optgroup label="ม.5">
-          <option value="นายมงคล แสงย้อย"      data-grade="ม.5">นายมงคล แสงย้อย</option>
-          <option value="นายปฏิรูป เธียรประมุข" data-grade="ม.5">นายปฏิรูป เธียรประมุข</option>
+          <option value="นายประสพชัย มหาวงศ์"     data-grade="ม.5">นายประสพชัย มหาวงศ์</option>
+          <option value="นางสาวจิราภรณ์ เชิงหอม"  data-grade="ม.5">นางสาวจิราภรณ์ เชิงหอม</option>
         </optgroup>
         <optgroup label="ม.6">
-          <option value="นายฉัตรชัย สนิทชัย" data-grade="ม.6">นายฉัตรชัย สนิทชัย</option>
-          <option value="นายวสันต์ สานัดถ์"  data-grade="ม.6">นายวสันต์ สานัดถ์</option>
+          <option value="นายมงคล แสงย้อย"       data-grade="ม.6">นายมงคล แสงย้อย</option>
+          <option value="นายปฏิรูป เธียรประมุข"  data-grade="ม.6">นายปฏิรูป เธียรประมุข</option>
         </optgroup>
       </select>
     </div>
     <input type="hidden" id="cfg-grade">
     <div class="fg"><label>ปีการศึกษา (default)</label><input type="text" id="cfg-year" placeholder="เช่น 2568"></div>
-    <div class="fg" style="margin-bottom:16px"><label>ชื่อผู้อำนวยการ</label><input type="text" id="cfg-principal"></div>
+    <div class="fg" style="margin-bottom:14px"><label>ชื่อผู้อำนวยการ</label><input type="text" id="cfg-principal"></div>
     <div class="btn-row">
       <button class="btn btn-pri" onclick="saveSettings()">💾 บันทึก</button>
       <button class="btn btn-gray" onclick="closeMo('mo-settings')">ยกเลิก</button>
@@ -920,13 +923,35 @@ tbody tr{transition:background .1s}
 
 // ── FIREBASE ──────────────────────────────
 let db = null;
+let _unsubscribe   = null;  // real-time listener handle
+let _listenerFired = false; // true หลัง onSnapshot ส่งข้อมูลครั้งแรกแล้ว
+
 function initFirebase() {
   if (!USE_FIREBASE) { setConn('local'); return; }
   try {
     firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.firestore();
     setConn('online');
+    startRealtimeListener();
   } catch(e) { setConn('offline'); }
+}
+
+function startRealtimeListener() {
+  if (!db) return;
+  if (_unsubscribe) _unsubscribe(); // ยกเลิก listener เก่าก่อน
+  _listenerFired = false;           // reset flag สำหรับ listener ใหม่
+  _unsubscribe = db.collection(COL).orderBy('ts','desc').onSnapshot(snap => {
+    _recs = snap.docs.map(d => ({...d.data(), id: d.id}));
+    localStorage.setItem('sv_bk', JSON.stringify(_recs));
+    setConn('online');
+    _listenerFired = true; // mark ว่าข้อมูลชุดแรกถึงแล้ว
+    // re-render หน้าที่กำลังเปิดอยู่
+    const active = document.querySelector('.page.active')?.id;
+    if (active === 'page-dashboard') renderDash();
+    if (active === 'page-records')   renderRecords();
+    if (active === 'page-district')  { fillYearSel(); renderDistrict(); }
+    if (active === 'page-present')   renderPresent();
+  }, () => { setConn('offline'); });
 }
 function setConn(s) {
   const el = document.getElementById('conn-badge');
@@ -938,6 +963,7 @@ function setConn(s) {
 // ── DATA ──────────────────────────────────
 let _recs = [];
 async function load() {
+  if (db && _unsubscribe && _listenerFired) return; // listener ส่งข้อมูลแล้ว ไม่ต้อง fetch ซ้ำ
   if (db) {
     try {
       const snap = await db.collection(COL).orderBy('ts','desc').get();
@@ -964,7 +990,7 @@ async function upsert(data) {
       setConn('online');
     } catch(e) { setConn('offline'); localUpsert(data); }
   } else { localUpsert(data); }
-  await load();
+  if (!(_unsubscribe && _listenerFired)) await load(); // โหลดเฉพาะเมื่อ listener ยังไม่ได้ส่งข้อมูล
 }
 function localUpsert(data) {
   if (!data.id) data.id = 'loc_' + Date.now();
@@ -1109,14 +1135,16 @@ function gn(id) { const e=document.getElementById(id); return e?parseFloat(e.val
 
 function getFormData() {
   const risks = checked('risk'), probs = checked('prob');
+  const editId  = document.getElementById('edit-id').value || '';
+  const origRec = editId ? _recs.find(r => r.id === editId) : null; // คงชั้น/ครูเดิมเมื่อแก้ไข
   return {
-    id:          document.getElementById('edit-id').value || '',
+    id:          editId,
     studentName: gv('f-name'),
     studentNo:   gv('f-student-no'),
     studentPhone:gv('f-student-phone'),
     gender:      radioVal('gender'),
-    gradeLevel:  tGrade(),
-    teacher:     tName(),
+    gradeLevel:  origRec ? origRec.gradeLevel : tGrade(), // ไม่เขียนทับชั้นเดิม
+    teacher:     origRec ? origRec.teacher    : tName(),  // ไม่เขียนทับครูเดิม
     // บิดา-มารดา
     fatherName:  gv('f-father-name'), fatherJob: gv('f-father-job'), fatherPhone: gv('f-father-phone'),
     motherName:  gv('f-mother-name'), motherJob: gv('f-mother-job'), motherPhone: gv('f-mother-phone'),
@@ -1280,7 +1308,7 @@ function confirmDel(id) {
 const charts = {};
 function renderDash() {
   const recs = _recs;
-  const total  = recs.length;
+  const total  = GRADES.reduce((a,g) => a + (GRADE_TOTALS[g]||0), 0) || recs.length;
   const vis    = recs.filter(r => r.visited).length;
   const nvis   = total - vis;
   const risk   = recs.filter(r => riskCount(r) > 0).length;
@@ -1333,8 +1361,8 @@ function renderGradeSummary(recs) {
   const el = document.getElementById('grade-summary'); if (!el) return;
   const rows = GRADES.map(g => {
     const gr = recs.filter(r => r.gradeLevel === g);
-    if (!gr.length) return null;
-    const total = gr.length;
+    const total = GRADE_TOTALS[g] || gr.length;
+    if (!total) return null;
     const visM  = gr.filter(r => r.visited && r.gender === 'male').length;
     const visF  = gr.filter(r => r.visited && r.gender === 'female').length;
     const vis   = visM + visF;
@@ -1533,8 +1561,8 @@ function renderDistrict() {
   if (yr  !== 'all') recs = recs.filter(r => r.year === yr);
   if (sem !== 'all') recs = recs.filter(r => r.semester === sem);
 
-  // ตัวเลขรวม
-  const tT   = recs.length;
+  // ตัวเลขรวม — ใช้ GRADE_TOTALS เป็นฐาน (จำนวนนักเรียนจริง)
+  const tT   = GRADES.reduce((a,g) => a + (GRADE_TOTALS[g]||0), 0) || recs.length;
   const tM   = recs.filter(r => r.gender === 'male').length;
   const tF   = recs.filter(r => r.gender === 'female').length;
   const tVM  = recs.filter(r => r.visited && r.gender === 'male').length;
@@ -1904,21 +1932,27 @@ function toggleFullscreen() {
 }
 function renderPresent() {
   let recs = _presGrade === 'all' ? _recs : _recs.filter(r => r.gradeLevel === _presGrade);
-  const total = recs.length, vis = recs.filter(r=>r.visited).length;
-  const nvis = total-vis, risk = recs.filter(r=>riskCount(r)>0).length;
-  const urg = recs.filter(r=>r.urgent).length;
-  const pct = total?Math.round(vis/total*100):0;
-  const male = recs.filter(r=>r.gender==='male').length;
+  // ใช้ GRADE_TOTALS เป็นฐานคำนวณ %
+  const total = _presGrade === 'all'
+    ? GRADES.reduce((a,g) => a + (GRADE_TOTALS[g]||0), 0)
+    : (GRADE_TOTALS[_presGrade] || recs.length);
+  const vis    = recs.filter(r=>r.visited).length;
+  const nvis   = total - vis;
+  const risk   = recs.filter(r=>riskCount(r)>0).length;
+  const urg    = recs.filter(r=>r.urgent).length;
+  const pct    = total ? Math.round(vis/total*100) : 0;
+  const male   = recs.filter(r=>r.gender==='male').length;
   const female = recs.filter(r=>r.gender==='female').length;
   const gradeRows = GRADES.map(g => {
-    const gr = _recs.filter(r=>r.gradeLevel===g);
-    if (!gr.length) return '';
-    const gv = gr.filter(r=>r.visited).length;
-    const gp = Math.round(gv/gr.length*100);
-    const gr_r = gr.filter(r=>riskCount(r)>0).length;
-    const gr_u = gr.filter(r=>r.urgent).length;
-    const col = gp>=80?'#15803d':gp>=50?'#b45309':'#b91c1c';
-    const tchr = gr.find(r=>r.teacher)?.teacher||'–';
+    const gr    = _recs.filter(r=>r.gradeLevel===g);
+    const gt    = GRADE_TOTALS[g] || gr.length; // ใช้ GRADE_TOTALS เสมอ
+    if (!gt) return ''; // ไม่แสดงถ้าไม่มีข้อมูลเลย
+    const gv    = gr.filter(r=>r.visited).length;
+    const gp    = Math.round(gv/gt*100);
+    const gr_r  = gr.filter(r=>riskCount(r)>0).length;
+    const gr_u  = gr.filter(r=>r.urgent).length;
+    const col   = gp>=80?'#15803d':gp>=50?'#b45309':'#b91c1c';
+    const tchr  = gr.find(r=>r.teacher)?.teacher||'–';
     return `<div style="background:#fff;border:1px solid var(--bdr);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px">
       <div style="font-size:1.3rem;font-weight:800;color:var(--pri-d);min-width:40px">${g}</div>
       <div style="flex:1">
@@ -1929,7 +1963,7 @@ function renderPresent() {
       </div>
       <div style="text-align:right;min-width:100px">
         <div style="font-size:1.4rem;font-weight:800;color:${col}">${gp}%</div>
-        <div style="font-size:.72rem;color:var(--muted)">${gv}/${gr.length} คน</div>
+        <div style="font-size:.72rem;color:var(--muted)">${gv}/${gt} คน</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;min-width:70px">
         ${gr_r?`<span style="background:#fef2f2;color:#b91c1c;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:700">⚠️ ${gr_r}</span>`:''}
