@@ -1861,36 +1861,28 @@ function printStudent(id) {
   const burdenAll= ['disabled','elderly','single_par','unemployed'];
 
   const css = [
-    '@page { size: A4 portrait; margin: 1.5cm 1.8cm 1.3cm 1.8cm; }',
+    '@page { size: A4 portrait; margin: 1.8cm 2cm 1.5cm 2cm; }',
     '* { box-sizing: border-box; margin: 0; padding: 0;',
     '    -webkit-print-color-adjust: exact; print-color-adjust: exact; }',
-    /* ── flex body ทำให้ตารางยืดเต็มหน้า ── */
-    'html, body { height: 100%; }',
     'body { font-family: "TH SarabunPSK","Sarabun","Noto Sans Thai",Arial,sans-serif;',
-    '       font-size: 16pt; color: #000; background: #fff; line-height: 1.55;',
-    '       display: flex; flex-direction: column; }',
-    '.hdr { flex-shrink: 0; text-align: center;',
-    '       border-bottom: 2pt solid #000; padding-bottom: 5pt; margin-bottom: 5pt; }',
-    'h1 { font-size: 22pt; font-weight: bold; letter-spacing: 1pt; }',
-    'h2 { font-size: 15pt; font-weight: normal; }',
-    '.meta { font-size: 14pt; margin-top: 2pt; }',
-    /* ── ตารางยืดเต็มพื้นที่ที่เหลือ ── */
-    'table { flex: 1; border-collapse: collapse; width: 100%; height: 1px; }',
-    'td { border: 1pt solid #000; padding: 4pt 8pt;',
-    '     vertical-align: middle; font-size: 15pt; line-height: 1.5; }',
-    'td.sec { font-weight: bold; font-size: 15.5pt; background: #d0d0d0;',
-    '         padding: 4pt 8pt; border-left: 4pt solid #555; letter-spacing: 0.3pt; }',
-    'td.lbl { width: 27%; font-weight: bold; background: #f0f0f0;',
-    '         font-size: 14.5pt; vertical-align: middle; }',
-    'td.sig { text-align: center; font-size: 15pt; vertical-align: middle; }',
-    /* ── แถวที่ให้ยืด (หมายเหตุ + ลายเซ็น) ── */
-    'tr.grow td { height: 100%; }'
+    '       font-size: 15pt; color: #000; background: #fff; line-height: 1.45; }',
+    'h1 { text-align: center; font-size: 18pt; font-weight: bold; margin-bottom: 2pt; }',
+    'h2 { text-align: center; font-size: 14pt; font-weight: normal; margin-bottom: 1pt; }',
+    '.meta { text-align: center; font-size: 13pt; margin-bottom: 6pt; }',
+    'table { border-collapse: collapse; width: 100%; table-layout: fixed; }',
+    'td { border: 1pt solid #000; padding: 2pt 5pt; vertical-align: middle; font-size: 14pt; }',
+    'td.sec { font-weight: bold; font-size: 14pt; background: #ddd;',
+    '         border-bottom: none; padding: 2pt 5pt; }',
+    'td.lbl { font-weight: bold; width: 28%; font-size: 13.5pt;',
+    '         background: #f2f2f2; vertical-align: middle; }',
+    'td.sig { text-align: center; font-size: 14pt; padding: 4pt 5pt; }',
+    '.line { display: inline-block; border-bottom: 1pt solid #000;',
+    '        min-width: 60pt; vertical-align: bottom; }'
   ].join('\n');
 
-  const rows  = (...cells) => '<tr>' + cells.join('') + '</tr>';
-  const growR = (...cells) => '<tr class="grow">' + cells.join('') + '</tr>';
-  const td    = (cls, span, txt, sty) =>
-    '<td'+(cls?' class="'+cls+'"':'')+(span>1?' colspan="'+span+'"':'')+(sty?' style="'+sty+'"':'')+'>'+txt+'</td>';
+  const rows = (...cells) => '<tr>' + cells.join('') + '</tr>';
+  const td   = (cls, span, txt) =>
+    '<td'+(cls?' class="'+cls+'"':'')+(span>1?' colspan="'+span+'"':'')+'>'+txt+'</td>';
 
   const html = [
     '<!DOCTYPE html><html lang="th"><head>',
@@ -1900,165 +1892,112 @@ function printStudent(id) {
     '</head><body>',
 
     // ═══ หัวเอกสาร ═══
-    '<div class="hdr">',
     '<h1>แบบบันทึกการเยี่ยมบ้านนักเรียน</h1>',
-    '<h2>'+SCHOOL+'&nbsp;&nbsp;&nbsp; สังกัด สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาอุบลราชธานี อำนาจเจริญ</h2>',
-    '<p class="meta">ปีการศึกษา&nbsp;<strong>'+v(r.year)+'</strong>&emsp;&emsp;'+
-    'ภาคเรียนที่&nbsp;<strong>'+v(r.semester)+'</strong>&emsp;&emsp;'+
-    'วันที่เยี่ยมบ้าน&nbsp;<strong>'+v(r.visitDate)+'</strong></p>',
-    '</div>',
+    '<h2>'+SCHOOL+'&nbsp;&nbsp; สังกัด สพม.อุบลราชธานี อำนาจเจริญ</h2>',
+    '<p class="meta">',
+    'ปีการศึกษา '+v(r.year)+'&emsp;',
+    'ภาคเรียนที่ '+v(r.semester)+'&emsp;',
+    'วันที่เยี่ยม '+v(r.visitDate),
+    '</p>',
 
     // ═══ ตารางหลัก ═══
     '<table>',
 
     // ── ส่วนที่ ๑ ──
     rows(td('sec',4,'ส่วนที่ ๑  ข้อมูลนักเรียน')),
+    rows(td('lbl',1,'ชื่อ-นามสกุล'), td('',3,'<strong>'+v(r.studentName)+'</strong>')),
     rows(
-      td('lbl',1,'ชื่อ-นามสกุลนักเรียน'),
-      td('',3,'<strong>'+v(r.studentName)+'</strong>')
-    ),
-    rows(
-      td('lbl',1,'เลขที่'),     td('',1,v(r.studentNo)),
-      td('lbl',1,'ระดับชั้น'),  td('',1,v(r.gradeLevel))
+      td('lbl',1,'เลขที่'),      td('',1,v(r.studentNo)),
+      td('lbl',1,'ระดับชั้น'),   td('',1,v(r.gradeLevel))
     ),
     rows(
       td('lbl',1,'เพศ'),
-      td('',1, chk(r.gender==='male','ชาย') + chk(r.gender==='female','หญิง')),
-      td('lbl',1,'เบอร์โทรนักเรียน'),
-      td('',1, v(r.studentPhone))
+      td('',3, chk(r.gender==='male','ชาย') + chk(r.gender==='female','หญิง'))
     ),
-    rows(td('lbl',1,'ครูที่ปรึกษา'), td('',3, v(r.teacher))),
+    rows(td('lbl',1,'ครูที่ปรึกษา'),   td('',3,v(r.teacher))),
+    rows(td('lbl',1,'เบอร์โทรนักเรียน'), td('',3,v(r.studentPhone))),
 
     // ── ส่วนที่ ๒ ──
     rows(td('sec',4,'ส่วนที่ ๒  ข้อมูลครอบครัวและผู้ปกครอง')),
-    rows(
-      td('lbl',1,'ชื่อบิดา'),
-      td('',3, v(r.fatherName)+'&emsp;&emsp;อาชีพ&nbsp;'+v(r.fatherJob)+'&emsp;&emsp;โทร.&nbsp;'+v(r.fatherPhone))
-    ),
-    rows(
-      td('lbl',1,'ชื่อมารดา'),
-      td('',3, v(r.motherName)+'&emsp;&emsp;อาชีพ&nbsp;'+v(r.motherJob)+'&emsp;&emsp;โทร.&nbsp;'+v(r.motherPhone))
-    ),
-    rows(
-      td('lbl',1,'สถานภาพบิดา-มารดา'),
-      td('',1, v(parStatTh[r.parStatus])),
-      td('lbl',1,'ผู้ปกครองนักเรียน'),
-      td('',1, v(r.parentName)+'&emsp;('+v(r.parentRel)+')')
-    ),
-    rows(
-      td('lbl',1,'อาชีพผู้ปกครอง'),
-      td('',1, v(r.parentJob)),
-      td('lbl',1,'โทรศัพท์ผู้ปกครอง'),
-      td('',1, v(r.parentPhone))
-    ),
-    rows(td('lbl',1,'ที่อยู่'), td('',3, v(r.address))),
-    rows(
-      td('lbl',1,'ลักษณะครอบครัว'),
-      td('',3, famBgAll.map(k=>chk((r.famBg||[]).includes(k), famBgTh[k])).join(''))
-    ),
+    rows(td('lbl',1,'บิดา'), td('',3,
+      v(r.fatherName)+'&emsp;อาชีพ '+v(r.fatherJob)+'&emsp;โทร. '+v(r.fatherPhone))),
+    rows(td('lbl',1,'มารดา'), td('',3,
+      v(r.motherName)+'&emsp;อาชีพ '+v(r.motherJob)+'&emsp;โทร. '+v(r.motherPhone))),
+    rows(td('lbl',1,'สถานภาพบิดา-มารดา'), td('',3,v(parStatTh[r.parStatus]))),
+    rows(td('lbl',1,'ผู้ปกครอง'), td('',3,
+      v(r.parentName)+'&emsp;ความสัมพันธ์ '+v(r.parentRel)+'&emsp;อาชีพ '+v(r.parentJob)+'&emsp;โทร. '+v(r.parentPhone))),
+    rows(td('lbl',1,'ที่อยู่'), td('',3,v(r.address))),
+    rows(td('lbl',1,'ลักษณะครอบครัว'), td('',3,
+      famBgAll.map(k=>chk((r.famBg||[]).includes(k), famBgTh[k])).join(''))),
 
     // ── ส่วนที่ ๓ ──
     rows(td('sec',4,'ส่วนที่ ๓  สภาพครัวเรือนและการเดินทาง')),
     rows(
-      td('lbl',1,'จำนวนสมาชิกในครัวเรือน'),
-      td('',1, v(r.householdSize)+' คน'),
-      td('lbl',1,'รายได้รวมต่อเดือน'),
-      td('',1, r.income ? r.income.toLocaleString()+' บาท' : dash)
+      td('lbl',1,'จำนวนสมาชิก'),    td('',1,v(r.householdSize)+' คน'),
+      td('lbl',1,'รายได้รวม/เดือน'),  td('',1,r.income?r.income.toLocaleString()+' บาท':dash)
     ),
     rows(
-      td('lbl',1,'เงินมาโรงเรียน/วัน'),
-      td('',1, r.allowance ? r.allowance+' บาท' : dash),
-      td('lbl',1,'ลักษณะที่อยู่อาศัย'),
-      td('',1, r.houseType==='own'?'บ้านตัวเอง' : r.houseType==='rent'?'เช่า' : dash)
+      td('lbl',1,'เงินมาโรงเรียน/วัน'), td('',1,r.allowance?r.allowance+' บาท':dash),
+      td('lbl',1,'ลักษณะที่อยู่อาศัย'),  td('',1,r.houseType==='own'?'บ้านตัวเอง':r.houseType==='rent'?'เช่า':dash)
     ),
+    rows(td('lbl',1,'สภาพที่พักอาศัย'), td('',3,
+      houseAll.map(k=>chk((r.house||[]).includes(k), houseTh[k])).join(''))),
+    rows(td('lbl',1,'ภาระพิเศษในครัวเรือน'), td('',3,
+      burdenAll.map(k=>chk((r.burden||[]).includes(k), burdenTh[k])).join(''))),
+    rows(td('lbl',1,'ความสัมพันธ์ในครอบครัว'), td('',3, v(famTh[r.family]))),
     rows(
-      td('lbl',1,'สภาพที่พักอาศัย'),
-      td('',3, houseAll.map(k=>chk((r.house||[]).includes(k), houseTh[k])).join(''))
-    ),
-    rows(
-      td('lbl',1,'ภาระพิเศษในครัวเรือน'),
-      td('',3, burdenAll.map(k=>chk((r.burden||[]).includes(k), burdenTh[k])).join(''))
-    ),
-    rows(
-      td('lbl',1,'ความสัมพันธ์ในครอบครัว'),
-      td('',1, v(famTh[r.family])),
-      td('lbl',1,'พาหนะมาโรงเรียน'),
-      td('',1, v(transTh[r.transport]))
-    ),
-    rows(
-      td('lbl',1,'ระยะทางจากบ้านถึงโรงเรียน'),
-      td('',1, v(r.distance)+' กิโลเมตร'),
-      td('lbl',1,'ระยะเวลาเดินทาง'),
-      td('',1, v(r.travelTime)+' นาที')
+      td('lbl',1,'พาหนะ'), td('',1,v(transTh[r.transport])),
+      td('lbl',1,'ระยะทาง / เวลา'), td('',1,v(r.distance)+' กม. / '+v(r.travelTime)+' นาที')
     ),
 
     // ── ส่วนที่ ๔ ──
     rows(td('sec',4,'ส่วนที่ ๔  ผลการเยี่ยมบ้าน')),
-    rows(
-      td('lbl',1,'ผลการเยี่ยมบ้าน'),
-      td('',3,
-        chk(r.visited,'เยี่ยมบ้านได้') + chk(!r.visited,'ยังไม่ได้เยี่ยมบ้าน') +
-        (!r.visited && (r.nvReasons||[]).length
-          ? '&emsp;สาเหตุ: '+(r.nvReasons||[]).map(k=>nvTh[k]||k).join(', ')
-          : '')
-      )
-    ),
+    rows(td('lbl',1,'ผลการเยี่ยมบ้าน'), td('',3,
+      chk(r.visited,'เยี่ยมได้') + chk(!r.visited,'ยังไม่ได้เยี่ยม') +
+      (!r.visited && (r.nvReasons||[]).length
+        ? '&emsp;สาเหตุ: '+(r.nvReasons||[]).map(k=>nvTh[k]||k).join(', ')
+        : '')
+    )),
 
     // ── ส่วนที่ ๕ ──
     rows(td('sec',4,'ส่วนที่ ๕  พฤติกรรมเสี่ยงและปัญหาที่พบ')),
-    rows(
-      td('lbl',1,'พฤติกรรมเสี่ยง'),
-      td('',3,
-        chk(r.rH,'ด้านสุขภาพอนามัย') +
-        chk(r.rS,'การใช้สารเสพติด') +
-        chk(r.rV,'การใช้ความรุนแรง') +
-        chk(r.rT,'การเดินทาง') +
-        chk(r.rX,'ด้านเพศ') +
-        chk(r.rP,'ติดโทรศัพท์/เกม') +
-        chk(r.rSf,'สวัสดิภาพ/ความปลอดภัย') +
-        chk(r.rO,'อื่น ๆ')
-      )
-    ),
-    rows(
-      td('lbl',1,'ปัญหาที่พบ'),
-      td('',3,
-        chk(r.pL,'ด้านการเรียน') +
-        chk(r.pH,'ด้านสุขภาพ') +
-        chk(r.pE,'ด้านเศรษฐกิจ') +
-        chk(r.pS,'การใช้สารเสพติด') +
-        chk(r.pD,'ภาวะซึมเศร้า') +
-        chk(r.pO,'อื่น ๆ')
-      )
-    ),
+    rows(td('lbl',1,'พฤติกรรมเสี่ยง'), td('',3,
+      chk(r.rH,'ด้านสุขภาพอนามัย') +
+      chk(r.rS,'การใช้สารเสพติด') +
+      chk(r.rV,'การใช้ความรุนแรง') +
+      chk(r.rT,'การเดินทาง') +
+      chk(r.rX,'ด้านเพศ') +
+      chk(r.rP,'ติดโทรศัพท์/เกม') +
+      chk(r.rSf,'สวัสดิภาพ/ความปลอดภัย') +
+      chk(r.rO,'อื่น ๆ')
+    )),
+    rows(td('lbl',1,'ปัญหาที่พบ'), td('',3,
+      chk(r.pL,'ด้านการเรียน') +
+      chk(r.pH,'ด้านสุขภาพ') +
+      chk(r.pE,'ด้านเศรษฐกิจ') +
+      chk(r.pS,'การใช้สารเสพติด') +
+      chk(r.pD,'ภาวะซึมเศร้า') +
+      chk(r.pO,'อื่น ๆ')
+    )),
     rows(
       td('lbl',1,'กรณีเร่งด่วน'),
-      td('',1, chk(r.urgent,'ต้องดูแลเป็นพิเศษทันที') + chk(!r.urgent,'ปกติ')),
-      td('lbl',1,'ความห่วงใยของผู้ปกครอง'),
+      td('',1, chk(r.urgent,'ต้องดูแลพิเศษทันที') + chk(!r.urgent,'ปกติ')),
+      td('lbl',1,'ความห่วงใยผู้ปกครอง'),
       td('',1, v(r.parentConcern))
     ),
-    /* แถวหมายเหตุ — ยืดเต็มพื้นที่ที่เหลือ */
-    growR(
-      td('lbl',1,'หมายเหตุ/ข้อเสนอแนะ'),
-      td('',3, v(r.notes), 'vertical-align:top;')
-    ),
+    rows(td('lbl',1,'หมายเหตุ'), td('',3, v(r.notes))),
 
-    // ── ลายเซ็น (แถวสูงพอสำหรับเซ็น) ──
+    // ── ลายเซ็น ──
     rows(
       td('sig',2,
-        '<div style="height:60pt;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4pt">'+
-        'ลงชื่อ ............................................'+
-        '</div>'+
-        '<div>('+v(r.teacher)+')</div>'+
-        '<div>ครูที่ปรึกษาระดับชั้น '+v(r.gradeLevel)+'</div>',
-        'height:90pt;'
+        '<br>ลงชื่อ ...................................................<br>' +
+        '('+v(r.teacher)+')<br>' +
+        'ครูที่ปรึกษาระดับชั้น '+v(r.gradeLevel)+'<br><br>'
       ),
       td('sig',2,
-        '<div style="height:60pt;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4pt">'+
-        'ลงชื่อ ............................................'+
-        '</div>'+
-        '<div>('+PRINCIPAL+')</div>'+
-        '<div>ผู้อำนวยการ'+SCHOOL+'</div>',
-        'height:90pt;'
+        '<br>ลงชื่อ ...................................................<br>' +
+        '('+PRINCIPAL+')<br>' +
+        'ผู้อำนวยการ'+SCHOOL+'<br><br>'
       )
     ),
 
