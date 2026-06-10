@@ -1833,186 +1833,187 @@ function exportExcel() {
 // ── PRINT STUDENT FORM (แบบราชการ 1 หน้า A4) ──
 function printStudent(id) {
   const r = _recs.find(x => x.id === id); if (!r) return;
-  const c  = (v,l) => (v?'☑':'☐')+' '+l;
-  const parStatTh = {together:'อยู่ด้วยกัน',separate:'แยกกันอยู่',divorced:'หย่าร้าง',
-    father_dead:'บิดาเสียชีวิต',mother_dead:'มารดาเสียชีวิต',both_dead:'เสียชีวิตทั้งคู่'};
-  const transTh   = {parent_drive:'ผู้ปกครองส่ง',motorbike:'รถจักรยานยนต์',bus:'รถโดยสาร',
-    school_bus:'รถโรงเรียน',bicycle:'รถจักรยาน',walk:'เดินเท้า',other:'อื่น ๆ'};
-  const famTh     = {close:'สนิทสนม/รักใคร่กันดี',conflict_some:'ขัดแย้งทะเลาะกันบางครั้ง',
-    conflict_often:'ขัดแย้งทะเลาะกันบ่อยครั้ง',distant:'ห่างเหิน',
-    viol_some:'ขัดแย้งและทำร้ายร่างกายบางครั้ง',viol_often:'ขัดแย้งและทำร้ายร่างกายบ่อยครั้ง',other:'อื่น ๆ'};
-  const houseTh   = {good:'สภาพดี/พอใช้',old:'เก่า/ทรุดโทรม',material:'วัสดุพื้นบ้าน',
-    no_toilet:'ไม่มีห้องส้วม',bad_area:'ใกล้แหล่งมั่วสุม'};
-  const burdenTh  = {disabled:'มีผู้พิการ',elderly:'มีผู้สูงอายุ',single_par:'พ่อ/แม่เลี้ยงเดี่ยว',unemployed:'ตกงาน/ว่างงาน'};
-  const famBgTh   = {both_dead:'บิดา-มารดาเสียชีวิตทั้งคู่',one_dead:'บิดาหรือมารดาเสียชีวิต',
-    divorced:'บิดา-มารดาเลิกร้างกัน',not_with_par:'ไม่ได้อาศัยกับบิดา/มารดา',half_sib:'มีพี่น้องต่างบิดา/มารดา'};
-  const nvTh      = {full100:'เยี่ยมบ้านครบ 100%',absent:'นักเรียนไม่มาเรียน',
-    busy:'ผู้ปกครองติดงาน',notfound:'ติดต่อไม่ได้',moved:'ย้ายที่อยู่',other:'อื่น ๆ'};
-  const dot = '...............................................';
-  const val = v => v || dot.substring(0,20);
 
-  // สร้าง HTML แบบราชการ
+  // ตัวช่วย
+  const chk  = (v, l) => '<span style="margin-right:12pt;white-space:nowrap">'+(v?'&#9745;':'&#9744;')+' '+l+'</span>';
+  const dash = '-';
+  const v    = x => (x !== undefined && x !== null && x !== '') ? x : dash;
+
+  const parStatTh = {together:'อยู่ด้วยกัน', separate:'แยกกันอยู่', divorced:'หย่าร้าง',
+    father_dead:'บิดาเสียชีวิต', mother_dead:'มารดาเสียชีวิต', both_dead:'เสียชีวิตทั้งคู่'};
+  const transTh = {parent_drive:'ผู้ปกครองส่ง', motorbike:'รถจักรยานยนต์', bus:'รถโดยสาร',
+    school_bus:'รถโรงเรียน', bicycle:'รถจักรยาน', walk:'เดินเท้า', other:'อื่น ๆ'};
+  const famTh = {close:'สนิทสนม/รักใคร่กันดี', conflict_some:'ขัดแย้งทะเลาะกันบางครั้ง',
+    conflict_often:'ขัดแย้งทะเลาะกันบ่อยครั้ง', distant:'ห่างเหิน',
+    viol_some:'ขัดแย้งและทำร้ายร่างกายบางครั้ง', viol_often:'ขัดแย้งและทำร้ายร่างกายบ่อยครั้ง', other:'อื่น ๆ'};
+  const houseTh = {good:'สภาพดี/พอใช้', old:'เก่า/ทรุดโทรม', material:'วัสดุพื้นบ้าน',
+    no_toilet:'ไม่มีห้องส้วม', bad_area:'ใกล้แหล่งมั่วสุม'};
+  const burdenTh = {disabled:'มีผู้พิการในครัวเรือน', elderly:'มีผู้สูงอายุในครัวเรือน',
+    single_par:'ครอบครัวเลี้ยงเดี่ยว', unemployed:'ตกงาน/ว่างงาน'};
+  const famBgTh = {both_dead:'บิดา-มารดาเสียชีวิตทั้งคู่', one_dead:'บิดาหรือมารดาเสียชีวิต',
+    divorced:'บิดา-มารดาเลิกร้างกัน', not_with_par:'ไม่ได้อาศัยอยู่กับบิดาหรือมารดา',
+    half_sib:'มีพี่น้องต่างบิดา/มารดา'};
+  const nvTh = {full100:'เยี่ยมครบแล้ว (100%)', absent:'นักเรียนไม่มาเรียน',
+    busy:'ผู้ปกครองไม่สะดวก', notfound:'ติดต่อไม่ได้', moved:'ย้ายที่อยู่', other:'อื่น ๆ'};
+
+  const famBgAll = ['both_dead','one_dead','divorced','not_with_par','half_sib'];
+  const houseAll = ['good','old','material','no_toilet','bad_area'];
+  const burdenAll= ['disabled','elderly','single_par','unemployed'];
+
+  const css = [
+    '@page { size: A4 portrait; margin: 1.8cm 2cm 1.5cm 2cm; }',
+    '* { box-sizing: border-box; margin: 0; padding: 0;',
+    '    -webkit-print-color-adjust: exact; print-color-adjust: exact; }',
+    'body { font-family: "TH SarabunPSK","Sarabun","Noto Sans Thai",Arial,sans-serif;',
+    '       font-size: 15pt; color: #000; background: #fff; line-height: 1.45; }',
+    'h1 { text-align: center; font-size: 18pt; font-weight: bold; margin-bottom: 2pt; }',
+    'h2 { text-align: center; font-size: 14pt; font-weight: normal; margin-bottom: 1pt; }',
+    '.meta { text-align: center; font-size: 13pt; margin-bottom: 6pt; }',
+    'table { border-collapse: collapse; width: 100%; table-layout: fixed; }',
+    'td { border: 1pt solid #000; padding: 2pt 5pt; vertical-align: middle; font-size: 14pt; }',
+    'td.sec { font-weight: bold; font-size: 14pt; background: #ddd;',
+    '         border-bottom: none; padding: 2pt 5pt; }',
+    'td.lbl { font-weight: bold; width: 28%; font-size: 13.5pt;',
+    '         background: #f2f2f2; vertical-align: middle; }',
+    'td.sig { text-align: center; font-size: 14pt; padding: 4pt 5pt; }',
+    '.line { display: inline-block; border-bottom: 1pt solid #000;',
+    '        min-width: 60pt; vertical-align: bottom; }'
+  ].join('\n');
+
+  const rows = (...cells) => '<tr>' + cells.join('') + '</tr>';
+  const td   = (cls, span, txt) =>
+    '<td'+(cls?' class="'+cls+'"':'')+(span>1?' colspan="'+span+'"':'')+'>'+txt+'</td>';
+
   const html = [
     '<!DOCTYPE html><html lang="th"><head>',
     '<meta charset="UTF-8">',
-    '<title>แบบบันทึกการเยี่ยมบ้านนักเรียน - '+( r.studentName||'')+' </title>',
-    '<style>',
-    '  @page { size: A4 portrait; margin: 1.8cm 2cm 1.5cm 2cm; }',
-    '  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; margin:0; padding:0; }',
-    '  body { font-family: "TH SarabunPSK","Sarabun","Noto Sans Thai",Arial,sans-serif;',
-    '         font-size: 15pt; color: #000; background: #fff; line-height: 1.4; }',
-    '  table { border-collapse: collapse; width: 100%; }',
-    '  td, th { border: 1px solid #000; padding: 2pt 5pt; vertical-align: top; font-size: 14pt; }',
-    '  .hd  { font-weight: bold; background: #e8e8e8; text-align: center; font-size: 14pt; padding: 2pt 4pt; }',
-    '  .sec { font-weight: bold; background: #f0f0f0; font-size: 13pt; padding: 2pt 5pt; }',
-    '  .lbl { width: 30%; font-weight: bold; background: #fafafa; font-size: 13.5pt; }',
-    '  .chk { font-size: 13pt; margin-right: 14pt; white-space: nowrap; }',
-    '  .sig { text-align: center; font-size: 14pt; padding-top: 4pt; }',
-    '  .title { text-align: center; font-size: 18pt; font-weight: bold; margin-bottom: 3pt; }',
-    '  .sub   { text-align: center; font-size: 14pt; margin-bottom: 2pt; }',
-    '</style></head><body>',
-    // ══ หัวเอกสาร ══
-    '<div class="title">แบบบันทึกการเยี่ยมบ้านนักเรียน</div>',
-    '<div class="sub">'+SCHOOL+'&nbsp;&nbsp; สังกัด สพม.อุบลราชธานี อำนาจเจริญ</div>',
-    '<div class="sub">ปีการศึกษา '+(r.year||dot.substring(0,6))+'&nbsp;&nbsp; ภาคเรียนที่ '+(r.semester||dot.substring(0,4))+'&nbsp;&nbsp; วันที่เยี่ยม '+(r.visitDate||dot.substring(0,16))+'</div>',
-    '<br>',
-    // ══ ตารางหลัก ══
+    '<title>แบบบันทึกการเยี่ยมบ้านนักเรียน</title>',
+    '<style>'+css+'</style>',
+    '</head><body>',
+
+    // ═══ หัวเอกสาร ═══
+    '<h1>แบบบันทึกการเยี่ยมบ้านนักเรียน</h1>',
+    '<h2>'+SCHOOL+'&nbsp;&nbsp; สังกัด สพม.อุบลราชธานี อำนาจเจริญ</h2>',
+    '<p class="meta">',
+    'ปีการศึกษา '+v(r.year)+'&emsp;',
+    'ภาคเรียนที่ '+v(r.semester)+'&emsp;',
+    'วันที่เยี่ยม '+v(r.visitDate),
+    '</p>',
+
+    // ═══ ตารางหลัก ═══
     '<table>',
-    // ส่วนที่ ๑ ข้อมูลนักเรียน
-    '<tr><td colspan="4" class="hd">๑. ข้อมูลนักเรียน</td></tr>',
-    '<tr>',
-    '  <td class="lbl">ชื่อ-นามสกุล</td>',
-    '  <td colspan="3"><strong>'+(r.studentName||dot)+'</strong></td>',
-    '</tr><tr>',
-    '  <td class="lbl">เลขที่</td><td>'+(r.studentNo||dot.substring(0,6))+'</td>',
-    '  <td class="lbl" style="width:20%">ระดับชั้น</td><td>'+(r.gradeLevel||dot.substring(0,6))+'</td>',
-    '</tr><tr>',
-    '  <td class="lbl">เพศ</td>',
-    '  <td colspan="3"><span class="chk">'+(r.gender==='male'?'☑':'☐')+' ชาย</span><span class="chk">'+(r.gender==='female'?'☑':'☐')+' หญิง</span></td>',
-    '</tr><tr>',
-    '  <td class="lbl">ครูที่ปรึกษา</td><td colspan="3">'+(r.teacher||dot)+'</td>',
-    '</tr><tr>',
-    '  <td class="lbl">เบอร์โทรนักเรียน</td><td colspan="3">'+(r.studentPhone||dot)+'</td>',
-    '</tr>',
-    // ส่วนที่ ๒ ข้อมูลครอบครัว
-    '<tr><td colspan="4" class="hd">๒. ข้อมูลครอบครัวและผู้ปกครอง</td></tr>',
-    '<tr>',
-    '  <td class="lbl">บิดา</td>',
-    '  <td colspan="3">'+(r.fatherName||dot.substring(0,20))+'&nbsp; อาชีพ '+(r.fatherJob||dot.substring(0,14))+'&nbsp; โทร. '+(r.fatherPhone||dot.substring(0,12))+'</td>',
-    '</tr><tr>',
-    '  <td class="lbl">มารดา</td>',
-    '  <td colspan="3">'+(r.motherName||dot.substring(0,20))+'&nbsp; อาชีพ '+(r.motherJob||dot.substring(0,14))+'&nbsp; โทร. '+(r.motherPhone||dot.substring(0,12))+'</td>',
-    '</tr><tr>',
-    '  <td class="lbl">สถานภาพบิดา-มารดา</td>',
-    '  <td colspan="3">'+(parStatTh[r.parStatus]||dot.substring(0,16))+'</td>',
-    '</tr><tr>',
-    '  <td class="lbl">ผู้ปกครอง</td>',
-    '  <td colspan="3">'+(r.parentName||dot.substring(0,20))+'&nbsp; ความสัมพันธ์ '+(r.parentRel||dot.substring(0,10))+'&nbsp; อาชีพ '+(r.parentJob||dot.substring(0,10))+'&nbsp; โทร. '+(r.parentPhone||dot.substring(0,12))+'</td>',
-    '</tr><tr>',
-    '  <td class="lbl">ที่อยู่</td>',
-    '  <td colspan="3">'+(r.address||dot)+'</td>',
-    '</tr><tr>',
-    '  <td class="lbl">ข้อมูลครอบครัว</td>',
-    '  <td colspan="3">',
-    '    '+(r.famBg||[]).map(k=>'<span class="chk">☑ '+(famBgTh[k]||k)+'</span>').join(''),
-    '    '+(['both_dead','one_dead','divorced','not_with_par','half_sib'].filter(k=>!(r.famBg||[]).includes(k)).map(k=>'<span class="chk">☐ '+(famBgTh[k]||k)+'</span>').join('')),
-    '  </td>',
-    '</tr>',
-    // ส่วนที่ ๓ สถานะครัวเรือน
-    '<tr><td colspan="4" class="hd">๓. สถานะครัวเรือนและการเดินทาง</td></tr>',
-    '<tr>',
-    '  <td class="lbl">จำนวนสมาชิก</td><td>'+(r.householdSize||dot.substring(0,4))+' คน</td>',
-    '  <td class="lbl" style="width:22%">รายได้รวม/เดือน</td><td>'+(r.income?r.income.toLocaleString()+' บาท':dot.substring(0,10))+'</td>',
-    '</tr><tr>',
-    '  <td class="lbl">เงินมาโรงเรียน/วัน</td><td>'+(r.allowance?r.allowance+' บาท':dot.substring(0,8))+'</td>',
-    '  <td class="lbl">ภาระพิเศษ</td>',
-    '  <td>'+(r.burden||[]).map(k=>'<span class="chk">☑ '+(burdenTh[k]||k)+'</span>').join('')+(['disabled','elderly','single_par','unemployed'].filter(k=>!(r.burden||[]).includes(k)).map(k=>'<span class="chk">☐ '+(burdenTh[k]||k)+'</span>').join(''))+'</td>',
-    '</tr><tr>',
-    '  <td class="lbl">สภาพที่อยู่อาศัย</td>',
-    '  <td colspan="3">',
-    '    '+(['good','old','material','no_toilet','bad_area'].map(k=>'<span class="chk">'+(( r.house||[]).includes(k)?'☑':'☐')+' '+(houseTh[k]||k)+'</span>').join('')),
-    '  </td>',
-    '</tr><tr>',
-    '  <td class="lbl">ความสัมพันธ์ในครอบครัว</td>',
-    '  <td colspan="3">'+(famTh[r.family]||dot.substring(0,20))+'</td>',
-    '</tr><tr>',
-    '  <td class="lbl">พาหนะ</td>',
-    '  <td>'+(transTh[r.transport]||dot.substring(0,12))+'</td>',
-    '  <td class="lbl">ระยะทาง/เวลา</td>',
-    '  <td>'+(r.distance||dot.substring(0,4))+' กม. / '+(r.travelTime||dot.substring(0,4))+' นาที</td>',
-    '</tr>',
-    // ส่วนที่ ๔ ผลการเยี่ยมบ้าน
-    '<tr><td colspan="4" class="hd">๔. ผลการเยี่ยมบ้าน</td></tr>',
-    '<tr>',
-    '  <td class="lbl">ผลการเยี่ยม</td>',
-    '  <td colspan="3"><span class="chk">'+(r.visited?'☑':'☐')+' เยี่ยมได้</span><span class="chk">'+(r.visited?'☐':'☑')+' ยังไม่ได้เยี่ยม</span>',
-    (!r.visited&&(r.nvReasons||[]).length ? '&nbsp;&nbsp; สาเหตุ: '+(r.nvReasons||[]).map(k=>nvTh[k]||k).join(', ') : ''),
-    '  </td>',
-    '</tr>',
-    // ส่วนที่ ๕ พฤติกรรมเสี่ยงและปัญหา
-    '<tr><td colspan="4" class="hd">๕. พฤติกรรมเสี่ยงและปัญหาที่พบ</td></tr>',
-    '<tr>',
-    '  <td class="sec" colspan="4">พฤติกรรมเสี่ยง</td>',
-    '</tr><tr>',
-    '  <td colspan="4" style="padding:3pt 5pt">',
-    '    <span class="chk">'+c(r.rH,'ด้านสุขภาพอนามัย')+'</span>',
-    '    <span class="chk">'+c(r.rS,'การใช้สารเสพติด')+'</span>',
-    '    <span class="chk">'+c(r.rV,'การใช้ความรุนแรง')+'</span>',
-    '    <span class="chk">'+c(r.rT,'การเดินทาง')+'</span>',
-    '    <span class="chk">'+c(r.rX,'ด้านเพศ')+'</span>',
-    '    <span class="chk">'+c(r.rP,'ติดโทรศัพท์/เกม')+'</span>',
-    '    <span class="chk">'+c(r.rSf,'สวัสดิภาพ/ความปลอดภัย')+'</span>',
-    '    <span class="chk">'+c(r.rO,'อื่น ๆ')+'</span>',
-    '  </td>',
-    '</tr><tr>',
-    '  <td class="sec" colspan="4">ปัญหาที่พบ</td>',
-    '</tr><tr>',
-    '  <td colspan="4" style="padding:3pt 5pt">',
-    '    <span class="chk">'+c(r.pL,'ด้านการเรียน')+'</span>',
-    '    <span class="chk">'+c(r.pH,'ด้านสุขภาพ')+'</span>',
-    '    <span class="chk">'+c(r.pE,'ด้านเศรษฐกิจ')+'</span>',
-    '    <span class="chk">'+c(r.pS,'การใช้สารเสพติด')+'</span>',
-    '    <span class="chk">'+c(r.pD,'ภาวะซึมเศร้า')+'</span>',
-    '    <span class="chk">'+c(r.pO,'อื่น ๆ')+'</span>',
-    '  </td>',
-    '</tr>',
-    // หมายเหตุ + เร่งด่วน
-    '<tr>',
-    '  <td class="lbl">หมายเหตุ'+(r.urgent?' <strong style="color:#000">⚠ เร่งด่วน</strong>':'')+'</td>',
-    '  <td colspan="3" style="min-height:30pt">'+(r.notes||'&nbsp;')+'</td>',
-    '</tr>',
-    // ลายเซ็น
-    '<tr>',
-    '  <td colspan="2" class="sig">',
-    '    <div style="margin-bottom:18pt">ลงชื่อ ............................................</div>',
-    '    <div>('+( r.teacher||dot.substring(0,20))+')</div>',
-    '    <div style="font-size:12pt">ครูที่ปรึกษา '+( r.gradeLevel||'')+'</div>',
-    '  </td>',
-    '  <td colspan="2" class="sig">',
-    '    <div style="margin-bottom:18pt">ลงชื่อ ............................................</div>',
-    '    <div>('+PRINCIPAL+')</div>',
-    '    <div style="font-size:12pt">ผู้อำนวยการ'+SCHOOL+'</div>',
-    '  </td>',
-    '</tr>',
+
+    // ── ส่วนที่ ๑ ──
+    rows(td('sec',4,'ส่วนที่ ๑  ข้อมูลนักเรียน')),
+    rows(td('lbl',1,'ชื่อ-นามสกุล'), td('',3,'<strong>'+v(r.studentName)+'</strong>')),
+    rows(
+      td('lbl',1,'เลขที่'),      td('',1,v(r.studentNo)),
+      td('lbl',1,'ระดับชั้น'),   td('',1,v(r.gradeLevel))
+    ),
+    rows(
+      td('lbl',1,'เพศ'),
+      td('',3, chk(r.gender==='male','ชาย') + chk(r.gender==='female','หญิง'))
+    ),
+    rows(td('lbl',1,'ครูที่ปรึกษา'),   td('',3,v(r.teacher))),
+    rows(td('lbl',1,'เบอร์โทรนักเรียน'), td('',3,v(r.studentPhone))),
+
+    // ── ส่วนที่ ๒ ──
+    rows(td('sec',4,'ส่วนที่ ๒  ข้อมูลครอบครัวและผู้ปกครอง')),
+    rows(td('lbl',1,'บิดา'), td('',3,
+      v(r.fatherName)+'&emsp;อาชีพ '+v(r.fatherJob)+'&emsp;โทร. '+v(r.fatherPhone))),
+    rows(td('lbl',1,'มารดา'), td('',3,
+      v(r.motherName)+'&emsp;อาชีพ '+v(r.motherJob)+'&emsp;โทร. '+v(r.motherPhone))),
+    rows(td('lbl',1,'สถานภาพบิดา-มารดา'), td('',3,v(parStatTh[r.parStatus]))),
+    rows(td('lbl',1,'ผู้ปกครอง'), td('',3,
+      v(r.parentName)+'&emsp;ความสัมพันธ์ '+v(r.parentRel)+'&emsp;อาชีพ '+v(r.parentJob)+'&emsp;โทร. '+v(r.parentPhone))),
+    rows(td('lbl',1,'ที่อยู่'), td('',3,v(r.address))),
+    rows(td('lbl',1,'ลักษณะครอบครัว'), td('',3,
+      famBgAll.map(k=>chk((r.famBg||[]).includes(k), famBgTh[k])).join(''))),
+
+    // ── ส่วนที่ ๓ ──
+    rows(td('sec',4,'ส่วนที่ ๓  สภาพครัวเรือนและการเดินทาง')),
+    rows(
+      td('lbl',1,'จำนวนสมาชิก'),    td('',1,v(r.householdSize)+' คน'),
+      td('lbl',1,'รายได้รวม/เดือน'),  td('',1,r.income?r.income.toLocaleString()+' บาท':dash)
+    ),
+    rows(
+      td('lbl',1,'เงินมาโรงเรียน/วัน'), td('',1,r.allowance?r.allowance+' บาท':dash),
+      td('lbl',1,'ลักษณะที่อยู่อาศัย'),  td('',1,r.houseType==='own'?'บ้านตัวเอง':r.houseType==='rent'?'เช่า':dash)
+    ),
+    rows(td('lbl',1,'สภาพที่พักอาศัย'), td('',3,
+      houseAll.map(k=>chk((r.house||[]).includes(k), houseTh[k])).join(''))),
+    rows(td('lbl',1,'ภาระพิเศษในครัวเรือน'), td('',3,
+      burdenAll.map(k=>chk((r.burden||[]).includes(k), burdenTh[k])).join(''))),
+    rows(td('lbl',1,'ความสัมพันธ์ในครอบครัว'), td('',3, v(famTh[r.family]))),
+    rows(
+      td('lbl',1,'พาหนะ'), td('',1,v(transTh[r.transport])),
+      td('lbl',1,'ระยะทาง / เวลา'), td('',1,v(r.distance)+' กม. / '+v(r.travelTime)+' นาที')
+    ),
+
+    // ── ส่วนที่ ๔ ──
+    rows(td('sec',4,'ส่วนที่ ๔  ผลการเยี่ยมบ้าน')),
+    rows(td('lbl',1,'ผลการเยี่ยมบ้าน'), td('',3,
+      chk(r.visited,'เยี่ยมได้') + chk(!r.visited,'ยังไม่ได้เยี่ยม') +
+      (!r.visited && (r.nvReasons||[]).length
+        ? '&emsp;สาเหตุ: '+(r.nvReasons||[]).map(k=>nvTh[k]||k).join(', ')
+        : '')
+    )),
+
+    // ── ส่วนที่ ๕ ──
+    rows(td('sec',4,'ส่วนที่ ๕  พฤติกรรมเสี่ยงและปัญหาที่พบ')),
+    rows(td('lbl',1,'พฤติกรรมเสี่ยง'), td('',3,
+      chk(r.rH,'ด้านสุขภาพอนามัย') +
+      chk(r.rS,'การใช้สารเสพติด') +
+      chk(r.rV,'การใช้ความรุนแรง') +
+      chk(r.rT,'การเดินทาง') +
+      chk(r.rX,'ด้านเพศ') +
+      chk(r.rP,'ติดโทรศัพท์/เกม') +
+      chk(r.rSf,'สวัสดิภาพ/ความปลอดภัย') +
+      chk(r.rO,'อื่น ๆ')
+    )),
+    rows(td('lbl',1,'ปัญหาที่พบ'), td('',3,
+      chk(r.pL,'ด้านการเรียน') +
+      chk(r.pH,'ด้านสุขภาพ') +
+      chk(r.pE,'ด้านเศรษฐกิจ') +
+      chk(r.pS,'การใช้สารเสพติด') +
+      chk(r.pD,'ภาวะซึมเศร้า') +
+      chk(r.pO,'อื่น ๆ')
+    )),
+    rows(
+      td('lbl',1,'กรณีเร่งด่วน'),
+      td('',1, chk(r.urgent,'ต้องดูแลพิเศษทันที') + chk(!r.urgent,'ปกติ')),
+      td('lbl',1,'ความห่วงใยผู้ปกครอง'),
+      td('',1, v(r.parentConcern))
+    ),
+    rows(td('lbl',1,'หมายเหตุ'), td('',3, v(r.notes))),
+
+    // ── ลายเซ็น ──
+    rows(
+      td('sig',2,
+        '<br>ลงชื่อ ...................................................<br>' +
+        '('+v(r.teacher)+')<br>' +
+        'ครูที่ปรึกษาระดับชั้น '+v(r.gradeLevel)+'<br><br>'
+      ),
+      td('sig',2,
+        '<br>ลงชื่อ ...................................................<br>' +
+        '('+PRINCIPAL+')<br>' +
+        'ผู้อำนวยการ'+SCHOOL+'<br><br>'
+      )
+    ),
+
     '</table>',
     '</body></html>'
   ].join('\n');
 
   document.getElementById('student-print-body').innerHTML =
-    '<p style="color:#666;font-size:.85rem;margin-bottom:8px">ตัวอย่างก่อนพิมพ์ — กด 🖨️ พิมพ์ / บันทึก PDF เพื่อเปิดหน้าต่างพิมพ์</p>' +
-    '<div style="border:1px solid #ddd;border-radius:4px;overflow:hidden;pointer-events:none">' +
-    '<iframe id="print-preview" style="width:100%;height:500px;border:none" srcdoc=""></iframe></div>';
+    '<p style="color:#555;font-size:.82rem;margin-bottom:6px">ตัวอย่างก่อนพิมพ์ — กดปุ่ม พิมพ์/บันทึก PDF เพื่อเปิดหน้าต่างพิมพ์จริง</p>' +
+    '<div style="border:1px solid #ccc;border-radius:4px;overflow:hidden">' +
+    '<iframe id="print-preview" style="width:100%;height:520px;border:none"></iframe></div>';
   document.getElementById('mo-print-student').classList.add('open');
-  // inject ลง iframe เพื่อ preview
   setTimeout(() => {
-    const iframe = document.getElementById('print-preview');
-    if (iframe) {
-      iframe.contentDocument.open();
-      iframe.contentDocument.write(html);
-      iframe.contentDocument.close();
-    }
-  }, 100);
-  // เก็บ html ไว้ให้ printStudentPDF ใช้
+    const fr = document.getElementById('print-preview');
+    if (fr) { fr.contentDocument.open(); fr.contentDocument.write(html); fr.contentDocument.close(); }
+  }, 120);
   document.getElementById('mo-print-student').dataset.printHtml = html;
 }
 
