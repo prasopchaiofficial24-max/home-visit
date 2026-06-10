@@ -210,21 +210,7 @@ tbody tr{transition:background .1s}
   #district-out table td{ font-size:11pt!important; padding:3pt 6pt; border:0.5pt solid #999 }
   #district-out table{ border-collapse:collapse; width:100%; margin-bottom:10pt }
 
-  /* พิมพ์ฟอร์มรายนักเรียน */
-  body.printing-student .page,
-  body.printing-student .topbar,
-  body.printing-student .mo > .mo-box > div.no-print{ display:none!important }
-  body.printing-student #mo-print-student{
-    display:block!important; position:static!important; background:none!important;
-    padding:0!important;
-  }
-  body.printing-student #mo-print-student .mo-box{
-    max-width:100%!important; box-shadow:none!important; border-radius:0!important; padding:0!important;
-  }
-  body.printing-student #student-print-body{
-    max-height:none!important; overflow:visible!important; padding:0!important;
-  }
-  body.printing-student .no-print{ display:none!important }
+  /* พิมพ์ฟอร์มรายนักเรียน (legacy — ไม่ใช้แล้ว ใช้ popup window แทน) */
 }
 
 /* ── DASHBOARD HERO ── */
@@ -801,7 +787,7 @@ tbody tr{transition:background .1s}
     <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--bdr)" class="no-print">
       <span style="font-weight:700;color:var(--pri-d)">🖨️ พิมพ์ฟอร์มเยี่ยมบ้านรายนักเรียน</span>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-pri btn-sm" onclick="window.print()">🖨️ พิมพ์ / บันทึก PDF</button>
+        <button class="btn btn-pri btn-sm" onclick="printStudentPDF()">🖨️ พิมพ์ / บันทึก PDF</button>
         <button class="btn btn-gray btn-sm" onclick="closeMo('mo-print-student')">✕ ปิด</button>
       </div>
     </div>
@@ -1072,6 +1058,37 @@ function saveSettings() {
   renderDash();
 }
 function closeMo(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── PRINT STUDENT PDF ─────────────────────
+function printStudentPDF() {
+  const content = document.getElementById('student-print-body').innerHTML;
+  const win = window.open('', '_blank');
+  if (!win) { alert('กรุณาอนุญาต Popup ในเบราว์เซอร์ก่อนครับ'); return; }
+  const html = [
+    '<!DOCTYPE html><html lang="th"><head>',
+    '<meta charset="UTF-8">',
+    '<title>บันทึกการเยี่ยมบ้านนักเรียน</title>',
+    '<style>',
+    '  @page { size: A4 portrait; margin: 1.5cm 2cm; }',
+    '  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; }',
+    '  body { font-family: "TH SarabunPSK","Sarabun","Noto Sans Thai",Arial,sans-serif;',
+    '         font-size: 13px; color: #111; margin: 0; padding: 20px; background: #fff; }',
+    '  table { border-collapse: collapse; width: 100%; }',
+    '  td { padding: 4px 8px; border: 0.5px solid #ccc; font-size: 12px; }',
+    '  div { orphans: 2; widows: 2; }',
+    '</style>',
+    '</head><body>',
+    content,
+    '</body></html>'
+  ].join('\n');
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => {
+    win.print();
+    win.onafterprint = () => win.close();
+  }, 400);
+}
 
 // ── NAVIGATION ────────────────────────────
 async function showPage(name) {
