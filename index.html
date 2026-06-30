@@ -265,7 +265,7 @@ tbody tr{transition:background .1s}
     <div class="tb-logo">🏠 เยี่ยมบ้าน <span>จิกดู่วิทยา</span></div>
     <div class="tb-teacher" id="tb-teacher">ยังไม่ได้ตั้งชื่อ</div>
     <div class="tb-right">
-      <span class="s-badge s-local" id="conn-badge">⏳</span>
+      <span class="s-badge s-local" id="conn-badge" title="คลิกเพื่อลองเชื่อมต่อใหม่">⏳</span>
       <button class="btn-gear" onclick="openSettings()">⚙️</button>
     </div>
   </div>
@@ -912,38 +912,66 @@ let db = null;
 let _unsubscribe   = null;  // real-time listener handle
 let _listenerFired = false; // true หลัง onSnapshot ส่งข้อมูลครั้งแรกแล้ว
 
+let _retryTimer = null;
+
 function initFirebase() {
   if (!USE_FIREBASE) { setConn('local'); return; }
   try {
-    firebase.initializeApp(FIREBASE_CONFIG);
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.firestore();
-    setConn('online');
+    setConn('connecting');
     startRealtimeListener();
-  } catch(e) { setConn('offline'); }
+  } catch(e) { setConn('offline', e.message); scheduleRetry(); }
 }
 
 function startRealtimeListener() {
   if (!db) return;
-  if (_unsubscribe) _unsubscribe(); // ยกเลิก listener เก่าก่อน
-  _listenerFired = false;           // reset flag สำหรับ listener ใหม่
+  if (_unsubscribe) _unsubscribe();
+  _listenerFired = false;
   _unsubscribe = db.collection(COL).orderBy('ts','desc').onSnapshot(snap => {
+    if (_retryTimer) { clearTimeout(_retryTimer); _retryTimer = null; }
     _recs = snap.docs.map(d => ({...d.data(), id: d.id}));
     localStorage.setItem('sv_bk', JSON.stringify(_recs));
     setConn('online');
-    _listenerFired = true; // mark ว่าข้อมูลชุดแรกถึงแล้ว
-    // re-render หน้าที่กำลังเปิดอยู่
+    _listenerFired = true;
     const active = document.querySelector('.page.active')?.id;
     if (active === 'page-dashboard') renderDash();
     if (active === 'page-records')   renderRecords();
     if (active === 'page-district')  { fillYearSel(); renderDistrict(); }
     if (active === 'page-present')   renderPresent();
-  }, () => { setConn('offline'); });
+  }, err => {
+    setConn('offline', err.message);
+    scheduleRetry();
+  });
 }
-function setConn(s) {
+
+function scheduleRetry() {
+  if (_retryTimer) return;
+  _retryTimer = setTimeout(() => {
+    _retryTimer = null;
+    retryConnect();
+  }, 30000);
+}
+
+function retryConnect() {
+  if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
+  setConn('connecting');
+  startRealtimeListener();
+}
+
+function setConn(s, errMsg) {
   const el = document.getElementById('conn-badge');
-  const m = { online:['🟢 Online','s-online'], offline:['🔴 Offline','s-offline'], local:['💾 Local','s-local'] };
-  el.className = 's-badge ' + (m[s]||m.local)[1];
-  el.textContent = (m[s]||m.local)[0];
+  const m = {
+    online:     ['🟢 Online',   's-online'],
+    offline:    ['🔴 Offline',  's-offline'],
+    local:      ['💾 Local',    's-local'],
+    connecting: ['⏳ กำลังเชื่อมต่อ…', 's-local']
+  };
+  el.className = 's-badge ' + (m[s]||m.offline)[1];
+  el.textContent = (m[s]||m.offline)[0];
+  el.title = errMsg || '';
+  el.style.cursor = (s === 'offline') ? 'pointer' : '';
+  el.onclick = (s === 'offline') ? () => retryConnect() : null;
 }
 
 // ── DATA ──────────────────────────────────
