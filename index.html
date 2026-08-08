@@ -908,6 +908,12 @@ tbody tr{transition:background .1s}
       <select id="w-name" style="padding:8px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.9rem;font-family:inherit"></select>
     </div>
     <input type="hidden" id="w-grade">
+    <div class="fg" style="margin-bottom:14px">
+      <label>PIN ประจำชั้นเรียน *</label>
+      <input type="password" id="w-pin" maxlength="20" placeholder="กรอก PIN ที่ได้รับจากผู้ดูแลระบบ" autocomplete="off"
+        style="padding:8px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.9rem;font-family:inherit;width:100%;letter-spacing:.1em">
+    </div>
+    <div id="w-pin-err" style="display:none;font-size:.82rem;color:var(--dan);margin-bottom:10px;padding:8px 12px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca"></div>
     <button class="btn btn-pri" style="width:100%" onclick="saveTeacher()">🚀 เริ่มใช้งาน</button>
   </div>
 </div>
@@ -923,9 +929,28 @@ tbody tr{transition:background .1s}
     <input type="hidden" id="cfg-grade">
     <div class="fg"><label>ปีการศึกษา (default)</label><input type="text" id="cfg-year" placeholder="เช่น 2568"></div>
     <div class="fg" style="margin-bottom:14px"><label>ชื่อผู้อำนวยการ</label><input type="text" id="cfg-principal"></div>
-    <div class="btn-row">
+    <div class="btn-row" style="margin-bottom:20px">
       <button class="btn btn-pri" onclick="saveSettings()">💾 บันทึก</button>
       <button class="btn btn-gray" onclick="closeMo('mo-settings')">ยกเลิก</button>
+    </div>
+
+    <div style="border-top:1.5px solid var(--bdr);padding-top:18px">
+      <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);margin-bottom:12px">🔐 จัดการ PIN ประจำชั้นเรียน</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">PIN ใช้สำหรับยืนยันตัวตนครูก่อนเข้าระบบ — บันทึกลง Firestore ทันที</div>
+      <div id="pin-rows">
+        <div style="display:grid;grid-template-columns:80px 1fr auto;gap:8px;align-items:center;margin-bottom:8px" id="pin-loading">
+          <span style="font-size:.82rem;color:var(--muted);grid-column:1/-1">⏳ กำลังโหลด PIN...</span>
+        </div>
+      </div>
+      <div id="pin-save-msg" style="font-size:.78rem;color:var(--sec);min-height:18px;margin-top:4px"></div>
+      <div style="margin-top:12px">
+        <div style="font-size:.82rem;font-weight:600;color:var(--txt);margin-bottom:8px">📝 PIN แบบสำรวจนักเรียน (survey)</div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center">
+          <input type="text" id="cfg-survey-pin" maxlength="20" placeholder="PIN แบบสำรวจ"
+            style="padding:7px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.88rem;font-family:inherit;letter-spacing:.1em">
+          <button class="btn btn-sm btn-pri" onclick="saveSurveyPin()">บันทึก</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1016,10 +1041,10 @@ const LABEL = {
 
 // ── FIREBASE ──────────────────────────────
 let db = null;
-let _unsubscribe   = null;  // real-time listener handle
-let _listenerFired = false; // true หลัง onSnapshot ส่งข้อมูลครั้งแรกแล้ว
-
-let _retryTimer = null;
+let _unsubscribe   = null;
+let _listenerFired = false;
+let _retryTimer    = null;
+let _gradePins     = {};   // โหลดจาก Firestore config/app
 
 function initFirebase() {
   if (!USE_FIREBASE) { setConn('local'); return; }
@@ -1028,6 +1053,9 @@ function initFirebase() {
     db = firebase.firestore();
     setConn('connecting');
     startRealtimeListener();
+    db.collection('config').doc('app').get()
+      .then(doc => { if (doc.exists && doc.data().grade_pins) _gradePins = doc.data().grade_pins; })
+      .catch(() => {});
   } catch(e) { setConn('offline', e.message); scheduleRetry(); }
 }
 
@@ -1153,10 +1181,32 @@ function onSelectTeacher(sel, gradeId) {
   if (hiddenGrade) hiddenGrade.value = g;
 }
 function saveTeacher() {
-  const n = document.getElementById('w-name').value.trim();
-  const g = document.getElementById('w-grade').value;
+  const n   = document.getElementById('w-name').value.trim();
+  const g   = document.getElementById('w-grade').value;
+  const pin = document.getElementById('w-pin').value.trim();
+  const errEl = document.getElementById('w-pin-err');
+  errEl.style.display = 'none';
+
   if (!n) { alert('กรุณาเลือกชื่อครูครับ'); return; }
   if (!g) { alert('ระบบหาชั้นไม่พบ กรุณาเลือกชื่ออีกครั้งครับ'); return; }
+  if (!pin) { errEl.textContent = 'กรุณากรอก PIN ประจำชั้นเรียน'; errEl.style.display = 'block'; return; }
+
+  const expected = _gradePins[g];
+  if (expected) {
+    if (pin !== expected) {
+      errEl.textContent = '❌ PIN ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง';
+      errEl.style.display = 'block';
+      document.getElementById('w-pin').value = '';
+      return;
+    }
+  } else if (Object.keys(_gradePins).length > 0) {
+    errEl.textContent = '❌ ไม่พบ PIN สำหรับชั้น ' + g + ' กรุณาติดต่อผู้ดูแลระบบ';
+    errEl.style.display = 'block';
+    return;
+  }
+  // _gradePins ยังไม่โหลด (Firestore offline) → อนุญาตแต่แจ้งเตือน
+  if (Object.keys(_gradePins).length === 0) _showOfflineToast();
+
   localStorage.setItem('t_name', n);
   localStorage.setItem('t_grade', g);
   closeMo('mo-teacher');
@@ -1191,6 +1241,7 @@ function openSettings() {
   document.getElementById('cfg-year').value      = cfg.year || '';
   document.getElementById('cfg-principal').value = cfg.principal || PRINCIPAL;
   document.getElementById('mo-settings').classList.add('open');
+  renderPinRows();
 }
 function saveSettings() {
   const nameSel = document.getElementById('cfg-name');
@@ -1210,6 +1261,57 @@ function saveSettings() {
   renderDash();
 }
 function closeMo(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── PIN MANAGEMENT ────────────────────────
+function renderPinRows() {
+  const container = document.getElementById('pin-rows');
+  if (!container) return;
+  const grades = [...GRADES, 'ผบ.'];
+  container.innerHTML = grades.map(g => `
+    <div style="display:grid;grid-template-columns:70px 1fr auto;gap:8px;align-items:center;margin-bottom:8px">
+      <span style="font-size:.84rem;font-weight:600">${g}</span>
+      <input type="password" id="pin-input-${g.replace('.','')}" maxlength="20"
+        value="${_gradePins[g] || ''}" placeholder="กรอก PIN"
+        style="padding:7px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.88rem;font-family:inherit;letter-spacing:.1em">
+      <button class="btn btn-sm btn-pri" onclick="savePinForGrade('${g}')">บันทึก</button>
+    </div>`).join('');
+  const surveyEl = document.getElementById('cfg-survey-pin');
+  if (surveyEl && !surveyEl.value) {
+    db && db.collection('config').doc('app').get()
+      .then(doc => { if (doc.exists && doc.data().survey_pin) surveyEl.value = doc.data().survey_pin; })
+      .catch(() => {});
+  }
+}
+
+async function savePinForGrade(grade) {
+  const inputId = 'pin-input-' + grade.replace('.','');
+  const newPin  = document.getElementById(inputId)?.value.trim();
+  const msg     = document.getElementById('pin-save-msg');
+  if (!newPin) { if (msg) { msg.textContent = '❌ กรุณากรอก PIN'; msg.style.color = 'var(--dan)'; } return; }
+  if (!db) { if (msg) { msg.textContent = '❌ ไม่ได้เชื่อมต่อ Firebase'; msg.style.color = 'var(--dan)'; } return; }
+  try {
+    _gradePins[grade] = newPin;
+    await db.collection('config').doc('app').set({ grade_pins: _gradePins }, { merge: true });
+    if (msg) { msg.textContent = `✅ บันทึก PIN ของ ${grade} แล้ว`; msg.style.color = 'var(--sec)'; }
+    setTimeout(() => { if (msg) msg.textContent = ''; }, 3000);
+  } catch(e) {
+    if (msg) { msg.textContent = '❌ บันทึกไม่สำเร็จ: ' + e.message; msg.style.color = 'var(--dan)'; }
+  }
+}
+
+async function saveSurveyPin() {
+  const newPin = document.getElementById('cfg-survey-pin')?.value.trim();
+  const msg    = document.getElementById('pin-save-msg');
+  if (!newPin) { if (msg) { msg.textContent = '❌ กรุณากรอก PIN แบบสำรวจ'; msg.style.color = 'var(--dan)'; } return; }
+  if (!db) { if (msg) { msg.textContent = '❌ ไม่ได้เชื่อมต่อ Firebase'; msg.style.color = 'var(--dan)'; } return; }
+  try {
+    await db.collection('config').doc('app').set({ survey_pin: newPin }, { merge: true });
+    if (msg) { msg.textContent = '✅ บันทึก PIN แบบสำรวจแล้ว'; msg.style.color = 'var(--sec)'; }
+    setTimeout(() => { if (msg) msg.textContent = ''; }, 3000);
+  } catch(e) {
+    if (msg) { msg.textContent = '❌ บันทึกไม่สำเร็จ: ' + e.message; msg.style.color = 'var(--dan)'; }
+  }
+}
 
 // ── PRINT STUDENT PDF ─────────────────────
 function printStudentPDF() {
