@@ -408,6 +408,13 @@ body.booting .db-vis-row strong{
   <input type="hidden" id="edit-id">
   <div class="alert al-ok"  id="f-alert"></div>
   <div class="alert al-info" id="f-edit-alert"></div>
+  <div id="f-draft-banner" style="display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:#fff7ed;color:#92400e;border:1px solid #fed7aa;border-radius:9px;padding:10px 14px;margin-bottom:12px;font-size:.85rem">
+    <span>📝 พบข้อมูลที่กรอกค้างไว้ (ยังไม่ได้บันทึก) ต้องการกู้คืนไหมครับ?</span>
+    <div style="display:flex;gap:6px;flex-shrink:0">
+      <button class="btn btn-sm btn-pri" onclick="restoreDraft()">กู้คืน</button>
+      <button class="btn btn-sm btn-gray" onclick="discardDraft()">ทิ้งร่าง</button>
+    </div>
+  </div>
 
   <!-- ส่วน 1: ข้อมูลนักเรียน -->
   <div class="fsec">
@@ -999,6 +1006,18 @@ body.booting .db-vis-row strong{
   </div>
 </div>
 
+<!-- Generic Confirm -->
+<div class="mo" id="mo-confirm">
+  <div class="mo-box" style="max-width:380px">
+    <h2 id="confirm-title">⚠️ ยืนยัน</h2>
+    <p id="confirm-msg" style="color:var(--muted);margin-bottom:18px;white-space:pre-line"></p>
+    <div class="btn-row">
+      <button class="btn btn-dan" id="confirm-yes-btn">ยืนยัน</button>
+      <button class="btn btn-gray" id="confirm-no-btn">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
 <!-- Delete Confirm -->
 <div class="mo" id="mo-del">
   <div class="mo-box" style="max-width:320px">
@@ -1154,37 +1173,50 @@ function setConn(s, errMsg) {
   el.onclick = (s === 'offline') ? () => retryConnect() : null;
 }
 
-function _showOfflineToast() {
-  let t = document.getElementById('_offline-toast');
+// ── TOAST (แทน alert() มาตรฐานเบราว์เซอร์ ให้เข้าธีมระบบ) ──
+const _TOAST_STYLE = {
+  warn:    { bg:'#fef3c7', color:'#92400e', border:'#fcd34d' },
+  success: { bg:'#dcfce7', color:'#15803d', border:'#86efac' },
+  error:   { bg:'#fee2e2', color:'#991b1b', border:'#fca5a5' }
+};
+function _showToast(msg, kind) {
+  const s = _TOAST_STYLE[kind] || _TOAST_STYLE.warn;
+  let t = document.getElementById('_generic-toast');
   if (!t) {
     t = document.createElement('div');
-    t.id = '_offline-toast';
+    t.id = '_generic-toast';
     t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);' +
-      'background:#fef3c7;color:#92400e;border:1.5px solid #fcd34d;border-radius:12px;' +
-      'padding:10px 20px;font-size:.84rem;font-weight:600;z-index:9999;' +
-      'box-shadow:0 4px 16px rgba(0,0,0,.12);display:flex;align-items:center;gap:8px';
-    t.innerHTML = '⚠️ บันทึกเฉพาะในเครื่องนี้ — ยังไม่ sync ขึ้น Firebase';
+      'border-radius:12px;padding:10px 20px;font-size:.84rem;font-weight:600;z-index:9999;' +
+      'box-shadow:0 4px 16px rgba(0,0,0,.12);display:flex;align-items:center;gap:8px;' +
+      'max-width:90vw;text-align:center';
     document.body.appendChild(t);
   }
+  t.style.background = s.bg; t.style.color = s.color; t.style.border = '1.5px solid ' + s.border;
+  t.textContent = msg;
   t.style.display = 'flex';
   clearTimeout(t._timer);
-  t._timer = setTimeout(() => { t.style.display = 'none'; }, 5000);
+  t._timer = setTimeout(() => { t.style.display = 'none'; }, kind === 'success' ? 5000 : 4000);
 }
-function _showSyncedToast(n) {
-  let t = document.getElementById('_synced-toast');
-  if (!t) {
-    t = document.createElement('div');
-    t.id = '_synced-toast';
-    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);' +
-      'background:#dcfce7;color:#15803d;border:1.5px solid #86efac;border-radius:12px;' +
-      'padding:10px 20px;font-size:.84rem;font-weight:600;z-index:9999;' +
-      'box-shadow:0 4px 16px rgba(0,0,0,.12);display:flex;align-items:center;gap:8px';
-    document.body.appendChild(t);
-  }
-  t.innerHTML = `✅ ซิงก์ข้อมูลที่ค้างจากตอนออฟไลน์ขึ้น Firebase แล้ว ${n} รายการ`;
-  t.style.display = 'flex';
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => { t.style.display = 'none'; }, 6000);
+function _showOfflineToast() { _showToast('⚠️ บันทึกเฉพาะในเครื่องนี้ — ยังไม่ sync ขึ้น Firebase', 'warn'); }
+function _showSyncedToast(n) { _showToast(`✅ ซิงก์ข้อมูลที่ค้างจากตอนออฟไลน์ขึ้น Firebase แล้ว ${n} รายการ`, 'success'); }
+
+// ── CONFIRM MODAL (แทน confirm() มาตรฐานเบราว์เซอร์) ──
+function showConfirm(message, title) {
+  return new Promise(resolve => {
+    const modal = document.getElementById('mo-confirm');
+    document.getElementById('confirm-title').textContent = title || '⚠️ ยืนยัน';
+    document.getElementById('confirm-msg').textContent = message;
+    modal.classList.add('open');
+    const yesBtn = document.getElementById('confirm-yes-btn');
+    const noBtn  = document.getElementById('confirm-no-btn');
+    const cleanup = (result) => {
+      modal.classList.remove('open');
+      yesBtn.onclick = null; noBtn.onclick = null;
+      resolve(result);
+    };
+    yesBtn.onclick = () => cleanup(true);
+    noBtn.onclick  = () => cleanup(false);
+  });
 }
 
 // ── DATA ──────────────────────────────────
@@ -1271,8 +1303,8 @@ function saveTeacher() {
   const errEl = document.getElementById('w-pin-err');
   errEl.style.display = 'none';
 
-  if (!n) { alert('กรุณาเลือกชื่อครูครับ'); return; }
-  if (!g) { alert('ระบบหาชั้นไม่พบ กรุณาเลือกชื่ออีกครั้งครับ'); return; }
+  if (!n) { _showToast('กรุณาเลือกชื่อครูครับ', 'warn'); return; }
+  if (!g) { _showToast('ระบบหาชั้นไม่พบ กรุณาเลือกชื่ออีกครั้งครับ', 'warn'); return; }
   if (!pin) { errEl.textContent = 'กรุณากรอก PIN ประจำชั้นเรียน'; errEl.style.display = 'block'; return; }
 
   const expected = _gradePins[g];
@@ -1429,9 +1461,9 @@ async function backupAllData() {
 // ── PRINT STUDENT PDF ─────────────────────
 function printStudentPDF() {
   const html = document.getElementById('mo-print-student').dataset.printHtml;
-  if (!html) { alert('กรุณาเลือกนักเรียนก่อนครับ'); return; }
+  if (!html) { _showToast('กรุณาเลือกนักเรียนก่อนครับ', 'warn'); return; }
   const win = window.open('', '_blank');
-  if (!win) { alert('กรุณาอนุญาต Popup ในเบราว์เซอร์ก่อนครับ'); return; }
+  if (!win) { _showToast('กรุณาอนุญาต Popup ในเบราว์เซอร์ก่อนครับ', 'warn'); return; }
   win.document.write(html);
   win.document.close();
   win.focus();
@@ -1465,7 +1497,7 @@ async function showPage(name) {
   _activatePage(name);
   if (name === 'dashboard') renderDash();
   if (name === 'records')   renderRecords();
-  if (name === 'form')      applyTeacher();
+  if (name === 'form')      { applyTeacher(); checkDraft(); }
   if (name === 'district')  { fillYearSel(); loadRptMeta(); renderDistrict(); }
   if (name === 'present')   renderPresent();
   if (name === 'survey')    renderSurvey();
@@ -1648,21 +1680,68 @@ function clearForm() {
   ['risk-sec','prob-sec','env-sec'].forEach(id => document.getElementById(id).style.display = 'block');
   document.getElementById('f-edit-alert').style.display = 'none';
   applyTeacher();
+  discardDraft();
 }
+
+// ── DRAFT AUTOSAVE (กันข้อมูลหายถ้าปิดแท็บ/เน็ตหลุดกลางฟอร์ม) ──
+let _formDirty = false;
+let _draftTimer = null;
+function _onFormInput() {
+  // บันทึกร่างเฉพาะตอนกรอกนักเรียนใหม่ ไม่ทับร่างระหว่างแก้ไขรายการเดิม
+  if (document.getElementById('edit-id').value) return;
+  _formDirty = true;
+  clearTimeout(_draftTimer);
+  _draftTimer = setTimeout(() => {
+    try { localStorage.setItem('sv_draft', JSON.stringify(getFormData())); } catch(e) {}
+  }, 800);
+}
+function checkDraft() {
+  const banner = document.getElementById('f-draft-banner');
+  if (!banner) return;
+  const hasDraft = !document.getElementById('edit-id').value && !!localStorage.getItem('sv_draft');
+  banner.style.display = hasDraft ? 'flex' : 'none';
+}
+function restoreDraft() {
+  const raw = localStorage.getItem('sv_draft');
+  if (raw) { try { setFormData(JSON.parse(raw)); document.getElementById('edit-id').value = ''; } catch(e) {} }
+  document.getElementById('f-draft-banner').style.display = 'none';
+}
+function discardDraft() {
+  localStorage.removeItem('sv_draft');
+  _formDirty = false;
+  const banner = document.getElementById('f-draft-banner');
+  if (banner) banner.style.display = 'none';
+}
+window.addEventListener('beforeunload', (e) => {
+  if (_formDirty && document.getElementById('page-form')?.classList.contains('active')) {
+    e.preventDefault(); e.returnValue = '';
+  }
+});
 
 // ── SUBMIT ────────────────────────────────
 let _saving = false;
 async function submitForm() {
   if (_saving) return;
   const data = getFormData();
-  if (!data.studentName) { alert('กรุณาใส่ชื่อนักเรียนครับ'); return; }
-  if (!data.gradeLevel)  { alert('กรุณาตั้งค่าระดับชั้นในโปรไฟล์ครูก่อนครับ'); return; }
-  if (radioVal('visited') === '') { alert('กรุณาเลือกผลการเยี่ยมบ้านครับ'); return; }
+  if (!data.studentName) { _showToast('กรุณาใส่ชื่อนักเรียนครับ', 'warn'); return; }
+  if (!data.gradeLevel)  { _showToast('กรุณาตั้งค่าระดับชั้นในโปรไฟล์ครูก่อนครับ', 'warn'); return; }
+  if (radioVal('visited') === '') { _showToast('กรุณาเลือกผลการเยี่ยมบ้านครับ', 'warn'); return; }
+  if (data.parentPhone && data.parentPhone.replace(/\D/g,'').length < 9) {
+    const proceed = await showConfirm(
+      `เบอร์โทรผู้ปกครอง "${data.parentPhone}" ดูสั้นผิดปกติ (ควรมีอย่างน้อย 9 หลัก)\n\nเบอร์นี้จะถูกใช้ติดต่อกรณีเร่งด่วน ต้องการบันทึกแบบนี้ต่อไปไหมครับ?`,
+      '⚠️ เบอร์โทรอาจไม่ถูกต้อง'
+    );
+    if (!proceed) return;
+  }
   if (!data.id) {
     const dup = _recs.find(r => r.gradeLevel === data.gradeLevel &&
       (r.studentName||'').trim().toLowerCase() === data.studentName.trim().toLowerCase());
-    if (dup && !confirm(`⚠️ มีนักเรียนชื่อ "${dup.studentName}" ในชั้น ${dup.gradeLevel} อยู่แล้วในระบบ\n\nต้องการบันทึกเป็นรายการใหม่ซ้ำหรือไม่?\n(กด "ยกเลิก" แล้วใช้ปุ่ม ✏️ แก้ไข จากหน้ารายชื่อแทน ถ้าเป็นคนเดียวกัน)`)) {
-      return;
+    if (dup) {
+      const proceed = await showConfirm(
+        `มีนักเรียนชื่อ "${dup.studentName}" ในชั้น ${dup.gradeLevel} อยู่แล้วในระบบ\n\nต้องการบันทึกเป็นรายการใหม่ซ้ำหรือไม่?\n(กด "ยกเลิก" แล้วใช้ปุ่ม ✏️ แก้ไข จากหน้ารายชื่อแทน ถ้าเป็นคนเดียวกัน)`,
+        '⚠️ พบชื่อซ้ำ'
+      );
+      if (!proceed) return;
     }
   }
   _saving = true;
@@ -2193,7 +2272,7 @@ function renderDistrict() {
 // ── EXCEL EXPORT ──────────────────────────
 function exportExcel() {
   let recs = _gFilter === 'all' ? _recs : _recs.filter(r => r.gradeLevel === _gFilter);
-  if (!recs.length) { alert('ไม่มีข้อมูลที่จะ export ครับ'); return; }
+  if (!recs.length) { _showToast('ไม่มีข้อมูลที่จะ export ครับ', 'warn'); return; }
   const parStatLabel = {'together':'อยู่ด้วยกัน','separate':'แยกกันอยู่','divorced':'หย่าร้าง','father_dead':'บิดาเสียชีวิต','mother_dead':'มารดาเสียชีวิต','both_dead':'เสียชีวิตทั้งคู่'};
   const transportLabel = {'parent_drive':'ผู้ปกครองส่ง','motorbike':'รถมอเตอร์ไซค์','bus':'รถโดยสาร','school_bus':'รถโรงเรียน','bicycle':'รถจักรยาน','walk':'เดิน','other':'อื่นๆ'};
   const sheet1 = recs.map(r => ({
@@ -2774,7 +2853,7 @@ async function addFollowupEntry() {
   const note   = document.getElementById('tl-log-note').value.trim();
   const result = document.getElementById('tl-log-result').value.trim();
   const date   = document.getElementById('tl-log-date').value;
-  if (!action || !note) { alert('กรุณาเลือกประเภทการดำเนินการและกรอกรายละเอียด'); return; }
+  if (!action || !note) { _showToast('กรุณาเลือกประเภทการดำเนินการและกรอกรายละเอียด', 'warn'); return; }
   const entry = { date, action, note, result, by: localStorage.getItem('t_name') || '' };
   r.followup_log = [...(r.followup_log || []), entry];
   await upsert(r);
@@ -2786,7 +2865,7 @@ async function addFollowupEntry() {
 
 async function deleteTLEntry(idx) {
   if (!_tlId) return;
-  if (!confirm('ลบบันทึกนี้?')) return;
+  if (!await showConfirm('ต้องการลบบันทึกนี้ใช่ไหมครับ?', '🗑 ยืนยันการลบบันทึก')) return;
   const r = _recs.find(x => x.id === _tlId);
   if (!r || !r.followup_log) return;
   r.followup_log.splice(idx, 1);
@@ -2800,7 +2879,7 @@ let _svChart = null;
 let _qrGenerated = false;
 
 async function markFollowUp(id, done) {
-  if (!db) { alert('ไม่ได้เชื่อมต่อ Firebase ไม่สามารถบันทึกสถานะติดตามได้ครับ'); return; }
+  if (!db) { _showToast('ไม่ได้เชื่อมต่อ Firebase ไม่สามารถบันทึกสถานะติดตามได้ครับ', 'error'); return; }
   try {
     if (done) {
       await db.collection(SURVEY_COL).doc(id).set({
@@ -2815,7 +2894,7 @@ async function markFollowUp(id, done) {
     }
     renderSurvey();
   } catch(e) {
-    alert('บันทึกสถานะติดตามไม่สำเร็จ: ' + e.message);
+    _showToast('บันทึกสถานะติดตามไม่สำเร็จ: ' + e.message, 'error');
   }
 }
 
@@ -2880,7 +2959,7 @@ function showQRCode() {
 
 function printSurveyReport() {
   const { rows, year, sem } = _latestSurveyData;
-  if (!rows.length) { alert('ไม่มีข้อมูลแบบสำรวจ'); return; }
+  if (!rows.length) { _showToast('ไม่มีข้อมูลแบบสำรวจ', 'warn'); return; }
   const byCrit = { critical:0, high:0, medium:0, low:0 };
   rows.forEach(r => { byCrit[r.riskLevel] = (byCrit[r.riskLevel]||0)+1; });
   const ord = { critical:0,high:1,medium:2,low:3 };
@@ -2938,6 +3017,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (_nav) _nav.addEventListener('scroll', _updNavFade, { passive: true });
   window.addEventListener('resize', _updNavFade);
   _updNavFade();
+  const _formPage = document.getElementById('page-form');
+  if (_formPage) { _formPage.addEventListener('input', _onFormInput); _formPage.addEventListener('click', _onFormInput); }
   initFirebase();
   document.body.classList.add('booting');
   await load();
