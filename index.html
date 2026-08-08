@@ -987,6 +987,13 @@ body.booting .db-vis-row strong{
         </div>
       </div>
     </div>
+
+    <div style="border-top:1.5px solid var(--bdr);padding-top:18px;margin-top:18px">
+      <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);margin-bottom:8px">📦 สำรองข้อมูล</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">ดาวน์โหลดข้อมูลทั้งหมด (เยี่ยมบ้าน + แบบสำรวจ) เป็นไฟล์ .json เก็บไว้กู้คืนกรณีฉุกเฉิน</div>
+      <button class="btn btn-sm" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe" onclick="backupAllData()">⬇️ ดาวน์โหลดไฟล์สำรอง</button>
+      <div id="backup-msg" style="font-size:.78rem;color:var(--sec);min-height:18px;margin-top:6px"></div>
+    </div>
   </div>
 </div>
 
@@ -1348,6 +1355,35 @@ async function saveSurveyPin() {
   }
 }
 
+// ── BACKUP ─────────────────────────────────
+async function backupAllData() {
+  const msg = document.getElementById('backup-msg');
+  if (msg) { msg.textContent = '⏳ กำลังเตรียมไฟล์...'; msg.style.color = 'var(--muted)'; }
+  try {
+    let surveyRows = [];
+    if (db) {
+      const snap = await db.collection(SURVEY_COL).get();
+      surveyRows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+    const backup = {
+      exportedAt: new Date().toISOString(),
+      school: SCHOOL,
+      studentVisits: _recs,
+      violenceSurvey: surveyRows
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const today = new Date().toISOString().slice(0,10);
+    a.href = url; a.download = `backup-เยี่ยมบ้าน-${today}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    if (msg) { msg.textContent = `✅ ดาวน์โหลดแล้ว (${_recs.length} รายการเยี่ยมบ้าน, ${surveyRows.length} แบบสำรวจ)`; msg.style.color = 'var(--sec)'; }
+  } catch(e) {
+    if (msg) { msg.textContent = '❌ สำรองข้อมูลไม่สำเร็จ: ' + e.message; msg.style.color = 'var(--dan)'; }
+  }
+}
+
 // ── PRINT STUDENT PDF ─────────────────────
 function printStudentPDF() {
   const html = document.getElementById('mo-print-student').dataset.printHtml;
@@ -1580,6 +1616,13 @@ async function submitForm() {
   if (!data.studentName) { alert('กรุณาใส่ชื่อนักเรียนครับ'); return; }
   if (!data.gradeLevel)  { alert('กรุณาตั้งค่าระดับชั้นในโปรไฟล์ครูก่อนครับ'); return; }
   if (radioVal('visited') === '') { alert('กรุณาเลือกผลการเยี่ยมบ้านครับ'); return; }
+  if (!data.id) {
+    const dup = _recs.find(r => r.gradeLevel === data.gradeLevel &&
+      (r.studentName||'').trim().toLowerCase() === data.studentName.trim().toLowerCase());
+    if (dup && !confirm(`⚠️ มีนักเรียนชื่อ "${dup.studentName}" ในชั้น ${dup.gradeLevel} อยู่แล้วในระบบ\n\nต้องการบันทึกเป็นรายการใหม่ซ้ำหรือไม่?\n(กด "ยกเลิก" แล้วใช้ปุ่ม ✏️ แก้ไข จากหน้ารายชื่อแทน ถ้าเป็นคนเดียวกัน)`)) {
+      return;
+    }
+  }
   _saving = true;
   showLd(true, 'กำลังบันทึก...');
   try {
