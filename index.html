@@ -911,6 +911,12 @@ body.booting .db-vis-row strong{
       <button class="btn btn-sm" style="background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7" onclick="addFollowupEntry()">➕ เพิ่มบันทึก</button>
     </div>
 
+    <div style="height:1px;background:var(--bdr);margin:18px 0"></div>
+
+    <!-- Section 3: Audit Log -->
+    <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);padding-bottom:7px;border-bottom:2px solid var(--pri-l);margin-bottom:10px">🕒 ส่วนที่ 3 — ประวัติการแก้ไขข้อมูล</div>
+    <div id="tl-audit-list" style="font-size:.78rem;color:var(--muted)"></div>
+
     <div style="margin-top:16px;text-align:right">
       <button class="btn btn-gray btn-sm" onclick="closeMo('mo-teacher-log')">ปิด</button>
     </div>
@@ -1259,6 +1265,8 @@ async function load() {
 }
 async function upsert(data) {
   data.ts = data.ts || Date.now();
+  // audit log: บันทึกว่าใครแก้ไขเรคคอร์ดนี้เมื่อไหร่ (เก็บย้อนหลังสูงสุด 20 ครั้งล่าสุด)
+  data.editLog = [...(data.editLog||[]), { by: tName()||'ไม่ทราบชื่อ', at: Date.now() }].slice(-20);
   if (db) {
     try {
       if (data.id && !data.id.startsWith('loc_')) {
@@ -1550,8 +1558,16 @@ function getFormData() {
   const risks = checked('risk'), probs = checked('prob');
   const editId  = document.getElementById('edit-id').value || '';
   const origRec = editId ? _recs.find(r => r.id === editId) : null; // คงชั้น/ครูเดิมเมื่อแก้ไข
+  // เก็บ obs/followup_log/editLog ของเดิมไว้ ไม่งั้น upsert() จะ .set() ทับข้อมูลนี้หายหมด
+  const preserved = {};
+  if (origRec) {
+    if (origRec.obs !== undefined)           preserved.obs = origRec.obs;
+    if (origRec.followup_log !== undefined)  preserved.followup_log = origRec.followup_log;
+    if (origRec.editLog !== undefined)       preserved.editLog = origRec.editLog;
+  }
   return {
     id:          editId,
+    ...preserved,
     studentName: gv('f-name'),
     studentNo:   gv('f-student-no'),
     studentPhone:gv('f-student-phone'),
@@ -2797,6 +2813,13 @@ function openTeacherLog(id) {
 
   // fill follow-up log
   renderTLLog(r.followup_log || []);
+
+  // audit log — ประวัติว่าใครแก้ไขเรคคอร์ดนี้เมื่อไหร่
+  const auditEl = document.getElementById('tl-audit-list');
+  const log = (r.editLog || []).slice().reverse();
+  auditEl.innerHTML = log.length
+    ? log.map(e => `<div style="padding:5px 0;border-bottom:1px dashed var(--bdr)">✏️ <strong style="color:var(--txt)">${e.by||'ไม่ทราบชื่อ'}</strong> — ${new Date(e.at).toLocaleString('th-TH',{dateStyle:'medium',timeStyle:'short'})}</div>`).join('')
+    : '<div>ยังไม่มีประวัติการแก้ไข</div>';
 
   // reset add-entry form
   document.getElementById('tl-log-date').value = new Date().toISOString().slice(0,10);
