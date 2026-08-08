@@ -2612,7 +2612,7 @@ async function renderSurvey() {
       const txtColor = r.riskLevel==='critical'?'#991b1b':r.riskLevel==='high'?'#9a3412':r.riskLevel==='medium'?'#854d0e':'#166534';
       return `<div style="background:${bg};border:1px solid ${bd};border-left:4px solid ${bd};border-radius:10px;padding:13px 15px;margin-bottom:10px">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:7px">
-          <div style="font-weight:700;font-size:.92rem">${r.grade} เลขที่ ${r.studentNo}</div>
+          <div style="font-weight:700;font-size:.92rem">${r.studentName ? `${r.studentName} <span style="font-weight:500;color:var(--muted)">(${r.grade} เลขที่ ${r.studentNo})</span>` : `${r.grade} เลขที่ ${r.studentNo}`}</div>
           <div style="display:flex;align-items:center;gap:6px">
             <div style="font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:20px;background:${bd};color:${txtColor}">${RISK_LABEL[r.riskLevel]||r.riskLevel}</div>
             ${done
@@ -2631,7 +2631,7 @@ async function renderSurvey() {
       const hasFriend = [r.q9_friend_threat,r.q10_friend_weapon,r.q11_friend_violent,r.q12_friend_concern].some(v=>v==='yes');
       const rc = r.riskLevel==='critical'?'#991b1b':r.riskLevel==='high'?'#9a3412':r.riskLevel==='medium'?'#854d0e':'#166534';
       return `<tr style="border-top:1px solid var(--bdr);background:${i%2?'var(--bg)':'#fff'}">
-        <td style="padding:8px 10px;font-weight:700">${r.grade} / ${r.studentNo}</td>
+        <td style="padding:8px 10px;font-weight:700">${r.studentName ? `${r.studentName}<br><span style="font-weight:500;font-size:.72rem;color:var(--muted)">${r.grade} / ${r.studentNo}</span>` : `${r.grade} / ${r.studentNo}`}</td>
         <td style="padding:8px 10px"><span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:12px;background:${RISK_COLOR[r.riskLevel]||'#f3f4f6'};color:${rc}">${RISK_LABEL[r.riskLevel]||'–'}</span></td>
         <td style="padding:8px 10px;color:${freqColor[safeMax]}">${safeMax>0?freqLabel[safeMax]:'✅'}</td>
         <td style="padding:8px 10px;color:${freqColor[thinkMax]}">${thinkMax>0?freqLabel[thinkMax]:'✅'}</td>
@@ -2888,7 +2888,8 @@ function printSurveyReport() {
   const alertRows = alerts.map(r => {
     const flags = (r.alertFlags||[]).map(f=>FLAG_LABEL[f]||f).join(', ');
     const fuStatus = r.followUpDone ? `ติดตามแล้ว (${r.followUpBy||'–'} / ${r.followUpAt?new Date(r.followUpAt).toLocaleDateString('th-TH'):'–'})` : 'รอดำเนินการ';
-    return `<tr><td>${r.grade} / เลขที่ ${r.studentNo}</td><td>${RISK_LABEL[r.riskLevel]||'–'}</td><td>${flags}</td><td>${fuStatus}</td></tr>`;
+    const who = r.studentName ? `${r.studentName} (${r.grade} / เลขที่ ${r.studentNo})` : `${r.grade} / เลขที่ ${r.studentNo}`;
+    return `<tr><td>${who}</td><td>${RISK_LABEL[r.riskLevel]||'–'}</td><td>${flags}</td><td>${fuStatus}</td></tr>`;
   }).join('');
   const today = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
   const w = window.open('','_blank','width=820,height=700');

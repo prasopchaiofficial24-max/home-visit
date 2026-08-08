@@ -185,6 +185,11 @@ body{font-family:'Prompt','Sarabun',Arial,sans-serif;background:var(--bg);color:
       </div>
 
       <div class="form-group">
+        <label class="form-label">ชื่อ-นามสกุล</label>
+        <input class="form-inp" id="inp-name" type="text" placeholder="เช่น เด็กชายสมชาย ใจดี" autocomplete="off">
+      </div>
+
+      <div class="form-group">
         <label class="form-label">ชั้นเรียน</label>
         <select class="form-sel" id="inp-grade">
           <option value="">-- เลือกชั้น --</option>
@@ -485,6 +490,7 @@ try {
 
 // ── LOGIN ──
 async function doLogin(){
+  const name  = document.getElementById('inp-name').value.trim();
   const grade = document.getElementById('inp-grade').value.trim();
   const no    = document.getElementById('inp-no').value.trim();
   const pin   = document.getElementById('inp-pin').value.trim().toUpperCase();
@@ -494,13 +500,13 @@ async function doLogin(){
   err.classList.remove('show');
   dup.classList.remove('show');
 
-  if(!grade || !no || !pin){ err.classList.add('show'); return; }
+  if(!name || !grade || !no || !pin){ err.classList.add('show'); return; }
   if(_surveyPin === null){
     err.textContent = 'ระบบกำลังโหลด กรุณารอสักครู่แล้วลองใหม่'; err.classList.add('show'); return;
   }
   if(pin !== _surveyPin){ err.textContent='รหัสห้องเรียนไม่ถูกต้อง'; err.classList.add('show'); return; }
 
-  student = {grade, no, existingId: null};
+  student = {name, grade, no, existingId: null};
 
   // ตรวจว่าเคยกรอกภาคนี้หรือยัง
   if(db){
@@ -635,6 +641,7 @@ async function submitSurvey(){
   const sem   = month >= 5 && month <= 9 ? 1 : 2;
 
   const data = {
+    studentName: student.name,
     grade: student.grade,
     studentNo: parseInt(student.no),
     school: SCHOOL,
