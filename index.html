@@ -29,6 +29,7 @@ const PRINCIPAL = 'นายโกวิท สุพรรณ์';
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1094,6 +1095,8 @@ function initFirebase() {
     if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.firestore();
     setConn('connecting');
+    // ต้อง sign in (แบบไม่ระบุตัวตน) ก่อน ไม่งั้น Firestore Rules จะปฏิเสธการเขียนข้อมูล
+    firebase.auth().signInAnonymously().catch(e => console.error('auth error', e));
     startRealtimeListener();
     db.collection('config').doc('app').get()
       .then(doc => { if (doc.exists && doc.data().grade_pins) _gradePins = doc.data().grade_pins; })

@@ -24,6 +24,7 @@ let _surveyPin   = null; // โหลดจาก Firestore config ตอน ini
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 
 <style>
 :root{
@@ -475,6 +476,8 @@ let db = null;
 try {
   firebase.initializeApp(FIREBASE_CONFIG);
   db = firebase.firestore();
+  // ต้อง sign in (แบบไม่ระบุตัวตน) ก่อน ไม่งั้น Firestore Rules จะปฏิเสธการเขียนข้อมูล
+  firebase.auth().signInAnonymously().catch(e => console.error('auth error', e));
   db.collection('config').doc('app').get()
     .then(doc => { if (doc.exists) _surveyPin = doc.data().survey_pin || null; })
     .catch(() => {});
