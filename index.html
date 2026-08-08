@@ -811,6 +811,68 @@ tbody tr{transition:background .1s}
   <div id="survey-out"><div style="color:var(--muted);text-align:center;padding:40px;font-size:.88rem">กำลังโหลด...</div></div>
 </div>
 
+<!-- Modal: Teacher Log -->
+<div class="mo" id="mo-teacher-log">
+  <div class="mo-box" style="max-width:580px;max-height:90vh;overflow-y:auto">
+    <h2 style="margin-bottom:4px">📝 <span id="tl-title">บันทึกของครู</span></h2>
+    <div id="tl-student-name" style="font-size:.82rem;color:var(--muted);margin-bottom:18px"></div>
+
+    <!-- Section 1: Observation -->
+    <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);padding-bottom:7px;border-bottom:2px solid var(--pri-l);margin-bottom:10px">🔍 ส่วนที่ 1 — การสังเกตพฤติกรรม</div>
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px">เลือกพฤติกรรมที่สังเกตเห็น (ช่วง 1 เดือนที่ผ่านมา)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:9px;cursor:pointer;font-size:.82rem"><input type="checkbox" id="tl-cb-behavior_change" style="width:15px;height:15px;accent-color:var(--pri)"> พฤติกรรมเปลี่ยนแปลงกะทันหัน</label>
+      <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:9px;cursor:pointer;font-size:.82rem"><input type="checkbox" id="tl-cb-bullied" style="width:15px;height:15px;accent-color:var(--pri)"> ถูกรังแก / ถูกกลั่นแกล้ง</label>
+      <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:9px;cursor:pointer;font-size:.82rem"><input type="checkbox" id="tl-cb-withdrawn" style="width:15px;height:15px;accent-color:var(--pri)"> แยกตัว / เก็บตัว</label>
+      <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:9px;cursor:pointer;font-size:.82rem"><input type="checkbox" id="tl-cb-aggressive" style="width:15px;height:15px;accent-color:var(--pri)"> ก้าวร้าว / อารมณ์รุนแรง</label>
+      <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:9px;cursor:pointer;font-size:.82rem"><input type="checkbox" id="tl-cb-absent" style="width:15px;height:15px;accent-color:var(--pri)"> ขาดเรียนบ่อย / ไม่สนใจเรียน</label>
+      <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:9px;cursor:pointer;font-size:.82rem"><input type="checkbox" id="tl-cb-grade_drop" style="width:15px;height:15px;accent-color:var(--pri)"> ผลการเรียนตกลงอย่างเห็นได้ชัด</label>
+      <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:9px;cursor:pointer;font-size:.82rem"><input type="checkbox" id="tl-cb-sad" style="width:15px;height:15px;accent-color:var(--pri)"> ซึมเศร้า / ร้องไห้บ่อย</label>
+      <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:9px;cursor:pointer;font-size:.82rem"><input type="checkbox" id="tl-cb-violent_talk" style="width:15px;height:15px;accent-color:var(--pri)"> พูดถึงการทำร้ายตัวเอง / ผู้อื่น</label>
+    </div>
+    <div class="fg" style="margin-bottom:10px">
+      <label>หมายเหตุ / รายละเอียดเพิ่มเติม</label>
+      <textarea id="tl-obs-note" rows="2" placeholder="บันทึกสิ่งที่สังเกตเห็นเพิ่มเติม..."></textarea>
+    </div>
+    <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:4px">
+      <div class="fg" style="flex:1"><label>วันที่สังเกต</label><input type="date" id="tl-obs-date"></div>
+      <button class="btn btn-pri btn-sm" onclick="saveTeacherObs()" style="margin-bottom:1px">💾 บันทึก</button>
+    </div>
+    <div id="tl-obs-saved" style="font-size:.78rem;color:var(--sec);margin-bottom:4px;min-height:18px"></div>
+
+    <div style="height:1px;background:var(--bdr);margin:18px 0"></div>
+
+    <!-- Section 2: Follow-up Log -->
+    <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);padding-bottom:7px;border-bottom:2px solid var(--pri-l);margin-bottom:10px">📋 ส่วนที่ 2 — บันทึกการดำเนินการ</div>
+    <div id="tl-log-list" style="margin-bottom:14px"></div>
+
+    <div style="background:var(--bg);border-radius:10px;padding:14px;border:1px solid var(--bdr)">
+      <div style="font-size:.82rem;font-weight:700;color:var(--pri-d);margin-bottom:10px">➕ เพิ่มบันทึกใหม่</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+        <div class="fg"><label>วันที่</label><input type="date" id="tl-log-date"></div>
+        <div class="fg"><label>ประเภทการดำเนินการ</label>
+          <select id="tl-log-action">
+            <option value="">-- เลือก --</option>
+            <option value="talk">💬 พูดคุยกับนักเรียน</option>
+            <option value="parent">📞 ติดต่อผู้ปกครอง</option>
+            <option value="counselor">🧑‍⚕️ ส่งต่อครูแนะแนว</option>
+            <option value="admin">🏫 รายงานผู้บริหาร</option>
+            <option value="external">🏥 ส่งต่อหน่วยงานภายนอก</option>
+            <option value="other">📌 อื่นๆ</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:8px"><label>รายละเอียดที่ดำเนินการ</label><textarea id="tl-log-note" rows="2" placeholder="อธิบายสิ่งที่ดำเนินการ..."></textarea></div>
+      <div class="fg" style="margin-bottom:10px"><label>ผลลัพธ์ / การเปลี่ยนแปลง</label><textarea id="tl-log-result" rows="2" placeholder="ผลที่ได้รับหลังดำเนินการ..."></textarea></div>
+      <button class="btn btn-sm" style="background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7" onclick="addFollowupEntry()">➕ เพิ่มบันทึก</button>
+    </div>
+
+    <div style="margin-top:16px;text-align:right">
+      <button class="btn btn-gray btn-sm" onclick="closeMo('mo-teacher-log')">ปิด</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: QR Code -->
 <div class="mo" id="mo-qr">
   <div class="mo-box" style="max-width:320px;text-align:center">
@@ -1527,6 +1589,7 @@ function renderRecords() {
         <td style="text-align:center">${r.urgent ? '<span class="bur">🚨 ด่วน</span>' : '–'}</td>
         <td style="white-space:nowrap">
           <button class="btn btn-out btn-sm" onclick="editRecord('${r.id}')">✏️</button>
+          <button class="btn btn-sm" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;margin-left:3px" onclick="openTeacherLog('${r.id}')" title="บันทึกของครู">📝</button>
           <button class="btn btn-sm" style="background:#fde8ec;color:#9b0a23;border:1px solid #f5bcc6;margin-left:3px" onclick="printStudent('${r.id}')">🖨️</button>
           <button class="btn btn-sm" style="background:#fde8e8;color:#9b1c1c;border:none;margin-left:3px" onclick="confirmDel('${r.id}')">🗑</button>
         </td>
@@ -2359,6 +2422,108 @@ async function renderSurvey() {
     console.error(e);
     out.innerHTML = '<div style="color:var(--muted);text-align:center;padding:40px">เกิดข้อผิดพลาดในการโหลด กรุณาลองใหม่</div>';
   }
+}
+
+// ── TEACHER LOG ────────────────────────────
+let _tlId = null;
+
+function openTeacherLog(id) {
+  const r = _recs.find(x => x.id === id);
+  if (!r) return;
+  _tlId = id;
+  document.getElementById('tl-title').textContent = 'บันทึกของครู';
+  document.getElementById('tl-student-name').textContent =
+    `${r.studentName || ''}  ${r.gradeLevel || ''}  ครู: ${r.teacher || ''}`;
+
+  // fill observation section
+  const obs = r.obs || {};
+  ['behavior_change','bullied','withdrawn','aggressive','absent','grade_drop','sad','violent_talk']
+    .forEach(k => {
+      const cb = document.getElementById('tl-cb-' + k);
+      if (cb) cb.checked = !!obs[k];
+    });
+  document.getElementById('tl-obs-note').value = obs.note || '';
+  document.getElementById('tl-obs-date').value = obs.date || new Date().toISOString().slice(0,10);
+  document.getElementById('tl-obs-saved').textContent =
+    obs.date ? `บันทึกล่าสุด: ${obs.date}` : '';
+
+  // fill follow-up log
+  renderTLLog(r.followup_log || []);
+
+  // reset add-entry form
+  document.getElementById('tl-log-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('tl-log-action').value = '';
+  document.getElementById('tl-log-note').value = '';
+  document.getElementById('tl-log-result').value = '';
+
+  document.getElementById('mo-teacher-log').classList.add('open');
+}
+
+function renderTLLog(entries) {
+  const el = document.getElementById('tl-log-list');
+  if (!entries || !entries.length) {
+    el.innerHTML = '<div style="font-size:.8rem;color:var(--muted);padding:8px 0">ยังไม่มีบันทึกการดำเนินการ</div>';
+    return;
+  }
+  const actionLabel = {
+    talk:'💬 พูดคุยกับนักเรียน', parent:'📞 ติดต่อผู้ปกครอง',
+    counselor:'🧑‍⚕️ ส่งต่อครูแนะแนว', admin:'🏫 รายงานผู้บริหาร',
+    external:'🏥 ส่งต่อหน่วยงานภายนอก', other:'📌 อื่นๆ'
+  };
+  el.innerHTML = [...entries].reverse().map((e, ri) => {
+    const realIdx = entries.length - 1 - ri;
+    return `<div style="border:1px solid var(--bdr);border-radius:10px;padding:11px 13px;margin-bottom:8px;background:#fff;position:relative">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:.78rem;color:var(--muted)">${e.date || ''}</span>
+        <span style="font-size:.8rem;font-weight:700;color:var(--pri-d)">${actionLabel[e.action] || e.action || '-'}</span>
+        <button onclick="deleteTLEntry(${realIdx})" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.75rem;padding:0 4px" title="ลบ">✕</button>
+      </div>
+      ${e.note ? `<div style="font-size:.82rem;margin-bottom:4px"><b>ดำเนินการ:</b> ${e.note}</div>` : ''}
+      ${e.result ? `<div style="font-size:.82rem;color:var(--sec)"><b>ผล:</b> ${e.result}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function saveTeacherObs() {
+  if (!_tlId) return;
+  const r = _recs.find(x => x.id === _tlId);
+  if (!r) return;
+  const obs = {};
+  ['behavior_change','bullied','withdrawn','aggressive','absent','grade_drop','sad','violent_talk']
+    .forEach(k => { obs[k] = document.getElementById('tl-cb-' + k).checked ? 1 : 0; });
+  obs.note = document.getElementById('tl-obs-note').value.trim();
+  obs.date = document.getElementById('tl-obs-date').value;
+  r.obs = obs;
+  await upsert(r);
+  document.getElementById('tl-obs-saved').textContent = `✅ บันทึกแล้ว: ${obs.date}`;
+}
+
+async function addFollowupEntry() {
+  if (!_tlId) return;
+  const r = _recs.find(x => x.id === _tlId);
+  if (!r) return;
+  const action = document.getElementById('tl-log-action').value;
+  const note   = document.getElementById('tl-log-note').value.trim();
+  const result = document.getElementById('tl-log-result').value.trim();
+  const date   = document.getElementById('tl-log-date').value;
+  if (!action || !note) { alert('กรุณาเลือกประเภทการดำเนินการและกรอกรายละเอียด'); return; }
+  const entry = { date, action, note, result, by: localStorage.getItem('t_name') || '' };
+  r.followup_log = [...(r.followup_log || []), entry];
+  await upsert(r);
+  renderTLLog(r.followup_log);
+  document.getElementById('tl-log-action').value = '';
+  document.getElementById('tl-log-note').value = '';
+  document.getElementById('tl-log-result').value = '';
+}
+
+async function deleteTLEntry(idx) {
+  if (!_tlId) return;
+  if (!confirm('ลบบันทึกนี้?')) return;
+  const r = _recs.find(x => x.id === _tlId);
+  if (!r || !r.followup_log) return;
+  r.followup_log.splice(idx, 1);
+  await upsert(r);
+  renderTLLog(r.followup_log);
 }
 
 // ── SURVEY HELPERS ────────────────────────
