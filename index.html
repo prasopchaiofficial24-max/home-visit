@@ -30,6 +30,7 @@ const PRINCIPAL = 'นายโกวิท สุพรรณ์';
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
@@ -278,6 +279,13 @@ tbody tr{transition:background .1s}
     <div class="nav-tab"         onclick="showPage('present')">🎯 นำเสนอ</div>
     <div class="nav-tab"         onclick="showPage('survey')">🛡️ แบบสำรวจ</div>
   </div>
+</div>
+
+<!-- CRITICAL BANNER -->
+<div id="critical-banner" style="display:none;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;padding:10px 18px;font-size:.85rem;font-weight:700;cursor:pointer;align-items:center;gap:10px" onclick="showPage('survey')">
+  <span style="font-size:1.1rem">🚨</span>
+  <span>มีนักเรียนระดับวิกฤต <strong id="critical-count">0</strong> คน ที่ต้องดำเนินการเร่งด่วน</span>
+  <span style="margin-left:auto;font-size:.73rem;opacity:.8;font-weight:400">กดเพื่อดูรายละเอียด →</span>
 </div>
 
 <!-- ════════════════════════════════════════
@@ -796,10 +804,22 @@ tbody tr{transition:background .1s}
         <option>ม.1</option><option>ม.2</option><option>ม.3</option>
         <option>ม.4</option><option>ม.5</option><option>ม.6</option>
       </select>
+      <button class="btn btn-sm btn-out" onclick="showQRCode()" style="padding:7px 14px;font-size:.82rem">📱 QR Code</button>
       <button class="btn btn-sm btn-out" onclick="renderSurvey()" style="padding:7px 14px;font-size:.82rem">🔄 รีเฟรช</button>
     </div>
   </div>
   <div id="survey-out"><div style="color:var(--muted);text-align:center;padding:40px;font-size:.88rem">กำลังโหลด...</div></div>
+</div>
+
+<!-- Modal: QR Code -->
+<div class="mo" id="mo-qr">
+  <div class="mo-box" style="max-width:320px;text-align:center">
+    <h2>📱 QR Code แบบสำรวจ</h2>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">ให้นักเรียนสแกนเพื่อเข้าแบบสำรวจความปลอดภัย</p>
+    <div id="qr-canvas" style="display:inline-block;padding:16px;background:#fff;border:1px solid var(--bdr);border-radius:10px"></div>
+    <p style="font-size:.68rem;color:var(--muted);margin-top:10px;word-break:break-all">https://prasopchaiofficial24-max.github.io/student-safety-survey/</p>
+    <div style="margin-top:16px"><button class="btn btn-out" onclick="closeMo('mo-qr')">ปิด</button></div>
+  </div>
 </div>
 
 <!-- Modal: พิมพ์รายนักเรียน -->
@@ -2209,134 +2229,263 @@ async function renderSurvey() {
   const out = document.getElementById('survey-out');
   if (!out) return;
   out.innerHTML = '<div style="color:var(--muted);text-align:center;padding:40px;font-size:.88rem">⏳ กำลังโหลด...</div>';
-
-  if (!db) {
-    out.innerHTML = '<div style="color:var(--muted);text-align:center;padding:40px">ไม่สามารถเชื่อมต่อ Firebase</div>';
-    return;
-  }
+  if (!db) { out.innerHTML = '<div style="color:var(--muted);text-align:center;padding:40px">ไม่สามารถเชื่อมต่อ Firebase</div>'; return; }
 
   const gradeFilter = document.getElementById('sv-grade-filter')?.value || 'all';
-  const now   = new Date();
-  const year  = now.getFullYear() + 543;
-  const month = now.getMonth() + 1;
-  const sem   = month >= 5 && month <= 9 ? 1 : 2;
+  const now = new Date(), year = now.getFullYear()+543, month = now.getMonth()+1;
+  const sem = month>=5&&month<=9 ? 1 : 2;
 
   try {
     let q = db.collection(SURVEY_COL).where('year','==',year).where('semester','==',sem);
     if (gradeFilter !== 'all') q = q.where('grade','==',gradeFilter);
     const snap = await q.get();
-    const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const rows = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    _latestSurveyData = { rows, year, sem };
 
     if (rows.length === 0) {
-      out.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">
-        <div style="font-size:2rem;margin-bottom:8px">📭</div>
-        <div style="font-weight:600">ยังไม่มีข้อมูลแบบสำรวจ</div>
-        <div style="font-size:.8rem;margin-top:4px">ภาคเรียน ${sem}/${year}</div>
-      </div>`;
+      out.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:2rem;margin-bottom:8px">📭</div><div style="font-weight:600">ยังไม่มีข้อมูลแบบสำรวจ</div><div style="font-size:.8rem;margin-top:4px">ภาคเรียน ${sem}/${year}</div></div>`;
       return;
     }
 
-    // นับสถิติ
-    const total    = rows.length;
-    const critical = rows.filter(r => r.riskLevel === 'critical').length;
-    const high     = rows.filter(r => r.riskLevel === 'high').length;
-    const medium   = rows.filter(r => r.riskLevel === 'medium').length;
-    const alerts   = rows.filter(r => r.needFollowUp);
+    const order  = { critical:0, high:1, medium:2, low:3 };
+    const byCrit = { critical:0, high:0, medium:0, low:0 };
+    rows.forEach(r => { byCrit[r.riskLevel] = (byCrit[r.riskLevel]||0)+1; });
+    const alerts    = rows.filter(r => r.needFollowUp).sort((a,b)=>(order[a.riskLevel]||3)-(order[b.riskLevel]||3));
+    const sorted    = [...rows].sort((a,b)=>(order[a.riskLevel]||3)-(order[b.riskLevel]||3));
+    const followUps = getFollowUps();
+    const doneCnt   = alerts.filter(r => followUps[r.id]?.done).length;
 
-    // เรียงตาม riskLevel
-    const order = { critical:0, high:1, medium:2, low:3 };
-    const sorted = [...rows].sort((a,b) => (order[a.riskLevel]||3) - (order[b.riskLevel]||3));
+    // กราฟแยกชั้น
+    const gradeStats = {};
+    rows.forEach(r => {
+      if (!gradeStats[r.grade]) gradeStats[r.grade] = { critical:0,high:0,medium:0,low:0 };
+      gradeStats[r.grade][r.riskLevel] = (gradeStats[r.grade][r.riskLevel]||0)+1;
+    });
 
-    // แถวรายคน
-    const alertRows = alerts.sort((a,b) => (order[a.riskLevel]||3) - (order[b.riskLevel]||3)).map(r => {
-      const flags = (r.alertFlags||[]).map(f => `<span style="display:inline-block;background:#fee2e2;color:#991b1b;font-size:.68rem;font-weight:600;padding:2px 7px;border-radius:5px;margin:2px">${FLAG_LABEL[f]||f}</span>`).join('');
-      // เพื่อนที่ระบุ
-      const friendParts = [];
-      if (r.q9_friend_threat==='yes' && (r.q9_friend_grade||r.q9_friend_no)) friendParts.push(`ข้อ 9: ${r.q9_friend_grade||'?'} เลขที่ ${r.q9_friend_no||'?'}`);
-      if (r.q10_friend_weapon==='yes' && (r.q10_friend_grade||r.q10_friend_no)) friendParts.push(`ข้อ 10: ${r.q10_friend_grade||'?'} เลขที่ ${r.q10_friend_no||'?'}`);
-      if (r.q11_friend_violent==='yes' && (r.q11_friend_grade||r.q11_friend_no)) friendParts.push(`ข้อ 11: ${r.q11_friend_grade||'?'} เลขที่ ${r.q11_friend_no||'?'}`);
-      if (r.q12_friend_concern==='yes' && (r.q12_friend_grade||r.q12_friend_no)) friendParts.push(`ข้อ 12: ${r.q12_friend_grade||'?'} เลขที่ ${r.q12_friend_no||'?'}`);
-      const friendInfo = friendParts.length ? `<div style="margin-top:6px;font-size:.75rem;background:#fff7ed;padding:5px 9px;border-radius:6px;color:#92400e">👥 เพื่อนที่ถูกระบุ: ${friendParts.join(' | ')}</div>` : '';
-      return `
-      <div style="background:${RISK_COLOR[r.riskLevel]||'#fff'};border:1px solid ${RISK_BORDER[r.riskLevel]||'var(--bdr)'};border-left:4px solid ${RISK_BORDER[r.riskLevel]||'var(--bdr)'};border-radius:10px;padding:13px 15px;margin-bottom:10px">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:7px">
+    // cards แจ้งเตือนรายคน
+    const freqLabel = ['–','บางครั้ง','บ่อย','เกือบทุกวัน'];
+    const freqColor = ['var(--muted)','#b45309','#ea580c','#dc2626'];
+    const alertCards = alerts.map(r => {
+      const fu   = followUps[r.id], done = fu?.done;
+      const flags = (r.alertFlags||[]).map(f=>`<span style="display:inline-block;background:#fee2e2;color:#991b1b;font-size:.68rem;font-weight:600;padding:2px 7px;border-radius:5px;margin:2px">${FLAG_LABEL[f]||f}</span>`).join('');
+      const fp = [];
+      if (r.q9_friend_threat==='yes'&&(r.q9_friend_grade||r.q9_friend_no)) fp.push(`ข้อ 9: ${r.q9_friend_grade||'?'} เลขที่ ${r.q9_friend_no||'?'}`);
+      if (r.q10_friend_weapon==='yes'&&(r.q10_friend_grade||r.q10_friend_no)) fp.push(`ข้อ 10: ${r.q10_friend_grade||'?'} เลขที่ ${r.q10_friend_no||'?'}`);
+      if (r.q11_friend_violent==='yes'&&(r.q11_friend_grade||r.q11_friend_no)) fp.push(`ข้อ 11: ${r.q11_friend_grade||'?'} เลขที่ ${r.q11_friend_no||'?'}`);
+      if (r.q12_friend_concern==='yes'&&(r.q12_friend_grade||r.q12_friend_no)) fp.push(`ข้อ 12: ${r.q12_friend_grade||'?'} เลขที่ ${r.q12_friend_no||'?'}`);
+      const friendInfo = fp.length ? `<div style="margin-top:6px;font-size:.75rem;background:#fff7ed;padding:5px 9px;border-radius:6px;color:#92400e">👥 เพื่อนที่ถูกระบุ: ${fp.join(' | ')}</div>` : '';
+      const fuNote = done ? `<div style="font-size:.73rem;color:#15803d;margin-top:6px;font-weight:600">✅ ติดตามแล้ว โดย ${fu.by||'–'} (${fu.at?new Date(fu.at).toLocaleDateString('th-TH'):''})</div>` : '';
+      const bg = done?'#f0fdf4':(RISK_COLOR[r.riskLevel]||'#fff'), bd = done?'#bbf7d0':(RISK_BORDER[r.riskLevel]||'var(--bdr)');
+      const txtColor = r.riskLevel==='critical'?'#991b1b':r.riskLevel==='high'?'#9a3412':r.riskLevel==='medium'?'#854d0e':'#166534';
+      return `<div style="background:${bg};border:1px solid ${bd};border-left:4px solid ${bd};border-radius:10px;padding:13px 15px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:7px">
           <div style="font-weight:700;font-size:.92rem">${r.grade} เลขที่ ${r.studentNo}</div>
-          <div style="font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:20px;background:${RISK_BORDER[r.riskLevel]||'#e5e7eb'};color:${r.riskLevel==='critical'?'#991b1b':r.riskLevel==='high'?'#9a3412':r.riskLevel==='medium'?'#854d0e':'#166534'}">${RISK_LABEL[r.riskLevel]||r.riskLevel}</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div style="font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:20px;background:${bd};color:${txtColor}">${RISK_LABEL[r.riskLevel]||r.riskLevel}</div>
+            ${done
+              ? `<button onclick="markFollowUp('${r.id}',false)" style="font-size:.7rem;padding:3px 9px;border:1px solid #bbf7d0;border-radius:8px;background:#f0fdf4;color:#15803d;cursor:pointer">↩ ยกเลิก</button>`
+              : `<button onclick="markFollowUp('${r.id}',true)" style="font-size:.7rem;padding:3px 9px;border:1.5px solid var(--bdr);border-radius:8px;background:#fff;color:var(--muted);cursor:pointer;font-weight:600">✓ ติดตามแล้ว</button>`}
+          </div>
         </div>
-        <div style="margin-bottom:5px">${flags}</div>
-        ${friendInfo}
+        <div style="margin-bottom:4px">${flags}</div>
+        ${friendInfo}${fuNote}
       </div>`;
     }).join('');
 
+    const tableRows = sorted.map((r,i) => {
+      const safeMax  = Math.max(r.q2_attacked||0,r.q3_threatened||0,r.q4_afraid||0);
+      const thinkMax = Math.max(r.q5_revenge||0,r.q6_hurt_others||0,r.q7_hurt_self||0);
+      const hasFriend = [r.q9_friend_threat,r.q10_friend_weapon,r.q11_friend_violent,r.q12_friend_concern].some(v=>v==='yes');
+      const rc = r.riskLevel==='critical'?'#991b1b':r.riskLevel==='high'?'#9a3412':r.riskLevel==='medium'?'#854d0e':'#166534';
+      return `<tr style="border-top:1px solid var(--bdr);background:${i%2?'var(--bg)':'#fff'}">
+        <td style="padding:8px 10px;font-weight:700">${r.grade} / ${r.studentNo}</td>
+        <td style="padding:8px 10px"><span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:12px;background:${RISK_COLOR[r.riskLevel]||'#f3f4f6'};color:${rc}">${RISK_LABEL[r.riskLevel]||'–'}</span></td>
+        <td style="padding:8px 10px;color:${freqColor[safeMax]}">${safeMax>0?freqLabel[safeMax]:'✅'}</td>
+        <td style="padding:8px 10px;color:${freqColor[thinkMax]}">${thinkMax>0?freqLabel[thinkMax]:'✅'}</td>
+        <td style="padding:8px 10px">${r.q8_weapon_home==='yes'?'<span style="color:#dc2626;font-weight:700">⚠️ มี</span>':'–'}</td>
+        <td style="padding:8px 10px">${hasFriend?'<span style="color:#dc2626;font-weight:700">⚠️ มี</span>':'–'}</td>
+      </tr>`;
+    }).join('');
+
     out.innerHTML = `
-    <!-- สรุป -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px">
-      ${[
-        ['ตอบแบบสำรวจ', total, '#0369a1', '📋'],
-        ['วิกฤต', critical, '#dc2626', '🔴🔴'],
-        ['เสี่ยงสูง', high, '#ea580c', '🔴'],
-        ['ต้องติดตาม', alerts.length, '#9333ea', '⚠️']
-      ].map(([l,v,c,ic])=>`
-        <div style="background:#fff;border:1px solid var(--bdr);border-top:3px solid ${c};border-radius:10px;padding:13px 15px">
-          <div style="font-size:.7rem;color:var(--muted)">${ic} ${l}</div>
-          <div style="font-size:2rem;font-weight:800;color:${c};line-height:1.2;margin-top:3px">${v}</div>
-          <div style="font-size:.68rem;color:var(--muted);margin-top:1px">ภาค ${sem}/${year}</div>
-        </div>`).join('')}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px">
+      ${[['ตอบแบบสำรวจ',rows.length,'#0369a1','📋'],['วิกฤต',byCrit.critical,'#dc2626','🔴🔴'],['เสี่ยงสูง',byCrit.high,'#ea580c','🔴'],['ติดตามแล้ว',doneCnt+'/'+alerts.length,'#7c3aed','✅']
+      ].map(([l,v,c,ic])=>`<div style="background:#fff;border:1px solid var(--bdr);border-top:3px solid ${c};border-radius:10px;padding:13px 15px">
+        <div style="font-size:.7rem;color:var(--muted)">${ic} ${l}</div>
+        <div style="font-size:1.8rem;font-weight:800;color:${c};line-height:1.2;margin-top:3px">${v}</div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:1px">ภาค ${sem}/${year}</div>
+      </div>`).join('')}
     </div>
 
-    <!-- แจ้งเตือนเร่งด่วน -->
+    <div style="background:#fff;border:1px solid var(--bdr);border-radius:12px;padding:16px 18px;margin-bottom:14px">
+      <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--pri-l)">📊 ความเสี่ยงแยกตามชั้นเรียน</div>
+      <div style="position:relative;height:200px"><canvas id="sv-risk-chart"></canvas></div>
+    </div>
+
     ${alerts.length > 0 ? `
     <div style="background:#fff;border:1px solid var(--bdr);border-radius:12px;padding:16px 18px;margin-bottom:14px">
-      <div style="font-weight:700;font-size:.92rem;color:#991b1b;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #fecaca">
-        🚨 นักเรียนที่ต้องติดตาม (${alerts.length} คน)
+      <div style="font-weight:700;font-size:.92rem;color:#991b1b;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #fecaca;display:flex;align-items:center;justify-content:space-between">
+        <span>🚨 นักเรียนที่ต้องติดตาม (${alerts.length} คน)</span>
+        <span style="font-size:.72rem;color:var(--muted);font-weight:400">ดำเนินการแล้ว ${doneCnt}/${alerts.length}</span>
       </div>
-      ${alertRows}
+      ${alertCards}
     </div>` : `
     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px 18px;margin-bottom:14px;text-align:center;color:#166534;font-weight:600">
       ✅ ไม่มีนักเรียนที่ต้องติดตามเป็นพิเศษ
     </div>`}
 
-    <!-- ตารางรายคนทั้งหมด -->
     <div style="background:#fff;border:1px solid var(--bdr);border-radius:12px;padding:16px 18px">
-      <div style="font-weight:700;font-size:.92rem;color:var(--pri-d);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--pri-l)">
-        📋 รายการทั้งหมด (${total} คน)
+      <div style="font-weight:700;font-size:.92rem;color:var(--pri-d);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--pri-l);display:flex;align-items:center;justify-content:space-between">
+        <span>📋 รายการทั้งหมด (${rows.length} คน)</span>
+        <button onclick="printSurveyReport()" class="btn btn-sm btn-out" style="font-size:.75rem">🖨️ พิมพ์รายงาน</button>
       </div>
       <div style="overflow-x:auto">
         <table style="width:100%;border-collapse:collapse;font-size:.8rem">
-          <thead>
-            <tr style="background:var(--bg);text-align:left">
-              <th style="padding:8px 10px;font-weight:700;color:var(--muted);white-space:nowrap">ชั้น/เลขที่</th>
-              <th style="padding:8px 10px;font-weight:700;color:var(--muted)">ระดับความเสี่ยง</th>
-              <th style="padding:8px 10px;font-weight:700;color:var(--muted)">ความปลอดภัย</th>
-              <th style="padding:8px 10px;font-weight:700;color:var(--muted)">อารมณ์/ความคิด</th>
-              <th style="padding:8px 10px;font-weight:700;color:var(--muted)">ปืนในบ้าน</th>
-              <th style="padding:8px 10px;font-weight:700;color:var(--muted)">รายงานเพื่อน</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${sorted.map((r,i) => {
-              const safeMax = Math.max(r.q2_attacked||0, r.q3_threatened||0, r.q4_afraid||0);
-              const thinkMax = Math.max(r.q5_revenge||0, r.q6_hurt_others||0, r.q7_hurt_self||0);
-              const freqLabel = ['–','บางครั้ง','บ่อย','เกือบทุกวัน'];
-              const freqColor = ['var(--muted)','#b45309','#ea580c','#dc2626'];
-              const hasFriend = [r.q9_friend_threat,r.q10_friend_weapon,r.q11_friend_violent,r.q12_friend_concern].some(v=>v==='yes');
-              return `<tr style="border-top:1px solid var(--bdr);background:${i%2?'var(--bg)':'#fff'}">
-                <td style="padding:8px 10px;font-weight:700">${r.grade} / ${r.studentNo}</td>
-                <td style="padding:8px 10px"><span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:12px;background:${RISK_COLOR[r.riskLevel]||'#f3f4f6'};color:${r.riskLevel==='critical'?'#991b1b':r.riskLevel==='high'?'#9a3412':r.riskLevel==='medium'?'#854d0e':'#166534'}">${RISK_LABEL[r.riskLevel]||'–'}</span></td>
-                <td style="padding:8px 10px;color:${freqColor[safeMax]}">${safeMax>0?freqLabel[safeMax]:'✅'}</td>
-                <td style="padding:8px 10px;color:${freqColor[thinkMax]}">${thinkMax>0?freqLabel[thinkMax]:'✅'}</td>
-                <td style="padding:8px 10px">${r.q8_weapon_home==='yes'?'<span style="color:#dc2626;font-weight:700">⚠️ มี</span>':'–'}</td>
-                <td style="padding:8px 10px">${hasFriend?'<span style="color:#dc2626;font-weight:700">⚠️ มี</span>':'–'}</td>
-              </tr>`;
-            }).join('')}
-          </tbody>
+          <thead><tr style="background:var(--bg);text-align:left">
+            <th style="padding:8px 10px;font-weight:700;color:var(--muted);white-space:nowrap">ชั้น/เลขที่</th>
+            <th style="padding:8px 10px;font-weight:700;color:var(--muted)">ระดับความเสี่ยง</th>
+            <th style="padding:8px 10px;font-weight:700;color:var(--muted)">ความปลอดภัย</th>
+            <th style="padding:8px 10px;font-weight:700;color:var(--muted)">อารมณ์/ความคิด</th>
+            <th style="padding:8px 10px;font-weight:700;color:var(--muted)">ปืนในบ้าน</th>
+            <th style="padding:8px 10px;font-weight:700;color:var(--muted)">รายงานเพื่อน</th>
+          </tr></thead>
+          <tbody>${tableRows}</tbody>
         </table>
       </div>
     </div>`;
+
+    requestAnimationFrame(() => drawSurveyChart(gradeStats));
   } catch(e) {
     console.error(e);
     out.innerHTML = '<div style="color:var(--muted);text-align:center;padding:40px">เกิดข้อผิดพลาดในการโหลด กรุณาลองใหม่</div>';
   }
+}
+
+// ── SURVEY HELPERS ────────────────────────
+let _latestSurveyData = { rows:[], year:0, sem:0 };
+let _svChart = null;
+let _qrGenerated = false;
+
+function getFollowUps() { return JSON.parse(localStorage.getItem('sv_followup')||'{}'); }
+
+function markFollowUp(id, done) {
+  const fu = getFollowUps();
+  if (done) fu[id] = { done:true, by:tName()||'ครู', at:new Date().toISOString() };
+  else delete fu[id];
+  localStorage.setItem('sv_followup', JSON.stringify(fu));
+  renderSurvey();
+}
+
+function drawSurveyChart(gradeStats) {
+  const ctx = document.getElementById('sv-risk-chart');
+  if (!ctx) return;
+  if (_svChart) _svChart.destroy();
+  const grades = Object.keys(gradeStats).sort();
+  _svChart = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:grades,
+      datasets:[
+        { label:'วิกฤต',          data:grades.map(g=>gradeStats[g].critical||0), backgroundColor:'#fca5a5', borderColor:'#dc2626', borderWidth:1.5 },
+        { label:'เสี่ยงสูง',      data:grades.map(g=>gradeStats[g].high||0),     backgroundColor:'#fed7aa', borderColor:'#ea580c', borderWidth:1.5 },
+        { label:'เสี่ยงปานกลาง', data:grades.map(g=>gradeStats[g].medium||0),   backgroundColor:'#fde68a', borderColor:'#ca8a04', borderWidth:1.5 },
+        { label:'ปกติ',           data:grades.map(g=>gradeStats[g].low||0),      backgroundColor:'#bbf7d0', borderColor:'#16a34a', borderWidth:1.5 },
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ font:{ family:'Prompt',size:11 }, padding:14 } } },
+      scales:{
+        x:{ stacked:true, ticks:{ font:{ family:'Prompt' } } },
+        y:{ stacked:true, ticks:{ font:{ family:'Prompt' }, stepSize:1 }, beginAtZero:true }
+      }
+    }
+  });
+}
+
+async function checkCriticalAlert() {
+  if (!db) return;
+  try {
+    const now = new Date(), year = now.getFullYear()+543, month = now.getMonth()+1;
+    const sem = month>=5&&month<=9 ? 1 : 2;
+    const snap = await db.collection(SURVEY_COL)
+      .where('year','==',year).where('semester','==',sem)
+      .where('riskLevel','==','critical').get();
+    const banner = document.getElementById('critical-banner');
+    if (!banner) return;
+    if (!snap.empty) {
+      document.getElementById('critical-count').textContent = snap.size;
+      banner.style.display = 'flex';
+    } else {
+      banner.style.display = 'none';
+    }
+  } catch(e) { console.warn(e); }
+}
+
+function showQRCode() {
+  document.getElementById('mo-qr').classList.add('open');
+  if (!_qrGenerated && typeof QRCode !== 'undefined') {
+    new QRCode(document.getElementById('qr-canvas'), {
+      text:'https://prasopchaiofficial24-max.github.io/student-safety-survey/',
+      width:200, height:200,
+      colorDark:'#9b0a23', colorLight:'#ffffff',
+      correctLevel:QRCode.CorrectLevel.M
+    });
+    _qrGenerated = true;
+  }
+}
+
+function printSurveyReport() {
+  const { rows, year, sem } = _latestSurveyData;
+  if (!rows.length) { alert('ไม่มีข้อมูลแบบสำรวจ'); return; }
+  const followUps = getFollowUps();
+  const byCrit = { critical:0, high:0, medium:0, low:0 };
+  rows.forEach(r => { byCrit[r.riskLevel] = (byCrit[r.riskLevel]||0)+1; });
+  const ord = { critical:0,high:1,medium:2,low:3 };
+  const alerts = rows.filter(r=>r.needFollowUp).sort((a,b)=>(ord[a.riskLevel]||3)-(ord[b.riskLevel]||3));
+  const alertRows = alerts.map(r => {
+    const fu = followUps[r.id];
+    const flags = (r.alertFlags||[]).map(f=>FLAG_LABEL[f]||f).join(', ');
+    const fuStatus = fu?.done ? `ติดตามแล้ว (${fu.by||'–'} / ${fu.at?new Date(fu.at).toLocaleDateString('th-TH'):'–'})` : 'รอดำเนินการ';
+    return `<tr><td>${r.grade} / เลขที่ ${r.studentNo}</td><td>${RISK_LABEL[r.riskLevel]||'–'}</td><td>${flags}</td><td>${fuStatus}</td></tr>`;
+  }).join('');
+  const today = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  const w = window.open('','_blank','width=820,height=700');
+  w.document.write(`<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>รายงานแบบสำรวจความปลอดภัย</title>
+<style>
+body{font-family:'TH SarabunPSK',Sarabun,Arial,sans-serif;font-size:15pt;margin:2cm 2.5cm;color:#000}
+h1{font-size:18pt;text-align:center;margin:0 0 4pt}
+.sub{text-align:center;font-size:14pt;color:#444;margin-bottom:4pt}
+.meta{text-align:center;font-size:13pt;margin-bottom:20pt;color:#666}
+.sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10pt;margin-bottom:20pt;text-align:center}
+.sum-box{border:1pt solid #ccc;border-radius:4pt;padding:8pt}
+.sum-val{font-size:24pt;font-weight:700}
+h2{font-size:15pt;margin:16pt 0 8pt;border-bottom:1pt solid #ccc;padding-bottom:4pt}
+table{width:100%;border-collapse:collapse;margin-bottom:20pt}
+th{background:#9b0a23;color:#fff;padding:5pt 8pt;font-size:13pt;text-align:left}
+td{padding:4pt 8pt;border:0.5pt solid #bbb;font-size:13pt;vertical-align:top}
+.sig{text-align:right;margin-top:40pt}
+.sig-line{display:inline-block;width:200pt;border-top:1pt solid #000;text-align:center;padding-top:4pt;font-size:13pt}
+@media print{@page{size:A4;margin:2cm 2.5cm}button{display:none!important}}
+</style></head><body>
+<h1>รายงานผลการสำรวจความปลอดภัยในโรงเรียน</h1>
+<div class="sub">โรงเรียนจิกดู่วิทยา อำเภอหัวตะพาน จังหวัดอำนาจเจริญ</div>
+<div class="meta">ภาคเรียนที่ ${sem} ปีการศึกษา ${year} &nbsp;|&nbsp; ณ วันที่ ${today}</div>
+<h2>สรุปภาพรวม</h2>
+<div class="sum">
+  <div class="sum-box"><div>ทำแบบสำรวจ</div><div class="sum-val" style="color:#0369a1">${rows.length}</div><div>คน</div></div>
+  <div class="sum-box"><div>วิกฤต</div><div class="sum-val" style="color:#dc2626">${byCrit.critical}</div><div>คน</div></div>
+  <div class="sum-box"><div>เสี่ยงสูง</div><div class="sum-val" style="color:#ea580c">${byCrit.high}</div><div>คน</div></div>
+  <div class="sum-box"><div>ต้องติดตาม</div><div class="sum-val" style="color:#7c3aed">${alerts.length}</div><div>คน</div></div>
+</div>
+${alerts.length > 0 ? `<h2>รายชื่อนักเรียนที่ต้องดำเนินการ (${alerts.length} คน)</h2>
+<table><thead><tr><th>ชั้น / เลขที่</th><th>ระดับความเสี่ยง</th><th>ประเด็นที่พบ</th><th>สถานะ</th></tr></thead>
+<tbody>${alertRows}</tbody></table>`
+: '<p style="color:green;font-weight:700">✅ ไม่มีนักเรียนที่ต้องดำเนินการเป็นพิเศษ</p>'}
+<div class="sig"><div class="sig-line">ลงชื่อ ........................................<br>(${tName()||'ครูผู้รับผิดชอบ'})<br>ผู้รายงาน</div></div>
+<div style="text-align:center;margin-top:20pt"><button onclick="window.print()" style="font-size:14pt;padding:8pt 24pt;background:#9b0a23;color:#fff;border:none;border-radius:6pt;cursor:pointer">🖨️ พิมพ์</button></div>
+</body></html>`);
+  w.document.close();
 }
 
 // ── INIT ──────────────────────────────────
@@ -2351,6 +2500,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     localStorage.setItem('sv_cfg', JSON.stringify(cfg));
   }
   renderDash();
+  checkCriticalAlert();
   checkTeacher();
   document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
   if (cfg.year) document.getElementById('f-year').value = cfg.year;
