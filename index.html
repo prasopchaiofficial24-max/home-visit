@@ -1167,13 +1167,52 @@ function _showOfflineToast() {
   clearTimeout(t._timer);
   t._timer = setTimeout(() => { t.style.display = 'none'; }, 5000);
 }
+function _showSyncedToast(n) {
+  let t = document.getElementById('_synced-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = '_synced-toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);' +
+      'background:#dcfce7;color:#15803d;border:1.5px solid #86efac;border-radius:12px;' +
+      'padding:10px 20px;font-size:.84rem;font-weight:600;z-index:9999;' +
+      'box-shadow:0 4px 16px rgba(0,0,0,.12);display:flex;align-items:center;gap:8px';
+    document.body.appendChild(t);
+  }
+  t.innerHTML = `✅ ซิงก์ข้อมูลที่ค้างจากตอนออฟไลน์ขึ้น Firebase แล้ว ${n} รายการ`;
+  t.style.display = 'flex';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.display = 'none'; }, 6000);
+}
 
 // ── DATA ──────────────────────────────────
 let _recs = [];
+// ส่งเรคคอร์ดที่บันทึกไว้ตอนออฟไลน์ (id ขึ้นต้น loc_) กลับขึ้น Firestore
+// ต้องทำก่อนโหลดข้อมูลสดทุกครั้ง ไม่งั้น _recs จะถูกเขียนทับจนข้อมูลที่ค้างหายไปเงียบๆ
+async function syncPendingRecords() {
+  if (!db) return;
+  const raw = localStorage.getItem('sv_bk');
+  let local = raw ? JSON.parse(raw) : [];
+  const pending = local.filter(r => r.id && r.id.startsWith('loc_'));
+  if (!pending.length) return;
+  let synced = 0;
+  for (const rec of pending) {
+    try {
+      const toSave = { ...rec };
+      delete toSave.id;
+      const ref = await db.collection(COL).add(toSave);
+      await ref.update({ id: ref.id });
+      local = local.filter(r => r.id !== rec.id);
+      localStorage.setItem('sv_bk', JSON.stringify(local));
+      synced++;
+    } catch(e) { /* ยังส่งไม่สำเร็จ ลองใหม่รอบหน้า */ }
+  }
+  if (synced > 0) _showSyncedToast(synced);
+}
 async function load() {
   if (db && _unsubscribe && _listenerFired) return; // listener ส่งข้อมูลแล้ว ไม่ต้อง fetch ซ้ำ
   if (db) {
     try {
+      await syncPendingRecords();
       const snap = await db.collection(COL).orderBy('ts','desc').get();
       _recs = snap.docs.map(d => ({...d.data(), id: d.id}));
       localStorage.setItem('sv_bk', JSON.stringify(_recs));
@@ -2541,8 +2580,7 @@ async function renderSurvey() {
     rows.forEach(r => { byCrit[r.riskLevel] = (byCrit[r.riskLevel]||0)+1; });
     const alerts    = rows.filter(r => r.needFollowUp).sort((a,b)=>(order[a.riskLevel]||3)-(order[b.riskLevel]||3));
     const sorted    = [...rows].sort((a,b)=>(order[a.riskLevel]||3)-(order[b.riskLevel]||3));
-    const followUps = getFollowUps();
-    const doneCnt   = alerts.filter(r => followUps[r.id]?.done).length;
+    const doneCnt   = alerts.filter(r => r.followUpDone).length;
 
     // กราฟแยกชั้น
     const gradeStats = {};
@@ -2555,7 +2593,7 @@ async function renderSurvey() {
     const freqLabel = ['–','บางครั้ง','บ่อย','เกือบทุกวัน'];
     const freqColor = ['var(--muted)','#b45309','#ea580c','#dc2626'];
     const alertCards = alerts.map(r => {
-      const fu   = followUps[r.id], done = fu?.done;
+      const done = !!r.followUpDone;
       const flags = (r.alertFlags||[]).map(f=>`<span style="display:inline-block;background:#fee2e2;color:#991b1b;font-size:.68rem;font-weight:600;padding:2px 7px;border-radius:5px;margin:2px">${FLAG_LABEL[f]||f}</span>`).join('');
       const fp = [];
       const friendLbl = (n, r) => r[`q${n}_friend_name`]!==undefined
@@ -2566,7 +2604,7 @@ async function renderSurvey() {
       if (r.q11_friend_violent==='yes'&&(r.q11_friend_name||r.q11_friend_grade||r.q11_friend_no)) fp.push(`ข้อ 11: ${friendLbl(11,r)}`);
       if (r.q12_friend_concern==='yes'&&(r.q12_friend_name||r.q12_friend_grade||r.q12_friend_no)) fp.push(`ข้อ 12: ${friendLbl(12,r)}`);
       const friendInfo = fp.length ? `<div style="margin-top:6px;font-size:.75rem;background:#fff7ed;padding:5px 9px;border-radius:6px;color:#92400e">👥 เพื่อนที่ถูกระบุ: ${fp.join(' | ')}</div>` : '';
-      const fuNote = done ? `<div style="font-size:.73rem;color:#15803d;margin-top:6px;font-weight:600">✅ ติดตามแล้ว โดย ${fu.by||'–'} (${fu.at?new Date(fu.at).toLocaleDateString('th-TH'):''})</div>` : '';
+      const fuNote = done ? `<div style="font-size:.73rem;color:#15803d;margin-top:6px;font-weight:600">✅ ติดตามแล้ว โดย ${r.followUpBy||'–'} (${r.followUpAt?new Date(r.followUpAt).toLocaleDateString('th-TH'):''})</div>` : '';
       const bg = done?'#f0fdf4':(RISK_COLOR[r.riskLevel]||'#fff'), bd = done?'#bbf7d0':(RISK_BORDER[r.riskLevel]||'var(--bdr)');
       const txtColor = r.riskLevel==='critical'?'#991b1b':r.riskLevel==='high'?'#9a3412':r.riskLevel==='medium'?'#854d0e':'#166534';
       return `<div style="background:${bg};border:1px solid ${bd};border-left:4px solid ${bd};border-radius:10px;padding:13px 15px;margin-bottom:10px">
@@ -2758,14 +2796,24 @@ let _latestSurveyData = { rows:[], year:0, sem:0 };
 let _svChart = null;
 let _qrGenerated = false;
 
-function getFollowUps() { return JSON.parse(localStorage.getItem('sv_followup')||'{}'); }
-
-function markFollowUp(id, done) {
-  const fu = getFollowUps();
-  if (done) fu[id] = { done:true, by:tName()||'ครู', at:new Date().toISOString() };
-  else delete fu[id];
-  localStorage.setItem('sv_followup', JSON.stringify(fu));
-  renderSurvey();
+async function markFollowUp(id, done) {
+  if (!db) { alert('ไม่ได้เชื่อมต่อ Firebase ไม่สามารถบันทึกสถานะติดตามได้ครับ'); return; }
+  try {
+    if (done) {
+      await db.collection(SURVEY_COL).doc(id).set({
+        followUpDone: true, followUpBy: tName()||'ครู', followUpAt: new Date().toISOString()
+      }, { merge:true });
+    } else {
+      await db.collection(SURVEY_COL).doc(id).update({
+        followUpDone: firebase.firestore.FieldValue.delete(),
+        followUpBy:   firebase.firestore.FieldValue.delete(),
+        followUpAt:   firebase.firestore.FieldValue.delete()
+      });
+    }
+    renderSurvey();
+  } catch(e) {
+    alert('บันทึกสถานะติดตามไม่สำเร็จ: ' + e.message);
+  }
 }
 
 function drawSurveyChart(gradeStats) {
@@ -2830,15 +2878,13 @@ function showQRCode() {
 function printSurveyReport() {
   const { rows, year, sem } = _latestSurveyData;
   if (!rows.length) { alert('ไม่มีข้อมูลแบบสำรวจ'); return; }
-  const followUps = getFollowUps();
   const byCrit = { critical:0, high:0, medium:0, low:0 };
   rows.forEach(r => { byCrit[r.riskLevel] = (byCrit[r.riskLevel]||0)+1; });
   const ord = { critical:0,high:1,medium:2,low:3 };
   const alerts = rows.filter(r=>r.needFollowUp).sort((a,b)=>(ord[a.riskLevel]||3)-(ord[b.riskLevel]||3));
   const alertRows = alerts.map(r => {
-    const fu = followUps[r.id];
     const flags = (r.alertFlags||[]).map(f=>FLAG_LABEL[f]||f).join(', ');
-    const fuStatus = fu?.done ? `ติดตามแล้ว (${fu.by||'–'} / ${fu.at?new Date(fu.at).toLocaleDateString('th-TH'):'–'})` : 'รอดำเนินการ';
+    const fuStatus = r.followUpDone ? `ติดตามแล้ว (${r.followUpBy||'–'} / ${r.followUpAt?new Date(r.followUpAt).toLocaleDateString('th-TH'):'–'})` : 'รอดำเนินการ';
     return `<tr><td>${r.grade} / เลขที่ ${r.studentNo}</td><td>${RISK_LABEL[r.riskLevel]||'–'}</td><td>${flags}</td><td>${fuStatus}</td></tr>`;
   }).join('');
   const today = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
