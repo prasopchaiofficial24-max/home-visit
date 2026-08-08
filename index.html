@@ -248,6 +248,21 @@ tbody tr{transition:background .1s}
 .db-chart-c{position:relative;height:185px}
 
 /* ── RESPONSIVE ── */
+/* ── รายชื่อแบบการ์ด (มือถือ) ── */
+.rec-cards{display:none}
+.rec-card{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:13px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.rec-card-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.rec-card-name{font-weight:700;font-size:.95rem}
+.rec-card-sub{font-size:.78rem;color:var(--muted);margin-top:2px}
+.rec-card-badges{display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0}
+.rec-risk{font-size:.72rem;font-weight:700;color:#b45309;background:#fef3c7;border-radius:20px;padding:2px 9px;white-space:nowrap}
+.rec-card-parent{font-size:.82rem;color:var(--txt);margin-top:8px;padding-top:8px;border-top:1px dashed var(--bdr)}
+.rec-card-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.rec-card-actions .btn{flex:1;min-width:60px}
+@media(max-width:900px){
+  #rec-table .tw{display:none}
+  .rec-cards{display:block}
+}
 @media(max-width:768px){.db-stats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:480px){
   .fgrid{grid-template-columns:1fr}
@@ -1693,6 +1708,11 @@ function renderRecords() {
   if (!recs.length) {
     el.innerHTML = `<div class="empty"><div class="empty-ico">📋</div><p>ไม่พบข้อมูล</p></div>`; return;
   }
+  const actionBtns = r => `
+    <button class="btn btn-out btn-sm" onclick="editRecord('${r.id}')">✏️</button>
+    <button class="btn btn-sm" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe" onclick="openTeacherLog('${r.id}')" title="บันทึกของครู">📝</button>
+    <button class="btn btn-sm" style="background:#fde8ec;color:#9b0a23;border:1px solid #f5bcc6" onclick="printStudent('${r.id}')">🖨️</button>
+    <button class="btn btn-sm" style="background:#fde8e8;color:#9b1c1c;border:none" onclick="confirmDel('${r.id}')">🗑</button>`;
   el.innerHTML = `<div class="tw"><table>
     <thead><tr>
       <th>ชื่อนักเรียน</th><th>เพศ</th><th>ชั้น</th><th>ผู้ปกครอง</th><th>เบอร์</th>
@@ -1710,14 +1730,27 @@ function renderRecords() {
         <td>${r.visited ? '<span class="bv">✅ เยี่ยมแล้ว</span>' : '<span class="bnv">❌ ยังไม่ได้</span>'}</td>
         <td style="text-align:center;color:${rc>0?'#ef4444':'var(--muted)'};font-weight:${rc>0?700:400}">${rc>0?rc:'–'}</td>
         <td style="text-align:center">${r.urgent ? '<span class="bur">🚨 ด่วน</span>' : '–'}</td>
-        <td style="white-space:nowrap">
-          <button class="btn btn-out btn-sm" onclick="editRecord('${r.id}')">✏️</button>
-          <button class="btn btn-sm" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;margin-left:3px" onclick="openTeacherLog('${r.id}')" title="บันทึกของครู">📝</button>
-          <button class="btn btn-sm" style="background:#fde8ec;color:#9b0a23;border:1px solid #f5bcc6;margin-left:3px" onclick="printStudent('${r.id}')">🖨️</button>
-          <button class="btn btn-sm" style="background:#fde8e8;color:#9b1c1c;border:none;margin-left:3px" onclick="confirmDel('${r.id}')">🗑</button>
-        </td>
+        <td style="white-space:nowrap">${actionBtns(r)}</td>
       </tr>`;
-    }).join('')}</tbody></table></div>`;
+    }).join('')}</tbody></table></div>
+  <div class="rec-cards">${recs.map(r => {
+    const rc = riskCount(r);
+    return `<div class="rec-card">
+      <div class="rec-card-top">
+        <div>
+          <div class="rec-card-name">${r.studentName||'–'}</div>
+          <div class="rec-card-sub">${r.gradeLevel||'–'} · ${r.gender==='male'?'ชาย':r.gender==='female'?'หญิง':'–'}${r.visitDate?' · เยี่ยม '+r.visitDate:''}</div>
+        </div>
+        <div class="rec-card-badges">
+          ${r.visited ? '<span class="bv">✅ เยี่ยมแล้ว</span>' : '<span class="bnv">❌ ยังไม่ได้</span>'}
+          ${r.urgent ? '<span class="bur">🚨 ด่วน</span>' : ''}
+          ${rc>0 ? `<span class="rec-risk">⚠️ เสี่ยง ${rc}</span>` : ''}
+        </div>
+      </div>
+      ${(r.parentName||r.parentPhone) ? `<div class="rec-card-parent">👤 ${r.parentName||'–'}${r.parentRel?' ('+r.parentRel+')':''}${r.parentPhone?` · <a href="tel:${r.parentPhone}" style="color:var(--pri-d);font-weight:600">${r.parentPhone}</a>`:''}</div>` : ''}
+      <div class="rec-card-actions">${actionBtns(r)}</div>
+    </div>`;
+  }).join('')}</div>`;
 }
 
 // ── REPORT META (localStorage) ────────────
