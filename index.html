@@ -2515,10 +2515,13 @@ async function renderSurvey() {
       const fu   = followUps[r.id], done = fu?.done;
       const flags = (r.alertFlags||[]).map(f=>`<span style="display:inline-block;background:#fee2e2;color:#991b1b;font-size:.68rem;font-weight:600;padding:2px 7px;border-radius:5px;margin:2px">${FLAG_LABEL[f]||f}</span>`).join('');
       const fp = [];
-      if (r.q9_friend_threat==='yes'&&(r.q9_friend_grade||r.q9_friend_no)) fp.push(`ข้อ 9: ${r.q9_friend_grade||'?'} เลขที่ ${r.q9_friend_no||'?'}`);
-      if (r.q10_friend_weapon==='yes'&&(r.q10_friend_grade||r.q10_friend_no)) fp.push(`ข้อ 10: ${r.q10_friend_grade||'?'} เลขที่ ${r.q10_friend_no||'?'}`);
-      if (r.q11_friend_violent==='yes'&&(r.q11_friend_grade||r.q11_friend_no)) fp.push(`ข้อ 11: ${r.q11_friend_grade||'?'} เลขที่ ${r.q11_friend_no||'?'}`);
-      if (r.q12_friend_concern==='yes'&&(r.q12_friend_grade||r.q12_friend_no)) fp.push(`ข้อ 12: ${r.q12_friend_grade||'?'} เลขที่ ${r.q12_friend_no||'?'}`);
+      const friendLbl = (n, r) => r[`q${n}_friend_name`]!==undefined
+        ? (r[`q${n}_friend_name`] || '?')
+        : `${r[`q${n}_friend_grade`]||'?'} เลขที่ ${r[`q${n}_friend_no`]||'?'}`; // ข้อมูลเก่าก่อนเปลี่ยนเป็นชื่อ
+      if (r.q9_friend_threat==='yes'&&(r.q9_friend_name||r.q9_friend_grade||r.q9_friend_no)) fp.push(`ข้อ 9: ${friendLbl(9,r)}`);
+      if (r.q10_friend_weapon==='yes'&&(r.q10_friend_name||r.q10_friend_grade||r.q10_friend_no)) fp.push(`ข้อ 10: ${friendLbl(10,r)}`);
+      if (r.q11_friend_violent==='yes'&&(r.q11_friend_name||r.q11_friend_grade||r.q11_friend_no)) fp.push(`ข้อ 11: ${friendLbl(11,r)}`);
+      if (r.q12_friend_concern==='yes'&&(r.q12_friend_name||r.q12_friend_grade||r.q12_friend_no)) fp.push(`ข้อ 12: ${friendLbl(12,r)}`);
       const friendInfo = fp.length ? `<div style="margin-top:6px;font-size:.75rem;background:#fff7ed;padding:5px 9px;border-radius:6px;color:#92400e">👥 เพื่อนที่ถูกระบุ: ${fp.join(' | ')}</div>` : '';
       const fuNote = done ? `<div style="font-size:.73rem;color:#15803d;margin-top:6px;font-weight:600">✅ ติดตามแล้ว โดย ${fu.by||'–'} (${fu.at?new Date(fu.at).toLocaleDateString('th-TH'):''})</div>` : '';
       const bg = done?'#f0fdf4':(RISK_COLOR[r.riskLevel]||'#fff'), bd = done?'#bbf7d0':(RISK_BORDER[r.riskLevel]||'var(--bdr)');

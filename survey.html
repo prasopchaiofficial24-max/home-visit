@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>แบบสำรวจความปลอดภัย – โรงเรียนจิกดู่วิทยา</title>
+
+<script>
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDXJIhFdFT8_9Uz5iyxvo0Tze5sYHrI4iM",
+  authDomain:        "school-student-home-visit.firebaseapp.com",
+  projectId:         "school-student-home-visit",
+  storageBucket:     "school-student-home-visit.firebasestorage.app",
+  messagingSenderId: "639982697383",
+  appId:             "1:639982697383:web:55488f484c1f80a4bbd482"
+};
+const SURVEY_COL = 'violenceSurvey';
+const SCHOOL     = 'โรงเรียนจิกดู่วิทยา';
+let _surveyPin   = null; // โหลดจาก Firestore config ตอน init
+</script>
+
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root{
+  --pri:#c8102e;--pri-d:#9b0a23;--pri-l:#fde8ec;--pri-ll:#fff5f7;
+  --sec:#16a34a;--dan:#dc2626;--warn:#ea580c;--info:#0369a1;
+  --bg:#f3f4f6;--card:#fff;--bdr:#e5e7eb;
+  --txt:#111827;--muted:#6b7280;
+  --sh:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);
+  --sh-md:0 4px 16px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.04);
+  --radius:14px;--radius-sm:9px;
+  --tr:all .2s cubic-bezier(.4,0,.2,1)
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Prompt','Sarabun',Arial,sans-serif;background:var(--bg);color:var(--txt);font-size:15px;-webkit-font-smoothing:antialiased;min-height:100dvh}
+
+/* ── TOPBAR ── */
+.topbar{background:rgba(255,255,255,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr);box-shadow:0 2px 8px rgba(0,0,0,.05);position:sticky;top:0;z-index:100;padding:12px 18px;display:flex;align-items:center;justify-content:space-between}
+.tb-logo{font-size:.95rem;font-weight:800;color:var(--pri-d);letter-spacing:-.02em}
+.tb-logo span{color:var(--muted);font-size:.72rem;font-weight:400;margin-left:4px}
+.tb-private{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--sec);font-weight:600;background:#dcfce7;padding:3px 10px;border-radius:20px}
+
+/* ── WRAP ── */
+.wrap{max-width:520px;margin:0 auto;padding:20px 16px 40px}
+
+/* ── CARD ── */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--sh);border:1px solid var(--bdr);padding:24px 22px;margin-bottom:16px}
+
+/* ── PROGRESS ── */
+.progress-wrap{margin-bottom:24px}
+.progress-steps{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:10px}
+.p-step{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;transition:var(--tr)}
+.p-step.done{background:var(--sec);color:#fff}
+.p-step.active{background:var(--pri);color:#fff;box-shadow:0 0 0 4px var(--pri-l)}
+.p-step.pending{background:var(--bdr);color:var(--muted)}
+.p-line{flex:1;height:2px;background:var(--bdr);max-width:40px;transition:var(--tr)}
+.p-line.done{background:var(--sec)}
+.progress-label{text-align:center;font-size:.8rem;color:var(--muted);font-weight:500}
+.progress-label strong{color:var(--pri-d)}
+
+/* ── SECTION HEADER ── */
+.sec-header{margin-bottom:20px}
+.sec-badge{display:inline-flex;align-items:center;gap:6px;background:var(--pri-l);color:var(--pri-d);font-size:.75rem;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:10px}
+.sec-title{font-size:1.1rem;font-weight:700;color:var(--txt);margin-bottom:6px}
+.sec-desc{font-size:.83rem;color:var(--muted);line-height:1.6}
+
+/* ── QUESTION ── */
+.q-block{margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid var(--bdr)}
+.q-block:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+.q-text{font-size:.93rem;font-weight:600;color:var(--txt);margin-bottom:12px;line-height:1.5}
+.q-num{display:inline-block;background:var(--pri);color:#fff;font-size:.7rem;font-weight:700;width:22px;height:22px;border-radius:50%;text-align:center;line-height:22px;margin-right:6px;flex-shrink:0}
+.q-warn{display:inline-block;background:#fff7ed;color:#c2410c;font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:6px;margin-left:6px;border:1px solid #fed7aa}
+
+/* ── FREQ PILLS ── */
+.freq-pills{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.freq-pill{padding:10px 8px;border:1.5px solid var(--bdr);border-radius:10px;text-align:center;font-size:.8rem;font-weight:500;cursor:pointer;transition:var(--tr);color:var(--muted);background:var(--bg);user-select:none}
+.freq-pill:hover{border-color:var(--pri);color:var(--pri);background:var(--pri-ll)}
+.freq-pill.sel-0{border-color:var(--sec);background:#dcfce7;color:#15803d;font-weight:700}
+.freq-pill.sel-1{border-color:#ca8a04;background:#fefce8;color:#854d0e;font-weight:700}
+.freq-pill.sel-2{border-color:var(--warn);background:#fff7ed;color:var(--warn);font-weight:700}
+.freq-pill.sel-3{border-color:var(--dan);background:#fee2e2;color:var(--dan);font-weight:700}
+
+/* ── YES/NO PILLS ── */
+.yn-pills{display:flex;gap:10px}
+.yn-pill{flex:1;padding:11px;border:1.5px solid var(--bdr);border-radius:10px;text-align:center;font-size:.85rem;font-weight:600;cursor:pointer;transition:var(--tr);color:var(--muted);background:var(--bg);user-select:none}
+.yn-pill:hover{border-color:var(--pri);background:var(--pri-ll);color:var(--pri)}
+.yn-pill.sel-no{border-color:var(--sec);background:#dcfce7;color:#15803d}
+.yn-pill.sel-yes{border-color:var(--dan);background:#fee2e2;color:var(--dan)}
+
+/* ── FRIEND INPUT ── */
+.friend-input-wrap{display:none;margin-top:12px;padding:14px;background:#fff7ed;border-radius:10px;border:1px solid #fed7aa}
+.friend-input-wrap.show{display:block}
+.friend-label{font-size:.8rem;color:#92400e;font-weight:600;margin-bottom:8px}
+.friend-row{display:flex;gap:8px}
+.friend-name{flex:1;padding:9px 12px;border:1.5px solid #fed7aa;border-radius:9px;font-size:.85rem;font-family:inherit;background:#fff;color:var(--txt)}
+.friend-name:focus{outline:none;border-color:var(--warn)}
+.friend-hint{font-size:.73rem;color:#92400e;margin-top:6px}
+
+/* ── LOGIN FORM ── */
+.login-hero{text-align:center;padding:10px 0 20px}
+.login-icon{font-size:3rem;margin-bottom:12px}
+.login-title{font-size:1.2rem;font-weight:800;color:var(--pri-d);margin-bottom:6px}
+.login-sub{font-size:.83rem;color:var(--muted);line-height:1.6}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:.82rem;font-weight:600;color:var(--txt);margin-bottom:7px}
+.form-sel,.form-inp{width:100%;padding:12px 14px;border:1.5px solid var(--bdr);border-radius:10px;font-size:.9rem;font-family:inherit;background:#fff;color:var(--txt);transition:var(--tr);appearance:none;-webkit-appearance:none}
+.form-sel:focus,.form-inp:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-l)}
+.privacy-note{background:var(--pri-ll);border:1px solid var(--pri-l);border-radius:10px;padding:12px 14px;font-size:.79rem;color:var(--pri-d);line-height:1.6;margin-bottom:20px}
+.privacy-note strong{font-weight:700}
+
+/* ── BUTTONS ── */
+.btn{display:block;width:100%;padding:14px;border:none;border-radius:10px;font-size:.95rem;font-weight:700;font-family:inherit;cursor:pointer;transition:var(--tr);text-align:center}
+.btn-pri{background:var(--pri);color:#fff}
+.btn-pri:hover{background:var(--pri-d);transform:translateY(-1px);box-shadow:0 4px 12px rgba(200,16,46,.25)}
+.btn-pri:active{transform:translateY(0)}
+.btn-sec{background:var(--bg);color:var(--muted);border:1.5px solid var(--bdr);margin-bottom:10px}
+.btn-sec:hover{background:var(--bdr);color:var(--txt)}
+.btn-row{display:flex;gap:10px;margin-top:24px}
+.btn-row .btn{flex:1}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* ── LOADING ── */
+.loading{display:none;position:fixed;inset:0;background:rgba(255,255,255,.9);backdrop-filter:blur(6px);z-index:500;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+.loading.show{display:flex}
+.spinner{width:40px;height:40px;border:3px solid var(--bdr);border-top-color:var(--pri);border-radius:50%;animation:spin .75s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── SUCCESS ── */
+.success-card{text-align:center;padding:32px 20px}
+.success-icon{font-size:3.5rem;margin-bottom:16px}
+.success-title{font-size:1.2rem;font-weight:800;color:var(--sec);margin-bottom:8px}
+.success-sub{font-size:.85rem;color:var(--muted);line-height:1.7}
+.alert-box{background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:14px 16px;margin-top:20px;text-align:left;font-size:.82rem;color:#92400e;line-height:1.6}
+.alert-box strong{display:block;margin-bottom:4px;font-size:.87rem}
+
+/* ── ERROR ── */
+.err-msg{background:#fee2e2;color:#991b1b;border-radius:8px;padding:10px 14px;font-size:.82rem;margin-bottom:14px;display:none}
+.err-msg.show{display:block}
+
+/* ── DUPLICATE NOTICE ── */
+.dup-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;font-size:.82rem;color:#1e40af;line-height:1.6;margin-bottom:16px;display:none}
+.dup-box.show{display:block}
+
+/* ── RESPONSIVE ── */
+@media(min-width:480px){
+  .freq-pills{grid-template-columns:repeat(4,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tb-logo"><img src="logo.png" style="height:34px;width:34px;object-fit:contain;vertical-align:middle;margin-right:7px;border-radius:50%">จิกดู่วิทยา <span>แบบสำรวจความปลอดภัย</span></div>
+  <div class="tb-private">🔒 เป็นความลับ</div>
+</div>
+
+<!-- LOADING -->
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <p>กำลังบันทึก...</p>
+</div>
+
+<div class="wrap">
+
+  <!-- ─── STEP 0: LOGIN ─── -->
+  <div id="step-0">
+    <div class="card">
+      <div class="login-hero">
+        <div class="login-icon">📋</div>
+        <div class="login-title">แบบสำรวจความปลอดภัยในโรงเรียน</div>
+        <div class="login-sub">กรอกข้อมูลเพื่อเข้าสู่แบบสำรวจ<br>ใช้เวลาประมาณ 3–5 นาที</div>
+      </div>
+
+      <div class="privacy-note">
+        🔒 <strong>ข้อมูลของคุณเป็นความลับ</strong><br>
+        มีเฉพาะครูแนะแนวและผู้บริหารเท่านั้นที่เห็นคำตอบ
+        ตอบตามความจริงเพื่อให้โรงเรียนช่วยเหลือได้ตรงจุด
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ชั้นเรียน</label>
+        <select class="form-sel" id="inp-grade">
+          <option value="">-- เลือกชั้น --</option>
+          <option>ม.1</option><option>ม.2</option><option>ม.3</option>
+          <option>ม.4</option><option>ม.5</option><option>ม.6</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">เลขที่</label>
+        <input class="form-inp" id="inp-no" type="number" min="1" max="50" placeholder="เช่น 12">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">รหัสห้องเรียน (รับจากครู)</label>
+        <input class="form-inp" id="inp-pin" type="text" maxlength="10" placeholder="กรอกรหัส" autocomplete="off" style="letter-spacing:.15em;text-transform:uppercase">
+      </div>
+
+      <div class="err-msg" id="login-err">กรุณากรอกข้อมูลให้ครบถ้วน และตรวจสอบรหัสห้องเรียน</div>
+      <div class="dup-box" id="dup-box">🔒 คุณได้ทำแบบสำรวจในภาคเรียนนี้แล้ว ไม่สามารถกรอกซ้ำได้ หากมีข้อสงสัยกรุณาติดต่อครูที่ปรึกษา</div>
+
+      <button class="btn btn-pri" id="btn-login" onclick="doLogin()">ดำเนินการต่อ →</button>
+    </div>
+  </div>
+
+  <!-- ─── STEP 1: ความปลอดภัยของตัวเอง ─── -->
+  <div id="step-1" style="display:none">
+    <div class="progress-wrap">
+      <div class="progress-steps">
+        <div class="p-step active" id="ps1">1</div>
+        <div class="p-line" id="pl1"></div>
+        <div class="p-step pending" id="ps2">2</div>
+        <div class="p-line" id="pl2"></div>
+        <div class="p-step pending" id="ps3">3</div>
+      </div>
+      <div class="progress-label">ส่วนที่ <strong>1</strong> จาก 3</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-header">
+        <div class="sec-badge">🛡️ ส่วนที่ 1</div>
+        <div class="sec-title">ความปลอดภัยของตัวเอง</div>
+        <div class="sec-desc">ตอบตามที่รู้สึกจริงๆ ในช่วง <strong>1 เดือนที่ผ่านมา</strong></div>
+      </div>
+
+      <!-- Q1 -->
+      <div class="q-block">
+        <div class="q-text"><span class="q-num">1</span>ฉันรู้สึกปลอดภัยเมื่ออยู่ในโรงเรียน</div>
+        <div class="freq-pills" id="q1">
+          <div class="freq-pill" onclick="selFreq('q1',0,this)">ไม่เคยเลย</div>
+          <div class="freq-pill" onclick="selFreq('q1',1,this)">บางครั้ง</div>
+          <div class="freq-pill" onclick="selFreq('q1',2,this)">บ่อยครั้ง</div>
+          <div class="freq-pill" onclick="selFreq('q1',3,this)">เกือบทุกวัน</div>
+        </div>
+      </div>
+
+      <!-- Q2 -->
+      <div class="q-block">
+        <div class="q-text"><span class="q-num">2</span>ฉันเคยถูกทำร้ายร่างกายในโรงเรียน<br><small style="color:var(--muted);font-weight:400">(ต่อย เตะ ผลัก ทุบตี)</small></div>
+        <div class="freq-pills" id="q2">
+          <div class="freq-pill" onclick="selFreq('q2',0,this)">ไม่เคยเลย</div>
+          <div class="freq-pill" onclick="selFreq('q2',1,this)">เคยบ้าง</div>
+          <div class="freq-pill" onclick="selFreq('q2',2,this)">บ่อยครั้ง</div>
+          <div class="freq-pill" onclick="selFreq('q2',3,this)">เกือบทุกวัน</div>
+        </div>
+      </div>
+
+      <!-- Q3 -->
+      <div class="q-block">
+        <div class="q-text"><span class="q-num">3</span>ฉันเคยถูกข่มขู่ว่าจะทำร้าย<br><small style="color:var(--muted);font-weight:400">(พูดโดยตรง ส่งข้อความ หรือออนไลน์)</small></div>
+        <div class="freq-pills" id="q3">
+          <div class="freq-pill" onclick="selFreq('q3',0,this)">ไม่เคยเลย</div>
+          <div class="freq-pill" onclick="selFreq('q3',1,this)">เคยบ้าง</div>
+          <div class="freq-pill" onclick="selFreq('q3',2,this)">บ่อยครั้ง</div>
+          <div class="freq-pill" onclick="selFreq('q3',3,this)">เกือบทุกวัน</div>
+        </div>
+      </div>
+
+      <!-- Q4 -->
+      <div class="q-block">
+        <div class="q-text"><span class="q-num">4</span>ฉันกลัวเพื่อนหรือรุ่นพี่บางคนในโรงเรียน</div>
+        <div class="freq-pills" id="q4">
+          <div class="freq-pill" onclick="selFreq('q4',0,this)">ไม่เคยเลย</div>
+          <div class="freq-pill" onclick="selFreq('q4',1,this)">บางครั้ง</div>
+          <div class="freq-pill" onclick="selFreq('q4',2,this)">บ่อยครั้ง</div>
+          <div class="freq-pill" onclick="selFreq('q4',3,this)">เกือบทุกวัน</div>
+        </div>
+      </div>
+
+      <div class="err-msg" id="err1">กรุณาตอบทุกข้อก่อนดำเนินการต่อ</div>
+      <div class="btn-row">
+        <button class="btn btn-sec" onclick="goStep(0)">← ย้อนกลับ</button>
+        <button class="btn btn-pri" onclick="nextStep(1)">ถัดไป →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── STEP 2: ความคิดและอารมณ์ ─── -->
+  <div id="step-2" style="display:none">
+    <div class="progress-wrap">
+      <div class="progress-steps">
+        <div class="p-step done">✓</div>
+        <div class="p-line done"></div>
+        <div class="p-step active">2</div>
+        <div class="p-line" id="pl2b"></div>
+        <div class="p-step pending">3</div>
+      </div>
+      <div class="progress-label">ส่วนที่ <strong>2</strong> จาก 3</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-header">
+        <div class="sec-badge">💭 ส่วนที่ 2</div>
+        <div class="sec-title">ความคิดและความรู้สึก</div>
+        <div class="sec-desc">ข้อมูลส่วนนี้เป็นความลับมากที่สุด ตอบตรงๆ ได้เลย ไม่มีคำตอบผิดถูก</div>
+      </div>
+
+      <!-- Q5 -->
+      <div class="q-block">
+        <div class="q-text"><span class="q-num">5</span>ฉันรู้สึกโกรธหรือแค้นใครบางคนมาก จนคิดอยากแก้แค้น</div>
+        <div class="freq-pills" id="q5">
+          <div class="freq-pill" onclick="selFreq('q5',0,this)">ไม่เคยเลย</div>
+          <div class="freq-pill" onclick="selFreq('q5',1,this)">เคยบ้าง</div>
+          <div class="freq-pill" onclick="selFreq('q5',2,this)">บ่อยครั้ง</div>
+          <div class="freq-pill" onclick="selFreq('q5',3,this)">เกือบทุกวัน</div>
+        </div>
+      </div>
+
+      <!-- Q6 -->
+      <div class="q-block">
+        <div class="q-text"><span class="q-num">6</span>ฉันเคยคิดอยากทำร้ายหรือทำให้คนอื่นเจ็บปวด <span class="q-warn">ข้อสำคัญ</span></div>
+        <div class="freq-pills" id="q6">
+          <div class="freq-pill" onclick="selFreq('q6',0,this)">ไม่เคยเลย</div>
+          <div class="freq-pill" onclick="selFreq('q6',1,this)">เคยบ้าง</div>
+          <div class="freq-pill" onclick="selFreq('q6',2,this)">บ่อยครั้ง</div>
+          <div class="freq-pill" onclick="selFreq('q6',3,this)">เกือบทุกวัน</div>
+        </div>
+      </div>
+
+      <!-- Q7 -->
+      <div class="q-block">
+        <div class="q-text"><span class="q-num">7</span>ฉันเคยคิดอยากทำร้ายตัวเอง หรือรู้สึกไม่อยากมีชีวิตอยู่ <span class="q-warn">ข้อสำคัญ</span></div>
+        <div class="freq-pills" id="q7">
+          <div class="freq-pill" onclick="selFreq('q7',0,this)">ไม่เคยเลย</div>
+          <div class="freq-pill" onclick="selFreq('q7',1,this)">เคยบ้าง</div>
+          <div class="freq-pill" onclick="selFreq('q7',2,this)">บ่อยครั้ง</div>
+          <div class="freq-pill" onclick="selFreq('q7',3,this)">เกือบทุกวัน</div>
+        </div>
+      </div>
+
+      <!-- Q8 -->
+      <div class="q-block">
+        <div class="q-text"><span class="q-num">8</span>ที่บ้านของฉันมีอาวุธปืนเก็บไว้ <span class="q-warn">ข้อสำคัญ</span></div>
+        <div class="yn-pills" id="q8">
+          <div class="yn-pill" onclick="selYN('q8','no',this)">ไม่มี</div>
+          <div class="yn-pill" onclick="selYN('q8','yes',this)">มี</div>
+        </div>
+      </div>
+
+      <div class="err-msg" id="err2">กรุณาตอบทุกข้อก่อนดำเนินการต่อ</div>
+      <div class="btn-row">
+        <button class="btn btn-sec" onclick="goStep(1)">← ย้อนกลับ</button>
+        <button class="btn btn-pri" onclick="nextStep(2)">ถัดไป →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── STEP 3: สิ่งที่เห็นในเพื่อน ─── -->
+  <div id="step-3" style="display:none">
+    <div class="progress-wrap">
+      <div class="progress-steps">
+        <div class="p-step done">✓</div>
+        <div class="p-line done"></div>
+        <div class="p-step done">✓</div>
+        <div class="p-line done"></div>
+        <div class="p-step active">3</div>
+      </div>
+      <div class="progress-label">ส่วนที่ <strong>3</strong> จาก 3 — เกือบเสร็จแล้ว!</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-header">
+        <div class="sec-badge">👥 ส่วนที่ 3</div>
+        <div class="sec-title">สิ่งที่สังเกตเห็นในเพื่อน</div>
+        <div class="sec-desc">ถ้ามีเพื่อนที่คุณเป็นห่วง การบอกโรงเรียนคือการช่วยเพื่อน ไม่ใช่การฟ้อง</div>
+      </div>
+
+      <!-- Q9 -->
+      <div class="q-block">
+        <div class="q-text"><span class="q-num">9</span>มีเพื่อนที่เคยบอกฉันว่าอยากทำร้ายหรือฆ่าคนอื่น</div>
+        <div class="yn-pills" id="q9">
+          <div class="yn-pill" onclick="selYNFriend('q9','no',this)">ไม่มี</div>
+          <div class="yn-pill" onclick="selYNFriend('q9','yes',this)">มี</div>
+        </div>
+        <div class="friend-input-wrap" id="fi9">
+          <div class="friend-label">ระบุชื่อ-นามสกุลเพื่อน (ถ้าทราบ)</div>
+          <div class="friend-row">
+            <input class="friend-name" id="fi9-name" type="text" placeholder="ชื่อ-นามสกุลเพื่อน" autocomplete="off">
+          </div>
+          <div class="friend-hint">ไม่ทราบก็ไม่ต้องกรอก โรงเรียนจะสอบถามต่อ</div>
+        </div>
+      </div>
+
+      <!-- Q10 -->
+      <div class="q-block">
+        <div class="q-text"><span class="q-num">10</span>มีเพื่อนที่พูดถึงอาวุธ มีด หรือปืนบ่อยผิดปกติ</div>
+        <div class="yn-pills" id="q10">
+          <div class="yn-pill" onclick="selYNFriend('q10','no',this)">ไม่มี</div>
+          <div class="yn-pill" onclick="selYNFriend('q10','yes',this)">มี</div>
+        </div>
+        <div class="friend-input-wrap" id="fi10">
+          <div class="friend-label">ระบุชื่อ-นามสกุลเพื่อน (ถ้าทราบ)</div>
+          <div class="friend-row">
+            <input class="friend-name" id="fi10-name" type="text" placeholder="ชื่อ-นามสกุลเพื่อน" autocomplete="off">
+          </div>
+          <div class="friend-hint">ไม่ทราบก็ไม่ต้องกรอก</div>
+        </div>
+      </div>
+
+      <!-- Q11 -->
+      <div class="q-block">
+        <div class="q-text"><span class="q-num">11</span>มีเพื่อนที่ดูคลิปหรือเนื้อหาความรุนแรงบ่อยมากผิดปกติ</div>
+        <div class="yn-pills" id="q11">
+          <div class="yn-pill" onclick="selYNFriend('q11','no',this)">ไม่มี</div>
+          <div class="yn-pill" onclick="selYNFriend('q11','yes',this)">มี</div>
+        </div>
+        <div class="friend-input-wrap" id="fi11">
+          <div class="friend-label">ระบุชื่อ-นามสกุลเพื่อน (ถ้าทราบ)</div>
+          <div class="friend-row">
+            <input class="friend-name" id="fi11-name" type="text" placeholder="ชื่อ-นามสกุลเพื่อน" autocomplete="off">
+          </div>
+          <div class="friend-hint">ไม่ทราบก็ไม่ต้องกรอก</div>
+        </div>
+      </div>
+
+      <!-- Q12 -->
+      <div class="q-block">
+        <div class="q-text"><span class="q-num">12</span>มีเพื่อนที่ฉันเป็นห่วงว่าอาจทำร้ายตัวเองหรือคนอื่น</div>
+        <div class="yn-pills" id="q12">
+          <div class="yn-pill" onclick="selYNFriend('q12','no',this)">ไม่มี</div>
+          <div class="yn-pill" onclick="selYNFriend('q12','yes',this)">มี</div>
+        </div>
+        <div class="friend-input-wrap" id="fi12">
+          <div class="friend-label">ระบุชื่อ-นามสกุลเพื่อน (ถ้าทราบ)</div>
+          <div class="friend-row">
+            <input class="friend-name" id="fi12-name" type="text" placeholder="ชื่อ-นามสกุลเพื่อน" autocomplete="off">
+          </div>
+          <div class="friend-hint">ไม่ทราบก็ไม่ต้องกรอก</div>
+        </div>
+      </div>
+
+      <div class="err-msg" id="err3">กรุณาตอบทุกข้อก่อนส่ง</div>
+      <div class="btn-row">
+        <button class="btn btn-sec" onclick="goStep(2)">← ย้อนกลับ</button>
+        <button class="btn btn-pri" onclick="submitSurvey()">ส่งแบบสำรวจ ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── STEP 4: SUCCESS ─── -->
+  <div id="step-4" style="display:none">
+    <div class="card success-card">
+      <div class="success-icon">✅</div>
+      <div class="success-title">ส่งแบบสำรวจเรียบร้อยแล้ว</div>
+      <div class="success-sub">ขอบคุณที่ร่วมทำแบบสำรวจ<br>ข้อมูลของคุณจะช่วยให้โรงเรียนดูแลทุกคนได้ดีขึ้น</div>
+      <div class="alert-box" id="alert-followup" style="display:none">
+        <strong>📞 โรงเรียนจะติดต่อกลับ</strong>
+        มีข้อมูลบางส่วนที่ครูแนะแนวจะติดตามดูแลเป็นพิเศษ ไม่ต้องกังวล — นี่คือการช่วยเหลือ ไม่ใช่การลงโทษ
+      </div>
+    </div>
+  </div>
+
+</div><!-- end wrap -->
+
+<script>
+// ── STATE ──
+const ans = {
+  q1:null,q2:null,q3:null,q4:null,
+  q5:null,q6:null,q7:null,q8:null,
+  q9:null,q9name:'',
+  q10:null,q10name:'',
+  q11:null,q11name:'',
+  q12:null,q12name:''
+};
+let student = {grade:'',no:'',existingId:null};
+let db = null;
+
+// ── INIT FIREBASE ──
+try {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  db = firebase.firestore();
+  db.collection('config').doc('app').get()
+    .then(doc => { if (doc.exists) _surveyPin = doc.data().survey_pin || null; })
+    .catch(() => {});
+} catch(e){ console.warn('Firebase init failed',e); }
+
+// ── LOGIN ──
+async function doLogin(){
+  const grade = document.getElementById('inp-grade').value.trim();
+  const no    = document.getElementById('inp-no').value.trim();
+  const pin   = document.getElementById('inp-pin').value.trim().toUpperCase();
+  const err   = document.getElementById('login-err');
+  const dup   = document.getElementById('dup-box');
+
+  err.classList.remove('show');
+  dup.classList.remove('show');
+
+  if(!grade || !no || !pin){ err.classList.add('show'); return; }
+  if(_surveyPin === null){
+    err.textContent = 'ระบบกำลังโหลด กรุณารอสักครู่แล้วลองใหม่'; err.classList.add('show'); return;
+  }
+  if(pin !== _surveyPin){ err.textContent='รหัสห้องเรียนไม่ถูกต้อง'; err.classList.add('show'); return; }
+
+  student = {grade, no, existingId: null};
+
+  // ตรวจว่าเคยกรอกภาคนี้หรือยัง
+  if(db){
+    showLoad(true);
+    try {
+      const now   = new Date();
+      const year  = now.getFullYear() + 543;
+      const month = now.getMonth()+1;
+      const sem   = month >= 5 && month <= 9 ? 1 : 2;
+      const snap  = await db.collection(SURVEY_COL)
+        .where('grade','==',grade)
+        .where('studentNo','==',parseInt(no))
+        .where('year','==',year)
+        .where('semester','==',sem)
+        .limit(1).get();
+      if(!snap.empty){
+        dup.classList.add('show');
+        showLoad(false);
+        return;
+      }
+    } catch(e){ console.warn(e); }
+    showLoad(false);
+  }
+
+  goStep(1);
+}
+
+// ── NAVIGATION ──
+function goStep(n){
+  [0,1,2,3,4].forEach(i=>{
+    document.getElementById('step-'+i).style.display = i===n ? 'block' : 'none';
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function nextStep(cur){
+  if(cur===1){
+    if(!validateFreq(['q1','q2','q3','q4'],'err1')) return;
+    goStep(2);
+  } else if(cur===2){
+    if(!validateFreqQ2()) return;
+    goStep(3);
+  }
+}
+
+// ── VALIDATION ──
+function validateFreq(keys, errId){
+  const ok = keys.every(k => ans[k] !== null);
+  document.getElementById(errId).classList.toggle('show', !ok);
+  return ok;
+}
+
+function validateFreqQ2(){
+  const ok = ans.q5!==null && ans.q6!==null && ans.q7!==null && ans.q8!==null;
+  document.getElementById('err2').classList.toggle('show', !ok);
+  return ok;
+}
+
+// ── ANSWER SELECTION ──
+function selFreq(qid, val, el){
+  ans[qid] = val;
+  const pills = document.querySelectorAll('#'+qid+' .freq-pill');
+  pills.forEach((p,i)=>{ p.className='freq-pill'+(i===val?' sel-'+i:''); });
+}
+
+function selYN(qid, val, el){
+  ans[qid] = val;
+  const pills = document.querySelectorAll('#'+qid+' .yn-pill');
+  pills.forEach(p=>{ p.className='yn-pill'; });
+  el.className = 'yn-pill sel-'+val;
+}
+
+function selYNFriend(qid, val, el){
+  ans[qid] = val;
+  const pills = document.querySelectorAll('#'+qid+' .yn-pill');
+  pills.forEach(p=>{ p.className='yn-pill'; });
+  el.className = 'yn-pill sel-'+val;
+  const fi = document.getElementById('fi'+qid.replace('q',''));
+  if(fi) fi.classList.toggle('show', val==='yes');
+}
+
+// ── RISK CALCULATION ──
+function calcRisk(){
+  const flags = [];
+  const setLevel = (l) => {
+    const order = {low:0,medium:1,high:2,critical:3};
+    if((order[l]||0) > (order[level]||0)) level = l;
+  };
+  let level = 'low';
+
+  // ข้อ 1 — ไม่รู้สึกปลอดภัย (ค่าน้อย = ไม่ปลอดภัย)
+  if(ans.q1 <= 1){ flags.push('feels_unsafe'); setLevel('medium'); }
+
+  // ข้อ 2,3,4 — ถูกกระทำ
+  if(ans.q2 >= 2 || ans.q3 >= 2){ flags.push('being_victimized'); setLevel('medium'); }
+
+  // ข้อ 5 — ความคิดแก้แค้น
+  if(ans.q5 >= 2){ flags.push('revenge_thought'); setLevel('high'); }
+
+  // ข้อ 6,7 — ความคิดทำร้าย (แยกประเมินอิสระ)
+  if(ans.q6 >= 2 || ans.q7 >= 2){ flags.push('self_harm_high'); setLevel('critical'); }
+  else if(ans.q6 === 1 || ans.q7 === 1){ flags.push('self_harm_some'); setLevel('medium'); }
+
+  // ข้อ 8 — อาวุธในบ้าน
+  if(ans.q8 === 'yes'){ flags.push('weapon_at_home'); setLevel('high'); }
+
+  // ข้อ 9-12 — เพื่อนเสี่ยง
+  if(ans.q9==='yes'){ flags.push('friend_threat'); setLevel('critical'); }
+  if(ans.q10==='yes'){ flags.push('friend_weapon'); setLevel('high'); }
+  if(ans.q11==='yes'){ flags.push('friend_violent_content'); setLevel('medium'); }
+  if(ans.q12==='yes'){ flags.push('friend_concern'); setLevel('medium'); }
+
+  return {level, flags};
+}
+
+// ── SUBMIT ──
+async function submitSurvey(){
+  if(!validatePartial()) return;
+
+  // เก็บค่า friend inputs
+  ['9','10','11','12'].forEach(n=>{
+    const qk = 'q'+n;
+    if(ans[qk]==='yes'){
+      ans[qk+'name'] = document.getElementById('fi'+n+'-name')?.value.trim()||'';
+    }
+  });
+
+  const {level, flags} = calcRisk();
+  const now   = new Date();
+  const year  = now.getFullYear() + 543;
+  const month = now.getMonth()+1;
+  const sem   = month >= 5 && month <= 9 ? 1 : 2;
+
+  const data = {
+    grade: student.grade,
+    studentNo: parseInt(student.no),
+    school: SCHOOL,
+    year, semester: sem,
+    ts: firebase.firestore.FieldValue.serverTimestamp(),
+    // ส่วน 1
+    q1_safe: ans.q1, q2_attacked: ans.q2,
+    q3_threatened: ans.q3, q4_afraid: ans.q4,
+    // ส่วน 2
+    q5_revenge: ans.q5, q6_hurt_others: ans.q6,
+    q7_hurt_self: ans.q7, q8_weapon_home: ans.q8,
+    // ส่วน 3
+    q9_friend_threat: ans.q9, q9_friend_name: ans.q9name,
+    q10_friend_weapon: ans.q10, q10_friend_name: ans.q10name,
+    q11_friend_violent: ans.q11, q11_friend_name: ans.q11name,
+    q12_friend_concern: ans.q12, q12_friend_name: ans.q12name,
+    // computed
+    riskLevel: level,
+    alertFlags: flags,
+    needFollowUp: flags.length > 0
+  };
+
+  showLoad(true);
+  try {
+    if(db){
+      await db.collection(SURVEY_COL).add(data);
+    }
+    showLoad(false);
+    goStep(4);
+    if(flags.length > 0){
+      document.getElementById('alert-followup').style.display = 'block';
+    }
+  } catch(e){
+    showLoad(false);
+    alert('เกิดข้อผิดพลาดในการบันทึก กรุณาลองใหม่');
+    console.error(e);
+  }
+}
+
+function validatePartial(){
+  const ok = ['q9','q10','q11','q12'].every(k => ans[k] !== null);
+  document.getElementById('err3').classList.toggle('show', !ok);
+  return ok;
+}
+
+function showLoad(v){
+  document.getElementById('loading').classList.toggle('show', v);
+}
+</script>
+</body>
+</html>
