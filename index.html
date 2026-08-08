@@ -905,38 +905,7 @@ tbody tr{transition:background .1s}
     <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px">ระบบดูแลช่วยเหลือนักเรียน โรงเรียนจิกดู่วิทยา<br>กรุณาเลือกชื่อครูก่อนเริ่มใช้งานครับ</p>
     <div class="fg" style="margin-bottom:18px">
       <label>เลือกชื่อครู *</label>
-      <select id="w-name" onchange="onSelectTeacher(this,'w-grade')" style="padding:8px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.9rem;font-family:inherit">
-        <option value="">-- เลือกชื่อครู --</option>
-        <optgroup label="ผู้บริหาร">
-          <option value="นายโกวิท สุพรรณ์" data-grade="ผบ.">นายโกวิท สุพรรณ์ (ผู้อำนวยการ)</option>
-        </optgroup>
-        <optgroup label="ม.1">
-          <option value="นางสาววันทนีย์ ไชยมงคล"      data-grade="ม.1">นางสาววันทนีย์ ไชยมงคล</option>
-          <option value="นางสาวไอรินทร์ อัครศักดิ์ศรี"  data-grade="ม.1">นางสาวไอรินทร์ อัครศักดิ์ศรี</option>
-          <option value="นางสาวอนัญญา หามทอง"         data-grade="ม.1">นางสาวอนัญญา หามทอง</option>
-        </optgroup>
-        <optgroup label="ม.2">
-          <option value="นางสาวพรอุมา จิตตัง"   data-grade="ม.2">นางสาวพรอุมา จิตตัง</option>
-          <option value="นางสาวอรวรรณ สุดาชม"   data-grade="ม.2">นางสาวอรวรรณ สุดาชม</option>
-        </optgroup>
-        <optgroup label="ม.3">
-          <option value="นายเทียนชัย ทาเงิน"      data-grade="ม.3">นายเทียนชัย ทาเงิน</option>
-          <option value="นายณัฐภัทร สังข์ขาว"     data-grade="ม.3">นายณัฐภัทร สังข์ขาว</option>
-          <option value="นางสาวอรอิริยา ศิริวาลย์"  data-grade="ม.3">นางสาวอรอิริยา ศิริวาลย์</option>
-        </optgroup>
-        <optgroup label="ม.4">
-          <option value="นายฉัตรชัย สนิทชัย" data-grade="ม.4">นายฉัตรชัย สนิทชัย</option>
-          <option value="นายวสันต์ สานัดถ์"  data-grade="ม.4">นายวสันต์ สานัดถ์</option>
-        </optgroup>
-        <optgroup label="ม.5">
-          <option value="นายประสพชัย มหาวงศ์"     data-grade="ม.5">นายประสพชัย มหาวงศ์</option>
-          <option value="นางสาวจิราภรณ์ เชิงหอม"  data-grade="ม.5">นางสาวจิราภรณ์ เชิงหอม</option>
-        </optgroup>
-        <optgroup label="ม.6">
-          <option value="นายมงคล แสงย้อย"       data-grade="ม.6">นายมงคล แสงย้อย</option>
-          <option value="นายปฏิรูป เธียรประมุข"  data-grade="ม.6">นายปฏิรูป เธียรประมุข</option>
-        </optgroup>
-      </select>
+      <select id="w-name" style="padding:8px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.9rem;font-family:inherit"></select>
     </div>
     <input type="hidden" id="w-grade">
     <button class="btn btn-pri" style="width:100%" onclick="saveTeacher()">🚀 เริ่มใช้งาน</button>
@@ -949,38 +918,7 @@ tbody tr{transition:background .1s}
     <h2>⚙️ ตั้งค่า</h2>
     <div class="fg">
       <label>เลือกชื่อครู</label>
-      <select id="cfg-name" onchange="onSelectTeacher(this,'cfg-grade')" style="padding:8px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.9rem;font-family:inherit">
-        <option value="">-- เลือกชื่อครู --</option>
-        <optgroup label="ผู้บริหาร">
-          <option value="นายโกวิท สุพรรณ์" data-grade="ผบ.">นายโกวิท สุพรรณ์ (ผู้อำนวยการ)</option>
-        </optgroup>
-        <optgroup label="ม.1">
-          <option value="นางสาววันทนีย์ ไชยมงคล"      data-grade="ม.1">นางสาววันทนีย์ ไชยมงคล</option>
-          <option value="นางสาวไอรินทร์ อัครศักดิ์ศรี"  data-grade="ม.1">นางสาวไอรินทร์ อัครศักดิ์ศรี</option>
-          <option value="นางสาวอนัญญา หามทอง"         data-grade="ม.1">นางสาวอนัญญา หามทอง</option>
-        </optgroup>
-        <optgroup label="ม.2">
-          <option value="นางสาวพรอุมา จิตตัง"   data-grade="ม.2">นางสาวพรอุมา จิตตัง</option>
-          <option value="นางสาวอรวรรณ สุดาชม"   data-grade="ม.2">นางสาวอรวรรณ สุดาชม</option>
-        </optgroup>
-        <optgroup label="ม.3">
-          <option value="นายเทียนชัย ทาเงิน"      data-grade="ม.3">นายเทียนชัย ทาเงิน</option>
-          <option value="นายณัฐภัทร สังข์ขาว"     data-grade="ม.3">นายณัฐภัทร สังข์ขาว</option>
-          <option value="นางสาวอรอิริยา ศิริวาลย์"  data-grade="ม.3">นางสาวอรอิริยา ศิริวาลย์</option>
-        </optgroup>
-        <optgroup label="ม.4">
-          <option value="นายฉัตรชัย สนิทชัย" data-grade="ม.4">นายฉัตรชัย สนิทชัย</option>
-          <option value="นายวสันต์ สานัดถ์"  data-grade="ม.4">นายวสันต์ สานัดถ์</option>
-        </optgroup>
-        <optgroup label="ม.5">
-          <option value="นายประสพชัย มหาวงศ์"     data-grade="ม.5">นายประสพชัย มหาวงศ์</option>
-          <option value="นางสาวจิราภรณ์ เชิงหอม"  data-grade="ม.5">นางสาวจิราภรณ์ เชิงหอม</option>
-        </optgroup>
-        <optgroup label="ม.6">
-          <option value="นายมงคล แสงย้อย"       data-grade="ม.6">นายมงคล แสงย้อย</option>
-          <option value="นายปฏิรูป เธียรประมุข"  data-grade="ม.6">นายปฏิรูป เธียรประมุข</option>
-        </optgroup>
-      </select>
+      <select id="cfg-name" style="padding:8px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.9rem;font-family:inherit"></select>
     </div>
     <input type="hidden" id="cfg-grade">
     <div class="fg"><label>ปีการศึกษา (default)</label><input type="text" id="cfg-year" placeholder="เช่น 2568"></div>
@@ -1009,6 +947,72 @@ tbody tr{transition:background .1s}
 ════════════════════════════════════════ -->
 <script>
 'use strict';
+
+// ── SHARED CONSTANTS ──────────────────────
+const OBS_KEYS = ['behavior_change','bullied','withdrawn','aggressive','absent','grade_drop','sad','violent_talk'];
+
+const TEACHERS = [
+  { group:'ผู้บริหาร', list:[{ name:'นายโกวิท สุพรรณ์ (ผู้อำนวยการ)', value:'นายโกวิท สุพรรณ์', grade:'ผบ.' }] },
+  { group:'ม.1', list:[
+    { name:'นางสาววันทนีย์ ไชยมงคล',     value:'นางสาววันทนีย์ ไชยมงคล',     grade:'ม.1' },
+    { name:'นางสาวไอรินทร์ อัครศักดิ์ศรี', value:'นางสาวไอรินทร์ อัครศักดิ์ศรี', grade:'ม.1' },
+    { name:'นางสาวอนัญญา หามทอง',        value:'นางสาวอนัญญา หามทอง',        grade:'ม.1' }
+  ]},
+  { group:'ม.2', list:[
+    { name:'นางสาวพรอุมา จิตตัง',  value:'นางสาวพรอุมา จิตตัง',  grade:'ม.2' },
+    { name:'นางสาวอรวรรณ สุดาชม',  value:'นางสาวอรวรรณ สุดาชม',  grade:'ม.2' }
+  ]},
+  { group:'ม.3', list:[
+    { name:'นายเทียนชัย ทาเงิน',     value:'นายเทียนชัย ทาเงิน',     grade:'ม.3' },
+    { name:'นายณัฐภัทร สังข์ขาว',    value:'นายณัฐภัทร สังข์ขาว',    grade:'ม.3' },
+    { name:'นางสาวอรอิริยา ศิริวาลย์', value:'นางสาวอรอิริยา ศิริวาลย์', grade:'ม.3' }
+  ]},
+  { group:'ม.4', list:[
+    { name:'นายฉัตรชัย สนิทชัย', value:'นายฉัตรชัย สนิทชัย', grade:'ม.4' },
+    { name:'นายวสันต์ สานัดถ์',  value:'นายวสันต์ สานัดถ์',  grade:'ม.4' }
+  ]},
+  { group:'ม.5', list:[
+    { name:'นายประสพชัย มหาวงศ์',    value:'นายประสพชัย มหาวงศ์',    grade:'ม.5' },
+    { name:'นางสาวจิราภรณ์ เชิงหอม', value:'นางสาวจิราภรณ์ เชิงหอม', grade:'ม.5' }
+  ]},
+  { group:'ม.6', list:[
+    { name:'นายมงคล แสงย้อย',      value:'นายมงคล แสงย้อย',      grade:'ม.6' },
+    { name:'นายปฏิรูป เธียรประมุข', value:'นายปฏิรูป เธียรประมุข', grade:'ม.6' }
+  ]}
+];
+
+function _buildTeacherSelect(selectId, gradeInputId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- เลือกชื่อครู --</option>' +
+    TEACHERS.map(g =>
+      `<optgroup label="${g.group}">` +
+      g.list.map(t =>
+        `<option value="${t.value}" data-grade="${t.grade}">${t.name}</option>`
+      ).join('') +
+      '</optgroup>'
+    ).join('');
+  sel.onchange = function() { onSelectTeacher(this, gradeInputId); };
+}
+
+const LABEL = {
+  parStat: {together:'อยู่ด้วยกัน', separate:'แยกกันอยู่', divorced:'หย่าร้าง',
+    father_dead:'บิดาเสียชีวิต', mother_dead:'มารดาเสียชีวิต', both_dead:'เสียชีวิตทั้งคู่'},
+  trans: {parent_drive:'ผู้ปกครองส่ง', motorbike:'รถจักรยานยนต์', bus:'รถโดยสาร',
+    school_bus:'รถโรงเรียน', bicycle:'รถจักรยาน', walk:'เดินเท้า', other:'อื่น ๆ'},
+  fam: {close:'สนิทสนม/รักใคร่กันดี', conflict_some:'ขัดแย้งทะเลาะกันบางครั้ง',
+    conflict_often:'ขัดแย้งทะเลาะกันบ่อยครั้ง', distant:'ห่างเหิน',
+    viol_some:'ขัดแย้งและทำร้ายร่างกายบางครั้ง', viol_often:'ขัดแย้งและทำร้ายร่างกายบ่อยครั้ง', other:'อื่น ๆ'},
+  house: {good:'สภาพดี/พอใช้', old:'เก่า/ทรุดโทรม', material:'วัสดุพื้นบ้าน',
+    no_toilet:'ไม่มีห้องส้วม', bad_area:'ใกล้แหล่งมั่วสุม'},
+  burden: {disabled:'มีผู้พิการในครัวเรือน', elderly:'มีผู้สูงอายุในครัวเรือน',
+    single_par:'ครอบครัวเลี้ยงเดี่ยว', unemployed:'ตกงาน/ว่างงาน'},
+  famBg: {both_dead:'บิดา-มารดาเสียชีวิตทั้งคู่', one_dead:'บิดาหรือมารดาเสียชีวิต',
+    divorced:'บิดา-มารดาเลิกร้างกัน', not_with_par:'ไม่ได้อาศัยอยู่กับบิดาหรือมารดา',
+    half_sib:'มีพี่น้องต่างบิดา/มารดา'},
+  nv: {full100:'เยี่ยมครบแล้ว (100%)', absent:'นักเรียนไม่มาเรียน',
+    busy:'ผู้ปกครองไม่สะดวก', notfound:'ติดต่อไม่ได้', moved:'ย้ายที่อยู่', other:'อื่น ๆ'}
+};
 
 // ── FIREBASE ──────────────────────────────
 let db = null;
@@ -1077,6 +1081,23 @@ function setConn(s, errMsg) {
   el.onclick = (s === 'offline') ? () => retryConnect() : null;
 }
 
+function _showOfflineToast() {
+  let t = document.getElementById('_offline-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = '_offline-toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);' +
+      'background:#fef3c7;color:#92400e;border:1.5px solid #fcd34d;border-radius:12px;' +
+      'padding:10px 20px;font-size:.84rem;font-weight:600;z-index:9999;' +
+      'box-shadow:0 4px 16px rgba(0,0,0,.12);display:flex;align-items:center;gap:8px';
+    t.innerHTML = '⚠️ บันทึกเฉพาะในเครื่องนี้ — ยังไม่ sync ขึ้น Firebase';
+    document.body.appendChild(t);
+  }
+  t.style.display = 'flex';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.display = 'none'; }, 5000);
+}
+
 // ── DATA ──────────────────────────────────
 let _recs = [];
 async function load() {
@@ -1105,8 +1126,8 @@ async function upsert(data) {
         await ref.update({ id: ref.id });
       }
       setConn('online');
-    } catch(e) { setConn('offline'); localUpsert(data); }
-  } else { localUpsert(data); }
+    } catch(e) { setConn('offline'); localUpsert(data); _showOfflineToast(); }
+  } else { localUpsert(data); _showOfflineToast(); }
   if (!(_unsubscribe && _listenerFired)) await load(); // โหลดเฉพาะเมื่อ listener ยังไม่ได้ส่งข้อมูล
 }
 function localUpsert(data) {
@@ -1206,15 +1227,18 @@ function printStudentPDF() {
 }
 
 // ── NAVIGATION ────────────────────────────
-async function showPage(name) {
-  showLd(true);
-  await load();
-  showLd(false);
+function _activatePage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   const idx = ['dashboard','form','records','district','present','survey'].indexOf(name);
   document.querySelectorAll('.nav-tab')[idx]?.classList.add('active');
+}
+async function showPage(name) {
+  showLd(true);
+  await load();
+  showLd(false);
+  _activatePage(name);
   if (name === 'dashboard') renderDash();
   if (name === 'records')   renderRecords();
   if (name === 'form')      applyTeacher();
@@ -1420,10 +1444,7 @@ async function submitForm() {
 function editRecord(id) {
   const r = _recs.find(x => x.id === id); if (!r) return;
   setFormData(r);
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-form').classList.add('active');
-  document.querySelectorAll('.nav-tab')[1]?.classList.add('active');
+  _activatePage('form');
   const al = document.getElementById('f-edit-alert');
   al.className = 'alert al-info'; al.textContent = '✏️ กำลังแก้ไข – กด "บันทึกข้อมูล" เพื่ออัปเดต'; al.style.display = 'flex';
   window.scrollTo(0, 0);
@@ -1656,7 +1677,7 @@ function aggByGrade() {
   if (sem !== 'all') recs = recs.filter(r => r.semester === sem);
   return GRADES.map(g => {
     const gr = recs.filter(r => r.gradeLevel === g);
-    const total = gr.length;
+    const total = GRADE_TOTALS[g] || gr.length;
     const visM  = gr.filter(r => r.visited && r.gender === 'male').length;
     const visF  = gr.filter(r => r.visited && r.gender === 'female').length;
     const vis   = visM + visF;
@@ -1972,22 +1993,13 @@ function printStudent(id) {
   const dash = '-';
   const v    = x => (x !== undefined && x !== null && x !== '') ? x : dash;
 
-  const parStatTh = {together:'อยู่ด้วยกัน', separate:'แยกกันอยู่', divorced:'หย่าร้าง',
-    father_dead:'บิดาเสียชีวิต', mother_dead:'มารดาเสียชีวิต', both_dead:'เสียชีวิตทั้งคู่'};
-  const transTh = {parent_drive:'ผู้ปกครองส่ง', motorbike:'รถจักรยานยนต์', bus:'รถโดยสาร',
-    school_bus:'รถโรงเรียน', bicycle:'รถจักรยาน', walk:'เดินเท้า', other:'อื่น ๆ'};
-  const famTh = {close:'สนิทสนม/รักใคร่กันดี', conflict_some:'ขัดแย้งทะเลาะกันบางครั้ง',
-    conflict_often:'ขัดแย้งทะเลาะกันบ่อยครั้ง', distant:'ห่างเหิน',
-    viol_some:'ขัดแย้งและทำร้ายร่างกายบางครั้ง', viol_often:'ขัดแย้งและทำร้ายร่างกายบ่อยครั้ง', other:'อื่น ๆ'};
-  const houseTh = {good:'สภาพดี/พอใช้', old:'เก่า/ทรุดโทรม', material:'วัสดุพื้นบ้าน',
-    no_toilet:'ไม่มีห้องส้วม', bad_area:'ใกล้แหล่งมั่วสุม'};
-  const burdenTh = {disabled:'มีผู้พิการในครัวเรือน', elderly:'มีผู้สูงอายุในครัวเรือน',
-    single_par:'ครอบครัวเลี้ยงเดี่ยว', unemployed:'ตกงาน/ว่างงาน'};
-  const famBgTh = {both_dead:'บิดา-มารดาเสียชีวิตทั้งคู่', one_dead:'บิดาหรือมารดาเสียชีวิต',
-    divorced:'บิดา-มารดาเลิกร้างกัน', not_with_par:'ไม่ได้อาศัยอยู่กับบิดาหรือมารดา',
-    half_sib:'มีพี่น้องต่างบิดา/มารดา'};
-  const nvTh = {full100:'เยี่ยมครบแล้ว (100%)', absent:'นักเรียนไม่มาเรียน',
-    busy:'ผู้ปกครองไม่สะดวก', notfound:'ติดต่อไม่ได้', moved:'ย้ายที่อยู่', other:'อื่น ๆ'};
+  const parStatTh = LABEL.parStat;
+  const transTh   = LABEL.trans;
+  const famTh     = LABEL.fam;
+  const houseTh   = LABEL.house;
+  const burdenTh  = LABEL.burden;
+  const famBgTh   = LABEL.famBg;
+  const nvTh      = LABEL.nv;
 
   const famBgAll = ['both_dead','one_dead','divorced','not_with_par','half_sib'];
   const houseAll = ['good','old','material','no_toilet','bad_area'];
@@ -2437,8 +2449,7 @@ function openTeacherLog(id) {
 
   // fill observation section
   const obs = r.obs || {};
-  ['behavior_change','bullied','withdrawn','aggressive','absent','grade_drop','sad','violent_talk']
-    .forEach(k => {
+  OBS_KEYS.forEach(k => {
       const cb = document.getElementById('tl-cb-' + k);
       if (cb) cb.checked = !!obs[k];
     });
@@ -2489,8 +2500,7 @@ async function saveTeacherObs() {
   const r = _recs.find(x => x.id === _tlId);
   if (!r) return;
   const obs = {};
-  ['behavior_change','bullied','withdrawn','aggressive','absent','grade_drop','sad','violent_talk']
-    .forEach(k => { obs[k] = document.getElementById('tl-cb-' + k).checked ? 1 : 0; });
+  OBS_KEYS.forEach(k => { obs[k] = document.getElementById('tl-cb-' + k).checked ? 1 : 0; });
   obs.note = document.getElementById('tl-obs-note').value.trim();
   obs.date = document.getElementById('tl-obs-date').value;
   r.obs = obs;
@@ -2655,6 +2665,8 @@ ${alerts.length > 0 ? `<h2>รายชื่อนักเรียนที�
 
 // ── INIT ──────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+  _buildTeacherSelect('w-name',   'w-grade');
+  _buildTeacherSelect('cfg-name', 'cfg-grade');
   initFirebase();
   showLd(true, 'กำลังโหลดข้อมูล...');
   await load();
