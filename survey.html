@@ -184,6 +184,14 @@ body{font-family:'Prompt','Sarabun',Arial,sans-serif;background:var(--bg);color:
         ตอบตามความจริงเพื่อให้โรงเรียนช่วยเหลือได้ตรงจุด
       </div>
 
+      <div id="draft-resume-box" style="display:none;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;margin-bottom:16px">
+        <div style="font-size:.85rem;color:#92400e;font-weight:600;margin-bottom:8px">📝 พบคำตอบที่ทำค้างไว้ (ยังไม่ได้ส่ง) ต้องการทำต่อไหม?</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-pri" style="flex:1;padding:9px" onclick="resumeDraft()">ทำต่อ</button>
+          <button class="btn btn-sec" style="flex:1;padding:9px" onclick="discardDraft()">เริ่มใหม่</button>
+        </div>
+      </div>
+
       <div class="form-group">
         <label class="form-label">ชื่อ-นามสกุล</label>
         <input class="form-inp" id="inp-name" type="text" placeholder="เช่น เด็กชายสมชาย ใจดี" autocomplete="off">
@@ -476,6 +484,70 @@ const ans = {
 };
 let student = {grade:'',no:'',existingId:null};
 let db = null;
+let _currentStep = 0;
+
+// ── DRAFT AUTOSAVE (กันคำตอบหายถ้ารีเฟรช/ปิดแท็บกลางคัน) ──
+const DRAFT_KEY = 'sv_survey_draft';
+function saveDraft() {
+  ['9','10','11','12'].forEach(n=>{
+    const qk = 'q'+n;
+    if(ans[qk]==='yes'){ ans[qk+'name'] = document.getElementById('fi'+n+'-name')?.value.trim()||''; }
+  });
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ student, ans, step:_currentStep })); } catch(e) {}
+}
+function checkDraftOnLoad() {
+  const raw = localStorage.getItem(DRAFT_KEY);
+  if (!raw) return;
+  try {
+    const draft = JSON.parse(raw);
+    if (draft.step > 0) document.getElementById('draft-resume-box').style.display = 'block';
+  } catch(e) {}
+}
+function resumeDraft() {
+  const raw = localStorage.getItem(DRAFT_KEY);
+  if (!raw) return;
+  try {
+    const draft = JSON.parse(raw);
+    student = draft.student || student;
+    Object.assign(ans, draft.ans || {});
+    document.getElementById('inp-name').value  = student.name  || '';
+    document.getElementById('inp-grade').value = student.grade || '';
+    document.getElementById('inp-no').value    = student.no    || '';
+    restoreAllPillVisuals();
+    goStep(draft.step || 1);
+  } catch(e) {}
+}
+function discardDraft() {
+  localStorage.removeItem(DRAFT_KEY);
+  document.getElementById('draft-resume-box').style.display = 'none';
+}
+function restoreAllPillVisuals() {
+  ['q1','q2','q3','q4','q5','q6','q7'].forEach(q => {
+    if (ans[q] !== null) {
+      const pills = document.querySelectorAll('#'+q+' .freq-pill');
+      pills.forEach((p,i)=>{ p.className='freq-pill'+(i===ans[q]?' sel-'+i:''); });
+    }
+  });
+  if (ans.q8 !== null) {
+    const pills = [...document.querySelectorAll('#q8 .yn-pill')];
+    const idx = ans.q8==='no' ? 0 : 1;
+    pills.forEach((p,i)=>{ p.className='yn-pill'+(i===idx?' sel-'+ans.q8:''); });
+  }
+  ['9','10','11','12'].forEach(n=>{
+    const q = 'q'+n;
+    if (ans[q] !== null) {
+      const pills = [...document.querySelectorAll('#'+q+' .yn-pill')];
+      const idx = ans[q]==='no' ? 0 : 1;
+      pills.forEach((p,i)=>{ p.className='yn-pill'+(i===idx?' sel-'+ans[q]:''); });
+      const fi = document.getElementById('fi'+n);
+      if (fi) fi.classList.toggle('show', ans[q]==='yes');
+      if (ans[q]==='yes') {
+        const nameInput = document.getElementById('fi'+n+'-name');
+        if (nameInput) nameInput.value = ans[q+'name'] || '';
+      }
+    }
+  });
+}
 
 // ── INIT FIREBASE ──
 try {
@@ -487,6 +559,8 @@ try {
     .then(doc => { if (doc.exists) _surveyPin = doc.data().survey_pin || null; })
     .catch(() => {});
 } catch(e){ console.warn('Firebase init failed',e); }
+
+checkDraftOnLoad();
 
 // ── LOGIN ──
 async function doLogin(){
@@ -501,6 +575,10 @@ async function doLogin(){
   dup.classList.remove('show');
 
   if(!name || !grade || !no || !pin){ err.classList.add('show'); return; }
+  const noNum = parseInt(no, 10);
+  if(!/^\d+$/.test(no) || noNum < 1 || noNum > 50){
+    err.textContent = 'เลขที่ไม่ถูกต้อง กรุณากรอกเป็นตัวเลข 1-50'; err.classList.add('show'); return;
+  }
   if(_surveyPin === null){
     err.textContent = 'ระบบกำลังโหลด กรุณารอสักครู่แล้วลองใหม่'; err.classList.add('show'); return;
   }
@@ -539,6 +617,8 @@ function goStep(n){
   [0,1,2,3,4].forEach(i=>{
     document.getElementById('step-'+i).style.display = i===n ? 'block' : 'none';
   });
+  _currentStep = n;
+  if (n > 0 && n < 4) saveDraft();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -570,6 +650,7 @@ function selFreq(qid, val, el){
   ans[qid] = val;
   const pills = document.querySelectorAll('#'+qid+' .freq-pill');
   pills.forEach((p,i)=>{ p.className='freq-pill'+(i===val?' sel-'+i:''); });
+  saveDraft();
 }
 
 function selYN(qid, val, el){
@@ -577,6 +658,7 @@ function selYN(qid, val, el){
   const pills = document.querySelectorAll('#'+qid+' .yn-pill');
   pills.forEach(p=>{ p.className='yn-pill'; });
   el.className = 'yn-pill sel-'+val;
+  saveDraft();
 }
 
 function selYNFriend(qid, val, el){
@@ -586,6 +668,7 @@ function selYNFriend(qid, val, el){
   el.className = 'yn-pill sel-'+val;
   const fi = document.getElementById('fi'+qid.replace('q',''));
   if(fi) fi.classList.toggle('show', val==='yes');
+  saveDraft();
 }
 
 // ── RISK CALCULATION ──
@@ -669,6 +752,7 @@ async function submitSurvey(){
     if(db){
       await db.collection(SURVEY_COL).add(data);
     }
+    localStorage.removeItem(DRAFT_KEY);
     showLoad(false);
     goStep(4);
     if(flags.length > 0){
