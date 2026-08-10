@@ -1141,6 +1141,13 @@ const LABEL = {
     busy:'ผู้ปกครองไม่สะดวก', notfound:'ติดต่อไม่ได้', moved:'ย้ายที่อยู่', other:'อื่น ๆ'}
 };
 
+// กัน XSS — ข้อมูลจากฟอร์ม/แบบสำรวจเป็น input ของผู้ใช้ ต้อง escape ก่อนแทรกเป็น HTML เสมอ
+const ESC_MAP = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ESC_MAP[c]);
+}
+
 // ป้ายพฤติกรรมเสี่ยงรายด้าน — ใช้ร่วมกันทั้งกราฟแดชบอร์ดและป้ายในหน้ารายชื่อ
 const RISK_FLAG = {
   rH:  { label:'สุขภาพ',      color:'#ef4444' },
@@ -2038,12 +2045,12 @@ function renderRecords() {
     <tbody>${recs.map(r => {
       const rc = riskCount(r);
       return `<tr>
-        <td><strong>${r.studentName||'–'}</strong></td>
+        <td><strong>${esc(r.studentName)||'–'}</strong></td>
         <td>${r.gender==='male'?'♂ ชาย':r.gender==='female'?'♀ หญิง':'–'}</td>
-        <td>${r.gradeLevel||'–'}</td>
-        <td style="font-size:.8rem">${r.parentName||'–'}${r.parentRel?' ('+r.parentRel+')':''}</td>
-        <td style="font-size:.8rem">${r.parentPhone||'–'}</td>
-        <td style="font-size:.8rem">${r.visitDate||'–'}</td>
+        <td>${esc(r.gradeLevel)||'–'}</td>
+        <td style="font-size:.8rem">${esc(r.parentName)||'–'}${r.parentRel?' ('+esc(r.parentRel)+')':''}</td>
+        <td style="font-size:.8rem">${esc(r.parentPhone)||'–'}</td>
+        <td style="font-size:.8rem">${esc(r.visitDate)||'–'}</td>
         <td>${r.visited ? '<span class="bv">✅ เยี่ยมแล้ว</span>' : '<span class="bnv">❌ ยังไม่ได้</span>'}</td>
         <td>${rc>0 ? `<div style="display:flex;flex-wrap:wrap;gap:2px;max-width:180px">${riskBadges(r)}</div>` : '<span style="color:var(--muted)">–</span>'}</td>
         <td style="text-align:center">${r.urgent ? '<span class="bur">🚨 ด่วน</span>' : '–'}</td>
@@ -2055,8 +2062,8 @@ function renderRecords() {
     return `<div class="rec-card">
       <div class="rec-card-top">
         <div>
-          <div class="rec-card-name">${r.studentName||'–'}</div>
-          <div class="rec-card-sub">${r.gradeLevel||'–'} · ${r.gender==='male'?'ชาย':r.gender==='female'?'หญิง':'–'}${r.visitDate?' · เยี่ยม '+r.visitDate:''}</div>
+          <div class="rec-card-name">${esc(r.studentName)||'–'}</div>
+          <div class="rec-card-sub">${esc(r.gradeLevel)||'–'} · ${r.gender==='male'?'ชาย':r.gender==='female'?'หญิง':'–'}${r.visitDate?' · เยี่ยม '+esc(r.visitDate):''}</div>
         </div>
         <div class="rec-card-badges">
           ${r.visited ? '<span class="bv">✅ เยี่ยมแล้ว</span>' : '<span class="bnv">❌ ยังไม่ได้</span>'}
@@ -2064,7 +2071,7 @@ function renderRecords() {
         </div>
       </div>
       ${rc>0 ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">${riskBadges(r)}</div>` : ''}
-      ${(r.parentName||r.parentPhone) ? `<div class="rec-card-parent">👤 ${r.parentName||'–'}${r.parentRel?' ('+r.parentRel+')':''}${r.parentPhone?` · <a href="tel:${r.parentPhone}" style="color:var(--pri-d);font-weight:600">${r.parentPhone}</a>`:''}</div>` : ''}
+      ${(r.parentName||r.parentPhone) ? `<div class="rec-card-parent">👤 ${esc(r.parentName)||'–'}${r.parentRel?' ('+esc(r.parentRel)+')':''}${r.parentPhone?` · <a href="tel:${esc(r.parentPhone)}" style="color:var(--pri-d);font-weight:600">${esc(r.parentPhone)}</a>`:''}</div>` : ''}
       <div class="rec-card-actions">${actionBtns(r)}</div>
     </div>`;
   }).join('')}</div>`;
@@ -2223,7 +2230,7 @@ function renderDistrict() {
   const row = (label, val) => `<div style="padding:3px 0;border-bottom:1px dotted #ddd;display:flex;justify-content:space-between;align-items:baseline">
     <span>${label}</span><span style="white-space:nowrap">จำนวน ${S(val)} คน</span></div>`;
   const chk = (checked, label) => `<span style="margin-right:16px;white-space:nowrap">${checked?'☑':'☐'} ${label}</span>`;
-  const blankLine = n => `<div style="border-bottom:1px solid #999;min-height:22px;margin-bottom:4px">${n||''}</div>`;
+  const blankLine = n => `<div style="border-bottom:1px solid #999;min-height:22px;margin-bottom:4px">${esc(n)}</div>`;
 
   document.getElementById('district-out').innerHTML = `
 <div style="background:#fff;padding:28px 32px;border-radius:10px;box-shadow:var(--sh);font-size:13.5px;line-height:1.8;color:#111;font-family:'TH SarabunPSK','Sarabun','Noto Sans Thai',Arial,sans-serif">
@@ -2443,7 +2450,7 @@ function printStudent(id) {
   // ตัวช่วย
   const chk  = (v, l) => '<span style="margin-right:12pt;white-space:nowrap">'+(v?'&#9745;':'&#9744;')+' '+l+'</span>';
   const dash = '-';
-  const v    = x => (x !== undefined && x !== null && x !== '') ? x : dash;
+  const v    = x => (x !== undefined && x !== null && x !== '') ? esc(x) : dash;
 
   const parStatTh = LABEL.parStat;
   const transTh   = LABEL.trans;
@@ -2672,9 +2679,9 @@ function renderPresent() {
   const urgList = urgRecs.length ? urgRecs.map(r=>`
     <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px">
       <div style="flex:1">
-        <div style="font-weight:700;font-size:.9rem">${r.studentName||'–'} <span style="font-size:.75rem;color:var(--muted)">${r.gradeLevel}</span></div>
-        <div style="font-size:.78rem;color:var(--muted)">ผู้ปกครอง: ${r.parentName||'–'} | โทร: ${r.parentPhone||'–'}</div>
-        ${r.notes?`<div style="font-size:.76rem;color:#b91c1c;margin-top:2px">📝 ${r.notes}</div>`:''}
+        <div style="font-weight:700;font-size:.9rem">${esc(r.studentName)||'–'} <span style="font-size:.75rem;color:var(--muted)">${esc(r.gradeLevel)}</span></div>
+        <div style="font-size:.78rem;color:var(--muted)">ผู้ปกครอง: ${esc(r.parentName)||'–'} | โทร: ${esc(r.parentPhone)||'–'}</div>
+        ${r.notes?`<div style="font-size:.76rem;color:#b91c1c;margin-top:2px">📝 ${esc(r.notes)}</div>`:''}
       </div>
       <button class="btn btn-sm btn-out" onclick="printStudent('${r.id}')">🖨️</button>
     </div>`).join('') : '<div style="color:var(--muted);font-size:.88rem;padding:10px">ไม่มีกรณีเร่งด่วน ✅</div>';
@@ -2796,8 +2803,8 @@ async function renderSurvey() {
       const flags = (r.alertFlags||[]).map(f=>`<span style="display:inline-block;background:#fee2e2;color:#991b1b;font-size:.68rem;font-weight:600;padding:2px 7px;border-radius:5px;margin:2px">${FLAG_LABEL[f]||f}</span>`).join('');
       const fp = [];
       const friendLbl = (n, r) => r[`q${n}_friend_name`]!==undefined
-        ? (r[`q${n}_friend_name`] || '?')
-        : `${r[`q${n}_friend_grade`]||'?'} เลขที่ ${r[`q${n}_friend_no`]||'?'}`; // ข้อมูลเก่าก่อนเปลี่ยนเป็นชื่อ
+        ? esc(r[`q${n}_friend_name`] || '?')
+        : `${esc(r[`q${n}_friend_grade`])||'?'} เลขที่ ${esc(r[`q${n}_friend_no`])||'?'}`; // ข้อมูลเก่าก่อนเปลี่ยนเป็นชื่อ
       if (r.q9_friend_threat==='yes'&&(r.q9_friend_name||r.q9_friend_grade||r.q9_friend_no)) fp.push(`ข้อ 9: ${friendLbl(9,r)}`);
       if (r.q10_friend_weapon==='yes'&&(r.q10_friend_name||r.q10_friend_grade||r.q10_friend_no)) fp.push(`ข้อ 10: ${friendLbl(10,r)}`);
       if (r.q11_friend_violent==='yes'&&(r.q11_friend_name||r.q11_friend_grade||r.q11_friend_no)) fp.push(`ข้อ 11: ${friendLbl(11,r)}`);
@@ -2808,7 +2815,7 @@ async function renderSurvey() {
       const txtColor = r.riskLevel==='critical'?'#991b1b':r.riskLevel==='high'?'#9a3412':r.riskLevel==='medium'?'#854d0e':'#166534';
       return `<div style="background:${bg};border:1px solid ${bd};border-left:4px solid ${bd};border-radius:10px;padding:13px 15px;margin-bottom:10px">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:7px">
-          <div style="font-weight:700;font-size:.92rem">${r.studentName ? `${r.studentName} <span style="font-weight:500;color:var(--muted)">(${r.grade} เลขที่ ${r.studentNo})</span>` : `${r.grade} เลขที่ ${r.studentNo}`}</div>
+          <div style="font-weight:700;font-size:.92rem">${r.studentName ? `${esc(r.studentName)} <span style="font-weight:500;color:var(--muted)">(${esc(r.grade)} เลขที่ ${esc(r.studentNo)})</span>` : `${esc(r.grade)} เลขที่ ${esc(r.studentNo)}`}</div>
           <div style="display:flex;align-items:center;gap:6px">
             <div style="font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:20px;background:${bd};color:${txtColor}">${RISK_LABEL[r.riskLevel]||r.riskLevel}</div>
             ${done
@@ -2827,7 +2834,7 @@ async function renderSurvey() {
       const hasFriend = [r.q9_friend_threat,r.q10_friend_weapon,r.q11_friend_violent,r.q12_friend_concern].some(v=>v==='yes');
       const rc = r.riskLevel==='critical'?'#991b1b':r.riskLevel==='high'?'#9a3412':r.riskLevel==='medium'?'#854d0e':'#166534';
       return `<tr style="border-top:1px solid var(--bdr);background:${i%2?'var(--bg)':'#fff'}">
-        <td style="padding:8px 10px;font-weight:700">${r.studentName ? `${r.studentName}<br><span style="font-weight:500;font-size:.72rem;color:var(--muted)">${r.grade} / ${r.studentNo}</span>` : `${r.grade} / ${r.studentNo}`}</td>
+        <td style="padding:8px 10px;font-weight:700">${r.studentName ? `${esc(r.studentName)}<br><span style="font-weight:500;font-size:.72rem;color:var(--muted)">${esc(r.grade)} / ${esc(r.studentNo)}</span>` : `${esc(r.grade)} / ${esc(r.studentNo)}`}</td>
         <td style="padding:8px 10px"><span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:12px;background:${RISK_COLOR[r.riskLevel]||'#f3f4f6'};color:${rc}">${RISK_LABEL[r.riskLevel]||'–'}</span></td>
         <td style="padding:8px 10px;color:${freqColor[safeMax]}">${safeMax>0?freqLabel[safeMax]:'✅'}</td>
         <td style="padding:8px 10px;color:${freqColor[thinkMax]}">${thinkMax>0?freqLabel[thinkMax]:'✅'}</td>
@@ -3091,7 +3098,7 @@ function printSurveyReport() {
   const alertRows = alerts.map(r => {
     const flags = (r.alertFlags||[]).map(f=>FLAG_LABEL[f]||f).join(', ');
     const fuStatus = r.followUpDone ? `ติดตามแล้ว (${r.followUpBy||'–'} / ${r.followUpAt?new Date(r.followUpAt).toLocaleDateString('th-TH'):'–'})` : 'รอดำเนินการ';
-    const who = r.studentName ? `${r.studentName} (${r.grade} / เลขที่ ${r.studentNo})` : `${r.grade} / เลขที่ ${r.studentNo}`;
+    const who = r.studentName ? `${esc(r.studentName)} (${esc(r.grade)} / เลขที่ ${esc(r.studentNo)})` : `${esc(r.grade)} / เลขที่ ${esc(r.studentNo)}`;
     return `<tr><td>${who}</td><td>${RISK_LABEL[r.riskLevel]||'–'}</td><td>${flags}</td><td>${fuStatus}</td></tr>`;
   }).join('');
   const today = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
