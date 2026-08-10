@@ -975,6 +975,24 @@ body.booting .db-vis-row strong{
   </div>
 </div>
 
+<!-- Admin PIN Gate -->
+<div class="mo" id="mo-admin-pin">
+  <div class="mo-box" style="max-width:340px">
+    <h2>🔒 ตั้งค่าระบบ</h2>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px">หน้านี้สำหรับผู้ดูแลระบบเท่านั้น กรุณากรอกรหัสผ่านครับ</p>
+    <div class="fg" style="margin-bottom:10px">
+      <input type="password" id="admin-pin-input" maxlength="20" placeholder="รหัสผู้ดูแลระบบ" autocomplete="off"
+        onkeydown="if(event.key==='Enter') checkAdminPin()"
+        style="padding:8px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.9rem;font-family:inherit;width:100%;letter-spacing:.1em">
+    </div>
+    <div id="admin-pin-err" style="display:none;font-size:.82rem;color:var(--dan);margin-bottom:10px;padding:8px 12px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca"></div>
+    <div class="btn-row">
+      <button class="btn btn-pri" onclick="checkAdminPin()">🔓 เข้าสู่ระบบ</button>
+      <button class="btn btn-gray" onclick="closeMo('mo-admin-pin')">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
 <!-- Settings -->
 <div class="mo" id="mo-settings">
   <div class="mo-box">
@@ -1007,6 +1025,15 @@ body.booting .db-vis-row strong{
             style="padding:7px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.88rem;font-family:inherit;letter-spacing:.1em">
           <button class="btn btn-sm btn-pri" onclick="saveSurveyPin()">บันทึก</button>
         </div>
+      </div>
+      <div style="margin-top:12px">
+        <div style="font-size:.82rem;font-weight:600;color:var(--txt);margin-bottom:8px">🔒 PIN ผู้ดูแลระบบ (เข้าหน้าตั้งค่า)</div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center">
+          <input type="password" id="cfg-admin-pin" maxlength="20" placeholder="ตั้ง/เปลี่ยน PIN ผู้ดูแลระบบ" autocomplete="off"
+            style="padding:7px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.88rem;font-family:inherit;letter-spacing:.1em">
+          <button class="btn btn-sm btn-pri" onclick="saveAdminPin()">บันทึก</button>
+        </div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:4px">อย่าลืม PIN นี้ — ถ้าลืมต้องแก้ผ่าน Firebase Console โดยตรง</div>
       </div>
     </div>
 
@@ -1132,6 +1159,7 @@ let _unsubscribe   = null;
 let _listenerFired = false;
 let _retryTimer    = null;
 let _gradePins     = {};   // โหลดจาก Firestore config/app
+let _adminPin      = null; // null = ยังโหลดไม่เสร็จ, '' = ยังไม่ได้ตั้ง
 
 function initFirebase() {
   if (!USE_FIREBASE) { setConn('local'); return; }
@@ -1143,8 +1171,13 @@ function initFirebase() {
     firebase.auth().signInAnonymously().catch(e => console.error('auth error', e));
     startRealtimeListener();
     db.collection('config').doc('app').get()
-      .then(doc => { if (doc.exists && doc.data().grade_pins) _gradePins = doc.data().grade_pins; })
-      .catch(() => {});
+      .then(doc => {
+        if (doc.exists) {
+          if (doc.data().grade_pins) _gradePins = doc.data().grade_pins;
+          _adminPin = doc.data().admin_pin || '';
+        } else { _adminPin = ''; }
+      })
+      .catch(() => { _adminPin = ''; });
   } catch(e) { setConn('offline', e.message); scheduleRetry(); }
 }
 
@@ -1374,8 +1407,31 @@ function applyTeacher() {
 }
 const getCfg = () => JSON.parse(localStorage.getItem('sv_cfg') || '{}');
 
-// ── SETTINGS ──────────────────────────────
+// ── SETTINGS (ล็อกด้วย PIN ผู้ดูแลระบบ) ────
 function openSettings() {
+  document.getElementById('admin-pin-input').value = '';
+  document.getElementById('admin-pin-err').style.display = 'none';
+  document.getElementById('mo-admin-pin').classList.add('open');
+}
+function checkAdminPin() {
+  const pin = document.getElementById('admin-pin-input').value.trim();
+  const err = document.getElementById('admin-pin-err');
+  err.style.display = 'none';
+  if (_adminPin === null) {
+    err.textContent = 'ระบบกำลังโหลด กรุณารอสักครู่แล้วลองใหม่'; err.style.display = 'block'; return;
+  }
+  if (!_adminPin) {
+    err.textContent = 'ยังไม่ได้ตั้งรหัสผู้ดูแลระบบ กรุณาติดต่อผู้พัฒนาระบบ'; err.style.display = 'block'; return;
+  }
+  if (pin !== _adminPin) {
+    err.textContent = '❌ รหัสไม่ถูกต้อง'; err.style.display = 'block';
+    document.getElementById('admin-pin-input').value = '';
+    return;
+  }
+  closeMo('mo-admin-pin');
+  _openSettingsReal();
+}
+function _openSettingsReal() {
   const cfg = getCfg();
   // pre-select teacher in dropdown
   const nameSel = document.getElementById('cfg-name');
@@ -1450,6 +1506,22 @@ async function saveSurveyPin() {
   try {
     await db.collection('config').doc('app').set({ survey_pin: newPin }, { merge: true });
     if (msg) { msg.textContent = '✅ บันทึก PIN แบบสำรวจแล้ว'; msg.style.color = 'var(--sec)'; }
+    setTimeout(() => { if (msg) msg.textContent = ''; }, 3000);
+  } catch(e) {
+    if (msg) { msg.textContent = '❌ บันทึกไม่สำเร็จ: ' + e.message; msg.style.color = 'var(--dan)'; }
+  }
+}
+
+async function saveAdminPin() {
+  const newPin = document.getElementById('cfg-admin-pin')?.value.trim();
+  const msg    = document.getElementById('pin-save-msg');
+  if (!newPin) { if (msg) { msg.textContent = '❌ กรุณากรอก PIN ผู้ดูแลระบบ'; msg.style.color = 'var(--dan)'; } return; }
+  if (!db) { if (msg) { msg.textContent = '❌ ไม่ได้เชื่อมต่อ Firebase'; msg.style.color = 'var(--dan)'; } return; }
+  try {
+    await db.collection('config').doc('app').set({ admin_pin: newPin }, { merge: true });
+    _adminPin = newPin;
+    document.getElementById('cfg-admin-pin').value = '';
+    if (msg) { msg.textContent = '✅ บันทึก PIN ผู้ดูแลระบบแล้ว'; msg.style.color = 'var(--sec)'; }
     setTimeout(() => { if (msg) msg.textContent = ''; }, 3000);
   } catch(e) {
     if (msg) { msg.textContent = '❌ บันทึกไม่สำเร็จ: ' + e.message; msg.style.color = 'var(--dan)'; }
