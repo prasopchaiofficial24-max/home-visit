@@ -1954,8 +1954,8 @@ function renderRecords() {
     el.innerHTML = `<div class="empty"><div class="empty-ico">📋</div><p>ไม่พบข้อมูล</p></div>`; return;
   }
   const actionBtns = r => `
-    <button class="btn btn-out btn-sm" onclick="editRecord('${r.id}')">✏️</button>
-    <button class="btn btn-sm" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe" onclick="openTeacherLog('${r.id}')" title="บันทึกของครู">📝</button>
+    <button class="btn btn-out btn-sm" onclick="editRecord('${r.id}')">✏️ แก้ไข</button>
+    <button class="btn btn-sm" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe" onclick="openTeacherLog('${r.id}')" title="บันทึกของครู">📝 บันทึกครู</button>
     <button class="btn btn-sm" style="background:#fde8ec;color:#9b0a23;border:1px solid #f5bcc6" onclick="printStudent('${r.id}')">🖨️</button>
     <button class="btn btn-sm" style="background:#fde8e8;color:#9b1c1c;border:none" onclick="confirmDel('${r.id}')">🗑</button>`;
   el.innerHTML = `<div class="tw"><table>
