@@ -276,7 +276,6 @@ body.booting .db-vis-row strong{
 .rec-card-name{font-weight:700;font-size:.95rem}
 .rec-card-sub{font-size:.78rem;color:var(--muted);margin-top:2px}
 .rec-card-badges{display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0}
-.rec-risk{font-size:.72rem;font-weight:700;color:#b45309;background:#fef3c7;border-radius:20px;padding:2px 9px;white-space:nowrap}
 .rec-card-parent{font-size:.82rem;color:var(--txt);margin-top:8px;padding-top:8px;border-top:1px dashed var(--bdr)}
 .rec-card-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
 .rec-card-actions .btn{flex:1;min-width:60px}
@@ -723,9 +722,17 @@ body.booting .db-vis-row strong{
       <div class="gtab" onclick="setGFilter('ม.5',this)">ม.5</div>
       <div class="gtab" onclick="setGFilter('ม.6',this)">ม.6</div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <input type="text" id="rec-search" placeholder="🔍 ค้นหาชื่อนักเรียน..." oninput="renderRecords()"
         style="flex:1;min-width:160px;padding:7px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-family:inherit;font-size:.88rem">
+      <label style="display:flex;align-items:center;gap:6px;font-size:.83rem;color:var(--txt);cursor:pointer;white-space:nowrap">
+        <input type="checkbox" id="rec-only-risk" onchange="renderRecords()" style="width:15px;height:15px;accent-color:var(--pri)">
+        เฉพาะที่มีความเสี่ยง
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:.83rem;color:var(--txt);cursor:pointer;white-space:nowrap">
+        <input type="checkbox" id="rec-sort-risk" onchange="renderRecords()" style="width:15px;height:15px;accent-color:var(--pri)">
+        เรียงเสี่ยงมาก→น้อย
+      </label>
       <button class="btn btn-suc btn-sm" onclick="exportExcel()">📥 Excel</button>
     </div>
   </div>
@@ -1105,6 +1112,18 @@ const LABEL = {
     half_sib:'มีพี่น้องต่างบิดา/มารดา'},
   nv: {full100:'เยี่ยมครบแล้ว (100%)', absent:'นักเรียนไม่มาเรียน',
     busy:'ผู้ปกครองไม่สะดวก', notfound:'ติดต่อไม่ได้', moved:'ย้ายที่อยู่', other:'อื่น ๆ'}
+};
+
+// ป้ายพฤติกรรมเสี่ยงรายด้าน — ใช้ร่วมกันทั้งกราฟแดชบอร์ดและป้ายในหน้ารายชื่อ
+const RISK_FLAG = {
+  rH:  { label:'สุขภาพ',      color:'#ef4444' },
+  rS:  { label:'สารเสพติด',   color:'#f97316' },
+  rV:  { label:'ความรุนแรง',  color:'#eab308' },
+  rT:  { label:'เดินทาง',     color:'#22c55e' },
+  rX:  { label:'เพศ',         color:'#3b82f6' },
+  rP:  { label:'โทรศัพท์',    color:'#8b5cf6' },
+  rSf: { label:'ปลอดภัย',     color:'#14b8a6' },
+  rO:  { label:'อื่นๆ',       color:'#94a3b8' }
 };
 
 // ── FIREBASE ──────────────────────────────
@@ -1814,10 +1833,11 @@ function renderDash() {
   if (decoEl) decoEl.textContent = total;
 
   const s = f => recs.reduce((a,r) => a + (r[f]||0), 0);
+  const riskKeys = Object.keys(RISK_FLAG);
   makeBar('c-risk',
-    ['สุขภาพ','สารเสพติด','ความรุนแรง','เดินทาง','เพศ','โทรศัพท์','ปลอดภัย','อื่นๆ'],
-    ['rH','rS','rV','rT','rX','rP','rSf','rO'].map(s),
-    ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6','#14b8a6','#94a3b8']);
+    riskKeys.map(k => RISK_FLAG[k].label),
+    riskKeys.map(s),
+    riskKeys.map(k => RISK_FLAG[k].color));
   makeBar('c-prob',
     ['การเรียน','สุขภาพ','เศรษฐกิจ','สารเสพติด','ซึมเศร้า','อื่นๆ'],
     ['pL','pH','pE','pS','pD','pO'].map(s),
@@ -1915,11 +1935,20 @@ function setGFilter(g, el) {
   el.classList.add('active');
   renderRecords();
 }
+function riskBadges(r) {
+  return Object.keys(RISK_FLAG).filter(k => r[k]).map(k =>
+    `<span style="display:inline-block;background:${RISK_FLAG[k].color}22;color:${RISK_FLAG[k].color};border:1px solid ${RISK_FLAG[k].color}66;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:20px;margin:1px;white-space:nowrap">${RISK_FLAG[k].label}</span>`
+  ).join('');
+}
 function renderRecords() {
   const q = (document.getElementById('rec-search')?.value || '').toLowerCase();
+  const onlyRisk = document.getElementById('rec-only-risk')?.checked;
+  const sortRisk = document.getElementById('rec-sort-risk')?.checked;
   let recs = _recs;
   if (_gFilter !== 'all') recs = recs.filter(r => r.gradeLevel === _gFilter);
   if (q) recs = recs.filter(r => (r.studentName||'').toLowerCase().includes(q) || (r.parentName||'').toLowerCase().includes(q));
+  if (onlyRisk) recs = recs.filter(r => riskCount(r) > 0);
+  if (sortRisk) recs = [...recs].sort((a,b) => riskCount(b) - riskCount(a));
   const el = document.getElementById('rec-table');
   if (!recs.length) {
     el.innerHTML = `<div class="empty"><div class="empty-ico">📋</div><p>ไม่พบข้อมูล</p></div>`; return;
@@ -1932,7 +1961,7 @@ function renderRecords() {
   el.innerHTML = `<div class="tw"><table>
     <thead><tr>
       <th>ชื่อนักเรียน</th><th>เพศ</th><th>ชั้น</th><th>ผู้ปกครอง</th><th>เบอร์</th>
-      <th>วันที่เยี่ยม</th><th>ผล</th><th style="text-align:center">เสี่ยง</th><th style="text-align:center">ด่วน</th><th></th>
+      <th>วันที่เยี่ยม</th><th>ผล</th><th>เสี่ยง</th><th style="text-align:center">ด่วน</th><th></th>
     </tr></thead>
     <tbody>${recs.map(r => {
       const rc = riskCount(r);
@@ -1944,7 +1973,7 @@ function renderRecords() {
         <td style="font-size:.8rem">${r.parentPhone||'–'}</td>
         <td style="font-size:.8rem">${r.visitDate||'–'}</td>
         <td>${r.visited ? '<span class="bv">✅ เยี่ยมแล้ว</span>' : '<span class="bnv">❌ ยังไม่ได้</span>'}</td>
-        <td style="text-align:center;color:${rc>0?'#ef4444':'var(--muted)'};font-weight:${rc>0?700:400}">${rc>0?rc:'–'}</td>
+        <td>${rc>0 ? `<div style="display:flex;flex-wrap:wrap;gap:2px;max-width:180px">${riskBadges(r)}</div>` : '<span style="color:var(--muted)">–</span>'}</td>
         <td style="text-align:center">${r.urgent ? '<span class="bur">🚨 ด่วน</span>' : '–'}</td>
         <td style="white-space:nowrap">${actionBtns(r)}</td>
       </tr>`;
@@ -1960,9 +1989,9 @@ function renderRecords() {
         <div class="rec-card-badges">
           ${r.visited ? '<span class="bv">✅ เยี่ยมแล้ว</span>' : '<span class="bnv">❌ ยังไม่ได้</span>'}
           ${r.urgent ? '<span class="bur">🚨 ด่วน</span>' : ''}
-          ${rc>0 ? `<span class="rec-risk">⚠️ เสี่ยง ${rc}</span>` : ''}
         </div>
       </div>
+      ${rc>0 ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">${riskBadges(r)}</div>` : ''}
       ${(r.parentName||r.parentPhone) ? `<div class="rec-card-parent">👤 ${r.parentName||'–'}${r.parentRel?' ('+r.parentRel+')':''}${r.parentPhone?` · <a href="tel:${r.parentPhone}" style="color:var(--pri-d);font-weight:600">${r.parentPhone}</a>`:''}</div>` : ''}
       <div class="rec-card-actions">${actionBtns(r)}</div>
     </div>`;
