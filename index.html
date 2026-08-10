@@ -65,7 +65,9 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
 .btn-gear:hover{background:var(--pri-l);border-color:rgba(200,16,46,.2);color:var(--pri-d);transform:rotate(30deg)}
 .tb-nav{display:flex;overflow-x:auto;border-top:1px solid var(--bdr);-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0 4px}
 .tb-nav::-webkit-scrollbar{display:none}
-.nav-tab{padding:10px 17px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;font-size:.84rem;transition:var(--tr);white-space:nowrap;flex-shrink:0;font-weight:500}
+.nav-tab{padding:10px 17px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;font-size:.84rem;transition:var(--tr);white-space:nowrap;flex-shrink:0;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.icon{width:1.05em;height:1.05em;vertical-align:-0.16em;flex-shrink:0}
+.btn .icon{margin-right:2px}
 .nav-tab:hover{color:var(--pri);background:var(--pri-ll)}
 .nav-tab.active{color:var(--pri-d);border-bottom-color:var(--pri);font-weight:700}
 
@@ -303,16 +305,16 @@ body.booting .db-vis-row strong{
     <div class="tb-teacher" id="tb-teacher">ยังไม่ได้ตั้งชื่อ</div>
     <div class="tb-right">
       <span class="s-badge s-local" id="conn-badge" title="คลิกเพื่อลองเชื่อมต่อใหม่">⏳</span>
-      <button class="btn-gear" onclick="openSettings()">⚙️</button>
+      <button class="btn-gear" onclick="openSettings()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:1.15em;height:1.15em;vertical-align:-0.2em"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg></button>
     </div>
   </div>
   <div class="tb-nav">
-    <div class="nav-tab active"  onclick="showPage('dashboard')">📊 แดชบอร์ด</div>
-    <div class="nav-tab"         onclick="showPage('form')">➕ กรอกข้อมูล</div>
-    <div class="nav-tab"         onclick="showPage('records')">📋 ข้อมูลรายบุคคล</div>
-    <div class="nav-tab"         onclick="showPage('district')">📄 สรุปรายงานเขตพื้นที่</div>
-    <div class="nav-tab"         onclick="showPage('present')">🖥️ สรุปนำเสนอ</div>
-    <div class="nav-tab"         onclick="showPage('survey')">🛡️ แบบสำรวจ</div>
+    <div class="nav-tab active"  onclick="showPage('dashboard')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg> แดชบอร์ด</div>
+    <div class="nav-tab"         onclick="showPage('form')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 12v6"/><path d="M9 15h6"/></svg> กรอกข้อมูล</div>
+    <div class="nav-tab"         onclick="showPage('records')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> ข้อมูลรายบุคคล</div>
+    <div class="nav-tab"         onclick="showPage('district')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg> สรุปรายงานเขตพื้นที่</div>
+    <div class="nav-tab"         onclick="showPage('present')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg> สรุปนำเสนอ</div>
+    <div class="nav-tab"         onclick="showPage('survey')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg> แบบสำรวจ</div>
   </div>
 </div>
 
@@ -1158,6 +1160,15 @@ const RISK_FLAG = {
   rP:  { label:'โทรศัพท์',    color:'#8b5cf6' },
   rSf: { label:'ปลอดภัย',     color:'#14b8a6' },
   rO:  { label:'อื่นๆ',       color:'#94a3b8' }
+};
+
+// ไอคอนปุ่ม action ที่ใช้ซ้ำหลายหน้า (แทนอีโมจิ ให้หน้าตาสม่ำเสมอทุกอุปกรณ์)
+const ICO_ATTR = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+const ICONS = {
+  edit:  `<svg class="icon" ${ICO_ATTR}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>`,
+  log:   `<svg class="icon" ${ICO_ATTR}><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>`,
+  print: `<svg class="icon" ${ICO_ATTR}><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>`,
+  trash: `<svg class="icon" ${ICO_ATTR}><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`
 };
 
 // ── FIREBASE ──────────────────────────────
@@ -2033,10 +2044,10 @@ function renderRecords() {
     el.innerHTML = `<div class="empty"><div class="empty-ico">📋</div><p>ไม่พบข้อมูล</p></div>`; return;
   }
   const actionBtns = r => `
-    <button class="btn btn-out btn-sm" onclick="editRecord('${r.id}')">✏️ แก้ไข</button>
-    <button class="btn btn-sm" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe" onclick="openTeacherLog('${r.id}')" title="บันทึกของครู">📝 บันทึกครู</button>
-    <button class="btn btn-sm" style="background:#fde8ec;color:#9b0a23;border:1px solid #f5bcc6" onclick="printStudent('${r.id}')">🖨️</button>
-    <button class="btn btn-sm" style="background:#fde8e8;color:#9b1c1c;border:none" onclick="confirmDel('${r.id}')">🗑</button>`;
+    <button class="btn btn-out btn-sm" onclick="editRecord('${r.id}')">${ICONS.edit} แก้ไข</button>
+    <button class="btn btn-sm" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe" onclick="openTeacherLog('${r.id}')" title="บันทึกของครู">${ICONS.log} บันทึกครู</button>
+    <button class="btn btn-sm" style="background:#fde8ec;color:#9b0a23;border:1px solid #f5bcc6" onclick="printStudent('${r.id}')">${ICONS.print}</button>
+    <button class="btn btn-sm" style="background:#fde8e8;color:#9b1c1c;border:none" onclick="confirmDel('${r.id}')">${ICONS.trash}</button>`;
   el.innerHTML = `<div class="tw"><table>
     <thead><tr>
       <th>ชื่อนักเรียน</th><th>เพศ</th><th>ชั้น</th><th>ผู้ปกครอง</th><th>เบอร์</th>
@@ -2683,7 +2694,7 @@ function renderPresent() {
         <div style="font-size:.78rem;color:var(--muted)">ผู้ปกครอง: ${esc(r.parentName)||'–'} | โทร: ${esc(r.parentPhone)||'–'}</div>
         ${r.notes?`<div style="font-size:.76rem;color:#b91c1c;margin-top:2px">📝 ${esc(r.notes)}</div>`:''}
       </div>
-      <button class="btn btn-sm btn-out" onclick="printStudent('${r.id}')">🖨️</button>
+      <button class="btn btn-sm btn-out" onclick="printStudent('${r.id}')">${ICONS.print}</button>
     </div>`).join('') : '<div style="color:var(--muted);font-size:.88rem;padding:10px">ไม่มีกรณีเร่งด่วน ✅</div>';
   document.getElementById('present-out').innerHTML = `
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px">
