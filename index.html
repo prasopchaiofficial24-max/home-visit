@@ -259,6 +259,7 @@ tbody tr{transition:background .1s}
 .db-chart-box:hover{box-shadow:var(--sh-md)}
 .db-chart-box h3{font-size:.8rem;font-weight:700;color:var(--txt);margin-bottom:var(--sp-3);display:flex;align-items:center;gap:var(--sp-2);padding-bottom:var(--sp-2);border-bottom:1px solid var(--bdr-l)}
 .db-chart-c{position:relative;height:185px}
+.db-chart-box.primary .db-chart-c{height:280px}
 
 /* ── RESPONSIVE ── */
 /* ── Skeleton loading (ตอนบูต) ── */
@@ -2055,17 +2056,44 @@ function renderGradeSummary(recs) {
     <tbody>${rows.join('')}</tbody>
   </table></div>`;
 }
+const _chartCenterTotal = {
+  id: 'chartCenterTotal',
+  afterDraw(chart) {
+    const total = chart.data.datasets[0].data.reduce((a,b) => a+b, 0);
+    if (!total) return;
+    const { ctx, chartArea:{ left, top, width, height } } = chart;
+    ctx.save();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#18181b';
+    ctx.font = '700 20px sans-serif';
+    ctx.fillText(total, left + width/2, top + height/2 - 8);
+    ctx.fillStyle = '#71717a';
+    ctx.font = '400 10px sans-serif';
+    ctx.fillText('คน', left + width/2, top + height/2 + 11);
+    ctx.restore();
+  }
+};
 function makeBar(id, labels, data, colors) {
   const ctx = document.getElementById(id); if (!ctx) return;
   if (charts[id]) charts[id].destroy();
-  charts[id] = new Chart(ctx, { type:'bar', data:{ labels, datasets:[{ data, backgroundColor:colors, borderRadius:4 }] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ stepSize:1 } } } } });
+  const maxVal = Math.max(...data);
+  const order  = labels.map((_,i) => i).sort((a,b) => data[b]-data[a]);
+  const sLabels = order.map(i => labels[i]);
+  const sData   = order.map(i => data[i]);
+  const sColors = order.map(i => colors[i]);
+  const borderColors = sData.map(v => v === maxVal && maxVal > 0 ? '#18181b' : 'rgba(0,0,0,0)');
+  const borderWidths = sData.map(v => v === maxVal && maxVal > 0 ? 2 : 0);
+  charts[id] = new Chart(ctx, { type:'bar',
+    data:{ labels:sLabels, datasets:[{ data:sData, backgroundColor:sColors, borderColor:borderColors, borderWidth:borderWidths, borderRadius:4 }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+      scales:{ x:{ beginAtZero:true, ticks:{ stepSize:1 } }, y:{ grid:{ display:false } } } } });
 }
 function makePie(id, labels, data, colors) {
   const ctx = document.getElementById(id); if (!ctx) return;
   if (charts[id]) charts[id].destroy();
-  charts[id] = new Chart(ctx, { type:'doughnut', data:{ labels, datasets:[{ data, backgroundColor:colors }] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ font:{ size:10 } } } } } });
+  charts[id] = new Chart(ctx, { type:'doughnut', data:{ labels, datasets:[{ data, backgroundColor:colors, borderColor:'#fff', borderWidth:2 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{ legend:{ position:'bottom', labels:{ font:{ size:10 }, boxWidth:9 } } } },
+    plugins:[_chartCenterTotal] });
 }
 
 // ── RECORDS TABLE ─────────────────────────
