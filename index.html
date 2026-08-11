@@ -256,6 +256,8 @@ tbody tr{transition:background .1s}
 /* ── RESPONSIVE ── */
 /* ── Skeleton loading (ตอนบูต) ── */
 @keyframes skel{0%{background-position:-200px 0}100%{background-position:200px 0}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 body.booting .db-val,
 body.booting .rec-loading{
   color:transparent!important;border-radius:6px;user-select:none;
@@ -1174,6 +1176,33 @@ const ICONS = {
   trash: `<svg class="icon" ${ICO_ATTR}><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`
 };
 
+// ── MOTION (นับเลขขึ้น + เผยการ์ดทีละใบ, เคารพ prefers-reduced-motion) ──
+function _reducedMotion() {
+  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+function countUp(el, target, opts) {
+  if (!el) return;
+  const { decimals = 0, suffix = '' } = opts || {};
+  const duration = (opts && opts.duration) || 700;
+  const targetNum = parseFloat(target);
+  if (isNaN(targetNum)) { el.textContent = target; return; }
+  if (_reducedMotion()) { el.textContent = targetNum.toFixed(decimals) + suffix; return; }
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  const t0 = performance.now();
+  (function tick(now) {
+    const p = Math.min(1, (now - t0) / duration);
+    el.textContent = (targetNum * ease(p)).toFixed(decimals) + suffix;
+    if (p < 1) requestAnimationFrame(tick);
+  })(t0);
+}
+function revealStagger(nodes, step) {
+  if (_reducedMotion()) return;
+  step = step || 60;
+  [...nodes].forEach((n, i) => {
+    n.style.animation = `fadeInUp .4s ease ${i*step}ms both`;
+  });
+}
+
 // ── FIREBASE ──────────────────────────────
 let db = null;
 let _unsubscribe   = null;
@@ -1914,16 +1943,17 @@ function renderDash() {
   const urg    = recs.filter(r => r.urgent).length;
   const pct    = total ? (vis / total * 100).toFixed(1) : 0;
 
-  document.getElementById('s-total').textContent = total;
-  document.getElementById('s-vis').textContent   = vis;
-  document.getElementById('s-pct').textContent   = pct + '%';
-  document.getElementById('s-nvis').textContent  = nvis;
-  document.getElementById('s-risk').textContent  = risk;
-  document.getElementById('s-urg').textContent   = urg;
+  countUp(document.getElementById('s-total'), total);
+  countUp(document.getElementById('s-vis'),   vis);
+  countUp(document.getElementById('s-pct'),   pct, { decimals:1, suffix:'%' });
+  countUp(document.getElementById('s-nvis'),  nvis);
+  countUp(document.getElementById('s-risk'),  risk);
+  countUp(document.getElementById('s-urg'),   urg);
   const pbarEl = document.getElementById('db-pbar');
   if (pbarEl) pbarEl.style.width = pct + '%';
-  const decoEl = document.getElementById('db-total-big');
-  if (decoEl) decoEl.textContent = total;
+  countUp(document.getElementById('db-total-big'), total, { duration:900 });
+  revealStagger(document.querySelectorAll('.db-stat'), 60);
+  revealStagger(document.querySelectorAll('.db-chart-box'), 70);
 
   const s = f => recs.reduce((a,r) => a + (r[f]||0), 0);
   const riskKeys = Object.keys(RISK_FLAG);
@@ -2089,6 +2119,7 @@ function renderRecords() {
       <div class="rec-card-actions">${actionBtns(r)}</div>
     </div>`;
   }).join('')}</div>`;
+  revealStagger([...document.querySelectorAll('.rec-card')].slice(0, 12), 35);
 }
 
 // ── REPORT META (localStorage) ────────────
