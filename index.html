@@ -332,7 +332,7 @@ body.booting .db-vis-row strong{
 
 <!-- CRITICAL BANNER -->
 <div id="critical-banner" style="display:none;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;padding:10px 18px;font-size:.85rem;font-weight:700;cursor:pointer;align-items:center;gap:10px" onclick="showPage('survey')">
-  <span style="font-size:1.1rem">🚨</span>
+  <span style="font-size:1.1rem"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg></span>
   <span>มีนักเรียนระดับวิกฤต <strong id="critical-count">0</strong> คน ที่ต้องดำเนินการเร่งด่วน</span>
   <span style="margin-left:auto;font-size:.73rem;opacity:.8;font-weight:400">กดเพื่อดูรายละเอียด →</span>
 </div>
@@ -737,7 +737,7 @@ body.booting .db-vis-row strong{
       <div class="gtab" onclick="setGFilter('ม.6',this)">ม.6</div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <input type="text" id="rec-search" placeholder="🔍 ค้นหาชื่อนักเรียน..." oninput="renderRecords()"
+      <input type="text" id="rec-search" placeholder="ค้นหาชื่อนักเรียน..." oninput="renderRecords()"
         style="flex:1;min-width:160px;padding:7px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-family:inherit;font-size:.88rem">
       <label style="display:flex;align-items:center;gap:6px;font-size:.83rem;color:var(--txt);cursor:pointer;white-space:nowrap">
         <input type="checkbox" id="rec-only-risk" onchange="renderRecords()" style="width:15px;height:15px;accent-color:var(--pri)">
@@ -747,7 +747,7 @@ body.booting .db-vis-row strong{
         <input type="checkbox" id="rec-sort-risk" onchange="renderRecords()" style="width:15px;height:15px;accent-color:var(--pri)">
         เรียงเสี่ยงมาก→น้อย
       </label>
-      <button class="btn btn-suc btn-sm" onclick="exportExcel()">📥 Excel</button>
+      <button class="btn btn-suc btn-sm" onclick="exportExcel()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Excel</button>
     </div>
   </div>
   <div id="rec-table"></div>
@@ -769,10 +769,10 @@ body.booting .db-vis-row strong{
         <option value="1">1</option>
         <option value="2">2</option>
       </select>
-      <button class="btn btn-pri btn-sm" onclick="window.print()">🖨️ พิมพ์ PDF</button>
+      <button class="btn btn-pri btn-sm" onclick="window.print()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> พิมพ์ PDF</button>
     </div>
     <!-- แถว 2: ข้อมูลระดับรายงาน -->
-    <div style="font-size:.83rem;font-weight:700;color:var(--pri-d);margin-bottom:10px">📝 ข้อมูลระดับรายงาน (บันทึกอัตโนมัติ)</div>
+    <div style="font-size:.83rem;font-weight:700;color:var(--pri-d);margin-bottom:10px"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><path d="M9 12h6"/><path d="M9 16h6"/></svg> ข้อมูลระดับรายงาน (บันทึกอัตโนมัติ)</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:10px">
       <div class="fg">
         <label>ครั้งที่</label>
@@ -839,7 +839,7 @@ body.booting .db-vis-row strong{
      PAGE: PRESENT
 ════════════════════════════════════════ -->
 <div class="page" id="page-present">
-  <div class="no-print" style="font-size:.8rem;color:var(--muted);margin-bottom:10px">🖥️ สรุปภาพรวมตัวอักษรใหญ่ สำหรับฉายจอ/นำเสนอที่ประชุมหรือรายงานผู้บริหาร</div>
+  <div class="no-print" style="font-size:.8rem;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg> สรุปภาพรวมตัวอักษรใหญ่ สำหรับฉายจอ/นำเสนอที่ประชุมหรือรายงานผู้บริหาร</div>
   <div class="no-print" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
     <div style="font-size:.83rem;color:var(--muted)">เลือกชั้นเรียน</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap" id="pres-gtabs">
@@ -851,7 +851,7 @@ body.booting .db-vis-row strong{
       <button class="gtab" onclick="setPresGrade('ม.5',this)">ม.5</button>
       <button class="gtab" onclick="setPresGrade('ม.6',this)">ม.6</button>
     </div>
-    <button class="btn btn-pri btn-sm" onclick="toggleFullscreen()">⛶ เต็มหน้าจอ</button>
+    <button class="btn btn-pri btn-sm" onclick="toggleFullscreen()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg> เต็มหน้าจอ</button>
   </div>
   <div id="present-out"></div>
 </div>
@@ -860,7 +860,7 @@ body.booting .db-vis-row strong{
 <div class="page" id="page-survey">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
     <div>
-      <div style="font-size:1rem;font-weight:800;color:var(--pri-d)">🛡️ แบบสำรวจความปลอดภัย</div>
+      <div style="font-size:1rem;font-weight:800;color:var(--pri-d)"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg> แบบสำรวจความปลอดภัย</div>
       <div style="font-size:.78rem;color:var(--muted);margin-top:2px">ข้อมูลจากนักเรียน — เฉพาะครูแนะแนวและผู้บริหารเท่านั้น</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -869,8 +869,8 @@ body.booting .db-vis-row strong{
         <option>ม.1</option><option>ม.2</option><option>ม.3</option>
         <option>ม.4</option><option>ม.5</option><option>ม.6</option>
       </select>
-      <button class="btn btn-sm btn-out" onclick="showQRCode()" style="padding:7px 14px;font-size:.82rem">📱 QR Code</button>
-      <button class="btn btn-sm btn-out" onclick="renderSurvey()" style="padding:7px 14px;font-size:.82rem">🔄 รีเฟรช</button>
+      <button class="btn btn-sm btn-out" onclick="showQRCode()" style="padding:7px 14px;font-size:.82rem"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg> QR Code</button>
+      <button class="btn btn-sm btn-out" onclick="renderSurvey()" style="padding:7px 14px;font-size:.82rem"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg> รีเฟรช</button>
     </div>
   </div>
   <div id="survey-out"><div style="color:var(--muted);text-align:center;padding:40px;font-size:.88rem">กำลังโหลด...</div></div>
@@ -879,11 +879,11 @@ body.booting .db-vis-row strong{
 <!-- Modal: Teacher Log -->
 <div class="mo" id="mo-teacher-log">
   <div class="mo-box" style="max-width:580px;max-height:90vh;overflow-y:auto">
-    <h2 style="margin-bottom:4px">📝 <span id="tl-title">บันทึกของครู</span></h2>
+    <h2 style="margin-bottom:4px"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><path d="M9 12h6"/><path d="M9 16h6"/></svg> <span id="tl-title">บันทึกของครู</span></h2>
     <div id="tl-student-name" style="font-size:.82rem;color:var(--muted);margin-bottom:18px"></div>
 
     <!-- Section 1: Observation -->
-    <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);padding-bottom:7px;border-bottom:2px solid var(--pri-l);margin-bottom:10px">🔍 ส่วนที่ 1 — การสังเกตพฤติกรรม</div>
+    <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);padding-bottom:7px;border-bottom:2px solid var(--pri-l);margin-bottom:10px"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> ส่วนที่ 1 — การสังเกตพฤติกรรม</div>
     <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px">เลือกพฤติกรรมที่สังเกตเห็น (ช่วง 1 เดือนที่ผ่านมา)</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px">
       <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:9px;cursor:pointer;font-size:.82rem"><input type="checkbox" id="tl-cb-behavior_change" style="width:15px;height:15px;accent-color:var(--pri)"> พฤติกรรมเปลี่ยนแปลงกะทันหัน</label>
@@ -901,41 +901,41 @@ body.booting .db-vis-row strong{
     </div>
     <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:4px">
       <div class="fg" style="flex:1"><label>วันที่สังเกต</label><input type="date" id="tl-obs-date"></div>
-      <button class="btn btn-pri btn-sm" onclick="saveTeacherObs()" style="margin-bottom:1px">💾 บันทึก</button>
+      <button class="btn btn-pri btn-sm" onclick="saveTeacherObs()" style="margin-bottom:1px"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> บันทึก</button>
     </div>
     <div id="tl-obs-saved" style="font-size:.78rem;color:var(--sec);margin-bottom:4px;min-height:18px"></div>
 
     <div style="height:1px;background:var(--bdr);margin:18px 0"></div>
 
     <!-- Section 2: Follow-up Log -->
-    <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);padding-bottom:7px;border-bottom:2px solid var(--pri-l);margin-bottom:10px">📋 ส่วนที่ 2 — บันทึกการดำเนินการ</div>
+    <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);padding-bottom:7px;border-bottom:2px solid var(--pri-l);margin-bottom:10px"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><path d="M9 12h6"/><path d="M9 16h6"/></svg> ส่วนที่ 2 — บันทึกการดำเนินการ</div>
     <div id="tl-log-list" style="margin-bottom:14px"></div>
 
     <div style="background:var(--bg);border-radius:10px;padding:14px;border:1px solid var(--bdr)">
-      <div style="font-size:.82rem;font-weight:700;color:var(--pri-d);margin-bottom:10px">➕ เพิ่มบันทึกใหม่</div>
+      <div style="font-size:.82rem;font-weight:700;color:var(--pri-d);margin-bottom:10px"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg> เพิ่มบันทึกใหม่</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
         <div class="fg"><label>วันที่</label><input type="date" id="tl-log-date"></div>
         <div class="fg"><label>ประเภทการดำเนินการ</label>
           <select id="tl-log-action">
             <option value="">-- เลือก --</option>
-            <option value="talk">💬 พูดคุยกับนักเรียน</option>
-            <option value="parent">📞 ติดต่อผู้ปกครอง</option>
-            <option value="counselor">🧑‍⚕️ ส่งต่อครูแนะแนว</option>
-            <option value="admin">🏫 รายงานผู้บริหาร</option>
-            <option value="external">🏥 ส่งต่อหน่วยงานภายนอก</option>
-            <option value="other">📌 อื่นๆ</option>
+            <option value="talk">พูดคุยกับนักเรียน</option>
+            <option value="parent">ติดต่อผู้ปกครอง</option>
+            <option value="counselor">ส่งต่อครูแนะแนว</option>
+            <option value="admin">รายงานผู้บริหาร</option>
+            <option value="external">ส่งต่อหน่วยงานภายนอก</option>
+            <option value="other">อื่นๆ</option>
           </select>
         </div>
       </div>
       <div class="fg" style="margin-bottom:8px"><label>รายละเอียดที่ดำเนินการ</label><textarea id="tl-log-note" rows="2" placeholder="อธิบายสิ่งที่ดำเนินการ..."></textarea></div>
       <div class="fg" style="margin-bottom:10px"><label>ผลลัพธ์ / การเปลี่ยนแปลง</label><textarea id="tl-log-result" rows="2" placeholder="ผลที่ได้รับหลังดำเนินการ..."></textarea></div>
-      <button class="btn btn-sm" style="background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7" onclick="addFollowupEntry()">➕ เพิ่มบันทึก</button>
+      <button class="btn btn-sm" style="background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7" onclick="addFollowupEntry()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg> เพิ่มบันทึก</button>
     </div>
 
     <div style="height:1px;background:var(--bdr);margin:18px 0"></div>
 
     <!-- Section 3: Audit Log -->
-    <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);padding-bottom:7px;border-bottom:2px solid var(--pri-l);margin-bottom:10px">🕒 ส่วนที่ 3 — ประวัติการแก้ไขข้อมูล</div>
+    <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);padding-bottom:7px;border-bottom:2px solid var(--pri-l);margin-bottom:10px"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ส่วนที่ 3 — ประวัติการแก้ไขข้อมูล</div>
     <div id="tl-audit-list" style="font-size:.78rem;color:var(--muted)"></div>
 
     <div style="margin-top:16px;text-align:right">
@@ -947,7 +947,7 @@ body.booting .db-vis-row strong{
 <!-- Modal: QR Code -->
 <div class="mo" id="mo-qr">
   <div class="mo-box" style="max-width:320px;text-align:center">
-    <h2>📱 QR Code แบบสำรวจ</h2>
+    <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg> QR Code แบบสำรวจ</h2>
     <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">ให้นักเรียนสแกนเพื่อเข้าแบบสำรวจความปลอดภัย</p>
     <div id="qr-canvas" style="display:inline-block;padding:16px;background:#fff;border:1px solid var(--bdr);border-radius:10px"></div>
     <p style="font-size:.68rem;color:var(--muted);margin-top:10px;word-break:break-all">https://prasopchaiofficial24-max.github.io/student-safety-survey/</p>
@@ -959,9 +959,9 @@ body.booting .db-vis-row strong{
 <div class="mo" id="mo-print-student">
   <div class="mo-box" style="max-width:700px;padding:0">
     <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--bdr)" class="no-print">
-      <span style="font-weight:700;color:var(--pri-d)">🖨️ พิมพ์ฟอร์มเยี่ยมบ้านรายนักเรียน</span>
+      <span style="font-weight:700;color:var(--pri-d)"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> พิมพ์ฟอร์มเยี่ยมบ้านรายนักเรียน</span>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-pri btn-sm" onclick="printStudentPDF()">🖨️ พิมพ์ / บันทึก PDF</button>
+        <button class="btn btn-pri btn-sm" onclick="printStudentPDF()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> พิมพ์ / บันทึก PDF</button>
         <button class="btn btn-gray btn-sm" onclick="closeMo('mo-print-student')">✕ ปิด</button>
       </div>
     </div>
@@ -972,7 +972,7 @@ body.booting .db-vis-row strong{
 <!-- Teacher Welcome -->
 <div class="mo open" id="mo-teacher">
   <div class="mo-box">
-    <h2>👋 ยินดีต้อนรับ</h2>
+    <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg> ยินดีต้อนรับ</h2>
     <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px">ระบบดูแลช่วยเหลือนักเรียน โรงเรียนจิกดู่วิทยา<br>กรุณาเลือกชื่อครูก่อนเริ่มใช้งานครับ</p>
     <div class="fg" style="margin-bottom:18px">
       <label>เลือกชื่อครู *</label>
@@ -985,14 +985,14 @@ body.booting .db-vis-row strong{
         style="padding:8px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.9rem;font-family:inherit;width:100%;letter-spacing:.1em">
     </div>
     <div id="w-pin-err" style="display:none;font-size:.82rem;color:var(--dan-fg);margin-bottom:10px;padding:8px 12px;background:var(--dan-bg);border-radius:8px;border:1px solid var(--dan-bd)"></div>
-    <button class="btn btn-pri" style="width:100%" onclick="saveTeacher()">🚀 เริ่มใช้งาน</button>
+    <button class="btn btn-pri" style="width:100%" onclick="saveTeacher()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg> เริ่มใช้งาน</button>
   </div>
 </div>
 
 <!-- Admin PIN Gate -->
 <div class="mo" id="mo-admin-pin">
   <div class="mo-box" style="max-width:340px">
-    <h2>🔒 ตั้งค่าระบบ</h2>
+    <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> ตั้งค่าระบบ</h2>
     <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px">หน้านี้สำหรับผู้ดูแลระบบเท่านั้น กรุณากรอกรหัสผ่านครับ</p>
     <div class="fg" style="margin-bottom:10px">
       <input type="password" id="admin-pin-input" maxlength="20" placeholder="รหัสผู้ดูแลระบบ" autocomplete="off"
@@ -1001,7 +1001,7 @@ body.booting .db-vis-row strong{
     </div>
     <div id="admin-pin-err" style="display:none;font-size:.82rem;color:var(--dan-fg);margin-bottom:10px;padding:8px 12px;background:var(--dan-bg);border-radius:8px;border:1px solid var(--dan-bd)"></div>
     <div class="btn-row">
-      <button class="btn btn-pri" onclick="checkAdminPin()">🔓 เข้าสู่ระบบ</button>
+      <button class="btn btn-pri" onclick="checkAdminPin()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg> เข้าสู่ระบบ</button>
       <button class="btn btn-gray" onclick="closeMo('mo-admin-pin')">ยกเลิก</button>
     </div>
   </div>
@@ -1010,7 +1010,7 @@ body.booting .db-vis-row strong{
 <!-- Settings -->
 <div class="mo" id="mo-settings">
   <div class="mo-box">
-    <h2>⚙️ ตั้งค่า</h2>
+    <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg> ตั้งค่า</h2>
     <div class="fg">
       <label>เลือกชื่อครู</label>
       <select id="cfg-name" style="padding:8px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.9rem;font-family:inherit"></select>
@@ -1019,21 +1019,21 @@ body.booting .db-vis-row strong{
     <div class="fg"><label>ปีการศึกษา (default)</label><input type="text" id="cfg-year" placeholder="เช่น 2568"></div>
     <div class="fg" style="margin-bottom:14px"><label>ชื่อผู้อำนวยการ</label><input type="text" id="cfg-principal"></div>
     <div class="btn-row" style="margin-bottom:20px">
-      <button class="btn btn-pri" onclick="saveSettings()">💾 บันทึก</button>
+      <button class="btn btn-pri" onclick="saveSettings()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> บันทึก</button>
       <button class="btn btn-gray" onclick="closeMo('mo-settings')">ยกเลิก</button>
     </div>
 
     <div style="border-top:1.5px solid var(--bdr);padding-top:18px">
-      <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);margin-bottom:12px">🔐 จัดการ PIN ประจำชั้นเรียน</div>
+      <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);margin-bottom:12px"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> จัดการ PIN ประจำชั้นเรียน</div>
       <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">PIN ใช้สำหรับยืนยันตัวตนครูก่อนเข้าระบบ — บันทึกลง Firestore ทันที</div>
       <div id="pin-rows">
         <div style="display:grid;grid-template-columns:80px 1fr auto;gap:8px;align-items:center;margin-bottom:8px" id="pin-loading">
-          <span style="font-size:.82rem;color:var(--muted);grid-column:1/-1">⏳ กำลังโหลด PIN...</span>
+          <span style="font-size:.82rem;color:var(--muted);grid-column:1/-1"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> กำลังโหลด PIN...</span>
         </div>
       </div>
       <div id="pin-save-msg" style="font-size:.78rem;color:var(--sec);min-height:18px;margin-top:4px"></div>
       <div style="margin-top:12px">
-        <div style="font-size:.82rem;font-weight:600;color:var(--txt);margin-bottom:8px">📝 PIN แบบสำรวจนักเรียน (survey)</div>
+        <div style="font-size:.82rem;font-weight:600;color:var(--txt);margin-bottom:8px"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><path d="M9 12h6"/><path d="M9 16h6"/></svg> PIN แบบสำรวจนักเรียน (survey)</div>
         <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center">
           <input type="text" id="cfg-survey-pin" maxlength="20" placeholder="PIN แบบสำรวจ"
             style="padding:7px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.88rem;font-family:inherit;letter-spacing:.1em">
@@ -1041,7 +1041,7 @@ body.booting .db-vis-row strong{
         </div>
       </div>
       <div style="margin-top:12px">
-        <div style="font-size:.82rem;font-weight:600;color:var(--txt);margin-bottom:8px">🔒 PIN ผู้ดูแลระบบ (เข้าหน้าตั้งค่า)</div>
+        <div style="font-size:.82rem;font-weight:600;color:var(--txt);margin-bottom:8px"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> PIN ผู้ดูแลระบบ (เข้าหน้าตั้งค่า)</div>
         <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center">
           <input type="password" id="cfg-admin-pin" maxlength="20" placeholder="ตั้ง/เปลี่ยน PIN ผู้ดูแลระบบ" autocomplete="off"
             style="padding:7px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.88rem;font-family:inherit;letter-spacing:.1em">
@@ -1052,9 +1052,9 @@ body.booting .db-vis-row strong{
     </div>
 
     <div style="border-top:1.5px solid var(--bdr);padding-top:18px;margin-top:18px">
-      <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);margin-bottom:8px">📦 สำรองข้อมูล</div>
+      <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);margin-bottom:8px"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg> สำรองข้อมูล</div>
       <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">ดาวน์โหลดข้อมูลทั้งหมด (เยี่ยมบ้าน + แบบสำรวจ) เป็นไฟล์ .json เก็บไว้กู้คืนกรณีฉุกเฉิน</div>
-      <button class="btn btn-sm" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe" onclick="backupAllData()">⬇️ ดาวน์โหลดไฟล์สำรอง</button>
+      <button class="btn btn-sm" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe" onclick="backupAllData()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> ดาวน์โหลดไฟล์สำรอง</button>
       <div id="backup-msg" style="font-size:.78rem;color:var(--sec);min-height:18px;margin-top:6px"></div>
     </div>
   </div>
@@ -1063,7 +1063,7 @@ body.booting .db-vis-row strong{
 <!-- Generic Confirm -->
 <div class="mo" id="mo-confirm">
   <div class="mo-box" style="max-width:380px">
-    <h2 id="confirm-title">⚠️ ยืนยัน</h2>
+    <h2 id="confirm-title">ยืนยัน</h2>
     <p id="confirm-msg" style="color:var(--muted);margin-bottom:18px;white-space:pre-line"></p>
     <div class="btn-row">
       <button class="btn btn-dan" id="confirm-yes-btn">ยืนยัน</button>
@@ -1075,7 +1075,7 @@ body.booting .db-vis-row strong{
 <!-- Delete Confirm -->
 <div class="mo" id="mo-del">
   <div class="mo-box" style="max-width:320px">
-    <h2>🗑 ยืนยันการลบ</h2>
+    <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> ยืนยันการลบ</h2>
     <p style="color:var(--muted);margin-bottom:18px">ต้องการลบข้อมูลนักเรียนคนนี้ใช่ไหมครับ?</p>
     <div class="btn-row">
       <button class="btn btn-dan" id="del-btn">ลบเลย</button>
@@ -1287,10 +1287,10 @@ function retryConnect() {
 function setConn(s, errMsg) {
   const el = document.getElementById('conn-badge');
   const m = {
-    online:     ['🟢 Online',   's-online'],
-    offline:    ['🔴 Offline',  's-offline'],
-    local:      ['💾 Local',    's-local'],
-    connecting: ['⏳ กำลังเชื่อมต่อ…', 's-local']
+    online:     ['Online',   's-online'],
+    offline:    ['Offline',  's-offline'],
+    local:      ['Local',    's-local'],
+    connecting: ['กำลังเชื่อมต่อ…', 's-local']
   };
   el.className = 's-badge ' + (m[s]||m.offline)[1];
   el.textContent = (m[s]||m.offline)[0];
@@ -1323,14 +1323,14 @@ function _showToast(msg, kind) {
   clearTimeout(t._timer);
   t._timer = setTimeout(() => { t.style.display = 'none'; }, kind === 'success' ? 5000 : 4000);
 }
-function _showOfflineToast() { _showToast('⚠️ บันทึกเฉพาะในเครื่องนี้ — ยังไม่ sync ขึ้น Firebase', 'warn'); }
-function _showSyncedToast(n) { _showToast(`✅ ซิงก์ข้อมูลที่ค้างจากตอนออฟไลน์ขึ้น Firebase แล้ว ${n} รายการ`, 'success'); }
+function _showOfflineToast() { _showToast('บันทึกเฉพาะในเครื่องนี้ — ยังไม่ sync ขึ้น Firebase', 'warn'); }
+function _showSyncedToast(n) { _showToast(`ซิงก์ข้อมูลที่ค้างจากตอนออฟไลน์ขึ้น Firebase แล้ว ${n} รายการ`, 'success'); }
 
 // ── CONFIRM MODAL (แทน confirm() มาตรฐานเบราว์เซอร์) ──
 function showConfirm(message, title) {
   return new Promise(resolve => {
     const modal = document.getElementById('mo-confirm');
-    document.getElementById('confirm-title').textContent = title || '⚠️ ยืนยัน';
+    document.getElementById('confirm-title').textContent = title || 'ยืนยัน';
     document.getElementById('confirm-msg').textContent = message;
     modal.classList.add('open');
     const yesBtn = document.getElementById('confirm-yes-btn');
@@ -1438,13 +1438,13 @@ function saveTeacher() {
   const expected = _gradePins[g];
   if (expected) {
     if (pin !== expected) {
-      errEl.textContent = '❌ PIN ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง';
+      errEl.textContent = 'PIN ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง';
       errEl.style.display = 'block';
       document.getElementById('w-pin').value = '';
       return;
     }
   } else if (Object.keys(_gradePins).length > 0) {
-    errEl.textContent = '❌ ไม่พบ PIN สำหรับชั้น ' + g + ' กรุณาติดต่อผู้ดูแลระบบ';
+    errEl.textContent = 'ไม่พบ PIN สำหรับชั้น ' + g + ' กรุณาติดต่อผู้ดูแลระบบ';
     errEl.style.display = 'block';
     return;
   }
@@ -1464,7 +1464,7 @@ function checkTeacher() {
 function updateTopbar() {
   const el = document.getElementById('tb-teacher');
   const n = tName(), g = tGrade();
-  if (el && n) el.innerHTML = `👤 ${n} <span class="g-badge">${g}</span>`;
+  if (el && n) el.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg> ${esc(n)} <span class="g-badge">${esc(g)}</span>`;
 }
 function applyTeacher() {
   const g = tGrade();
@@ -1492,7 +1492,7 @@ function checkAdminPin() {
     err.textContent = 'ยังไม่ได้ตั้งรหัสผู้ดูแลระบบ กรุณาติดต่อผู้พัฒนาระบบ'; err.style.display = 'block'; return;
   }
   if (pin !== _adminPin) {
-    err.textContent = '❌ รหัสไม่ถูกต้อง'; err.style.display = 'block';
+    err.textContent = 'รหัสไม่ถูกต้อง'; err.style.display = 'block';
     document.getElementById('admin-pin-input').value = '';
     return;
   }
@@ -1554,45 +1554,45 @@ async function savePinForGrade(grade) {
   const inputId = 'pin-input-' + grade.replace('.','');
   const newPin  = document.getElementById(inputId)?.value.trim();
   const msg     = document.getElementById('pin-save-msg');
-  if (!newPin) { if (msg) { msg.textContent = '❌ กรุณากรอก PIN'; msg.style.color = 'var(--dan)'; } return; }
-  if (!db) { if (msg) { msg.textContent = '❌ ไม่ได้เชื่อมต่อ Firebase'; msg.style.color = 'var(--dan)'; } return; }
+  if (!newPin) { if (msg) { msg.textContent = 'กรุณากรอก PIN'; msg.style.color = 'var(--dan)'; } return; }
+  if (!db) { if (msg) { msg.textContent = 'ไม่ได้เชื่อมต่อ Firebase'; msg.style.color = 'var(--dan)'; } return; }
   try {
     _gradePins[grade] = newPin;
     await db.collection('config').doc('app').set({ grade_pins: _gradePins }, { merge: true });
-    if (msg) { msg.textContent = `✅ บันทึก PIN ของ ${grade} แล้ว`; msg.style.color = 'var(--sec)'; }
+    if (msg) { msg.textContent = `บันทึก PIN ของ ${grade} แล้ว`; msg.style.color = 'var(--sec)'; }
     setTimeout(() => { if (msg) msg.textContent = ''; }, 3000);
   } catch(e) {
-    if (msg) { msg.textContent = '❌ บันทึกไม่สำเร็จ: ' + e.message; msg.style.color = 'var(--dan)'; }
+    if (msg) { msg.textContent = 'บันทึกไม่สำเร็จ: ' + e.message; msg.style.color = 'var(--dan)'; }
   }
 }
 
 async function saveSurveyPin() {
   const newPin = document.getElementById('cfg-survey-pin')?.value.trim();
   const msg    = document.getElementById('pin-save-msg');
-  if (!newPin) { if (msg) { msg.textContent = '❌ กรุณากรอก PIN แบบสำรวจ'; msg.style.color = 'var(--dan)'; } return; }
-  if (!db) { if (msg) { msg.textContent = '❌ ไม่ได้เชื่อมต่อ Firebase'; msg.style.color = 'var(--dan)'; } return; }
+  if (!newPin) { if (msg) { msg.textContent = 'กรุณากรอก PIN แบบสำรวจ'; msg.style.color = 'var(--dan)'; } return; }
+  if (!db) { if (msg) { msg.textContent = 'ไม่ได้เชื่อมต่อ Firebase'; msg.style.color = 'var(--dan)'; } return; }
   try {
     await db.collection('config').doc('app').set({ survey_pin: newPin }, { merge: true });
-    if (msg) { msg.textContent = '✅ บันทึก PIN แบบสำรวจแล้ว'; msg.style.color = 'var(--sec)'; }
+    if (msg) { msg.textContent = 'บันทึก PIN แบบสำรวจแล้ว'; msg.style.color = 'var(--sec)'; }
     setTimeout(() => { if (msg) msg.textContent = ''; }, 3000);
   } catch(e) {
-    if (msg) { msg.textContent = '❌ บันทึกไม่สำเร็จ: ' + e.message; msg.style.color = 'var(--dan)'; }
+    if (msg) { msg.textContent = 'บันทึกไม่สำเร็จ: ' + e.message; msg.style.color = 'var(--dan)'; }
   }
 }
 
 async function saveAdminPin() {
   const newPin = document.getElementById('cfg-admin-pin')?.value.trim();
   const msg    = document.getElementById('pin-save-msg');
-  if (!newPin) { if (msg) { msg.textContent = '❌ กรุณากรอก PIN ผู้ดูแลระบบ'; msg.style.color = 'var(--dan)'; } return; }
-  if (!db) { if (msg) { msg.textContent = '❌ ไม่ได้เชื่อมต่อ Firebase'; msg.style.color = 'var(--dan)'; } return; }
+  if (!newPin) { if (msg) { msg.textContent = 'กรุณากรอก PIN ผู้ดูแลระบบ'; msg.style.color = 'var(--dan)'; } return; }
+  if (!db) { if (msg) { msg.textContent = 'ไม่ได้เชื่อมต่อ Firebase'; msg.style.color = 'var(--dan)'; } return; }
   try {
     await db.collection('config').doc('app').set({ admin_pin: newPin }, { merge: true });
     _adminPin = newPin;
     document.getElementById('cfg-admin-pin').value = '';
-    if (msg) { msg.textContent = '✅ บันทึก PIN ผู้ดูแลระบบแล้ว'; msg.style.color = 'var(--sec)'; }
+    if (msg) { msg.textContent = 'บันทึก PIN ผู้ดูแลระบบแล้ว'; msg.style.color = 'var(--sec)'; }
     setTimeout(() => { if (msg) msg.textContent = ''; }, 3000);
   } catch(e) {
-    if (msg) { msg.textContent = '❌ บันทึกไม่สำเร็จ: ' + e.message; msg.style.color = 'var(--dan)'; }
+    if (msg) { msg.textContent = 'บันทึกไม่สำเร็จ: ' + e.message; msg.style.color = 'var(--dan)'; }
   }
 }
 
@@ -1619,9 +1619,9 @@ async function backupAllData() {
     a.href = url; a.download = `backup-เยี่ยมบ้าน-${today}.json`;
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
-    if (msg) { msg.textContent = `✅ ดาวน์โหลดแล้ว (${_recs.length} รายการเยี่ยมบ้าน, ${surveyRows.length} แบบสำรวจ)`; msg.style.color = 'var(--sec)'; }
+    if (msg) { msg.textContent = `ดาวน์โหลดแล้ว (${_recs.length} รายการเยี่ยมบ้าน, ${surveyRows.length} แบบสำรวจ)`; msg.style.color = 'var(--sec)'; }
   } catch(e) {
-    if (msg) { msg.textContent = '❌ สำรองข้อมูลไม่สำเร็จ: ' + e.message; msg.style.color = 'var(--dan)'; }
+    if (msg) { msg.textContent = 'สำรองข้อมูลไม่สำเร็จ: ' + e.message; msg.style.color = 'var(--dan)'; }
   }
 }
 
@@ -1904,7 +1904,7 @@ async function submitForm() {
   if (data.parentPhone && data.parentPhone.replace(/\D/g,'').length < 9) {
     const proceed = await showConfirm(
       `เบอร์โทรผู้ปกครอง "${data.parentPhone}" ดูสั้นผิดปกติ (ควรมีอย่างน้อย 9 หลัก)\n\nเบอร์นี้จะถูกใช้ติดต่อกรณีเร่งด่วน ต้องการบันทึกแบบนี้ต่อไปไหมครับ?`,
-      '⚠️ เบอร์โทรอาจไม่ถูกต้อง'
+      'เบอร์โทรอาจไม่ถูกต้อง'
     );
     if (!proceed) return;
   }
@@ -1913,8 +1913,8 @@ async function submitForm() {
       (r.studentName||'').trim().toLowerCase() === data.studentName.trim().toLowerCase());
     if (dup) {
       const proceed = await showConfirm(
-        `มีนักเรียนชื่อ "${dup.studentName}" ในชั้น ${dup.gradeLevel} อยู่แล้วในระบบ\n\nต้องการบันทึกเป็นรายการใหม่ซ้ำหรือไม่?\n(กด "ยกเลิก" แล้วใช้ปุ่ม ✏️ แก้ไข จากหน้ารายชื่อแทน ถ้าเป็นคนเดียวกัน)`,
-        '⚠️ พบชื่อซ้ำ'
+        `มีนักเรียนชื่อ "${dup.studentName}" ในชั้น ${dup.gradeLevel} อยู่แล้วในระบบ\n\nต้องการบันทึกเป็นรายการใหม่ซ้ำหรือไม่?\n(กด "ยกเลิก" แล้วใช้ปุ่ม "แก้ไข" จากหน้ารายชื่อแทน ถ้าเป็นคนเดียวกัน)`,
+        'พบชื่อซ้ำ'
       );
       if (!proceed) return;
     }
@@ -1928,7 +1928,7 @@ async function submitForm() {
     showLd(false);
   }
   const al = document.getElementById('f-alert');
-  al.className = 'alert al-ok'; al.textContent = '✅ บันทึกเรียบร้อยแล้ว!'; al.style.display = 'flex';
+  al.className = 'alert al-ok'; al.textContent = 'บันทึกเรียบร้อยแล้ว!'; al.style.display = 'flex';
   setTimeout(() => al.style.display = 'none', 3500);
   clearForm();
   window.scrollTo(0, 0);
@@ -1938,7 +1938,7 @@ function editRecord(id) {
   setFormData(r);
   _activatePage('form');
   const al = document.getElementById('f-edit-alert');
-  al.className = 'alert al-info'; al.textContent = '✏️ กำลังแก้ไข – กด "บันทึกข้อมูล" เพื่ออัปเดต'; al.style.display = 'flex';
+  al.className = 'alert al-info'; al.textContent = 'กำลังแก้ไข – กด "บันทึกข้อมูล" เพื่ออัปเดต'; al.style.display = 'flex';
   window.scrollTo(0, 0);
 }
 function confirmDel(id) {
@@ -2038,7 +2038,7 @@ function renderGradeSummary(recs) {
   }).filter(Boolean);
 
   if (!rows.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-ico">📊</div><p>ยังไม่มีข้อมูล — กด "➕ กรอกข้อมูล" เพื่อเริ่มต้น</p></div>`;
+    el.innerHTML = `<div class="empty"><div class="empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:2.6rem;height:2.6rem"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></div><p>ยังไม่มีข้อมูล — กด "กรอกข้อมูล" เพื่อเริ่มต้น</p></div>`;
     return;
   }
   el.innerHTML = `<div class="tw"><table>
@@ -2092,8 +2092,11 @@ function renderRecords() {
   if (sortRisk) recs = [...recs].sort((a,b) => riskCount(b) - riskCount(a));
   const el = document.getElementById('rec-table');
   if (!recs.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-ico">📋</div><p>ไม่พบข้อมูล</p></div>`; return;
+    el.innerHTML = `<div class="empty"><div class="empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:2.6rem;height:2.6rem"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><p>ไม่พบข้อมูล</p></div>`; return;
   }
+  const visBadge  = '<span class="bv"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg> เยี่ยมแล้ว</span>';
+  const nvisBadge = '<span class="bnv"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> ยังไม่ได้</span>';
+  const urgBadge  = '<span class="bur"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg> ด่วน</span>';
   const actionBtns = r => `
     <button class="btn btn-out btn-sm" onclick="editRecord('${r.id}')">${ICONS.edit} แก้ไข</button>
     <button class="btn btn-sm" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe" onclick="openTeacherLog('${r.id}')" title="บันทึกของครู">${ICONS.log} บันทึกครู</button>
@@ -2113,9 +2116,9 @@ function renderRecords() {
         <td style="font-size:.8rem">${esc(r.parentName)||'–'}${r.parentRel?' ('+esc(r.parentRel)+')':''}</td>
         <td style="font-size:.8rem">${esc(r.parentPhone)||'–'}</td>
         <td style="font-size:.8rem">${esc(r.visitDate)||'–'}</td>
-        <td>${r.visited ? '<span class="bv">✅ เยี่ยมแล้ว</span>' : '<span class="bnv">❌ ยังไม่ได้</span>'}</td>
+        <td>${r.visited ? visBadge : nvisBadge}</td>
         <td>${rc>0 ? `<div style="display:flex;flex-wrap:wrap;gap:2px;max-width:180px">${riskBadges(r)}</div>` : '<span style="color:var(--muted)">–</span>'}</td>
-        <td style="text-align:center">${r.urgent ? '<span class="bur">🚨 ด่วน</span>' : '–'}</td>
+        <td style="text-align:center">${r.urgent ? urgBadge : '–'}</td>
         <td style="white-space:nowrap">${actionBtns(r)}</td>
       </tr>`;
     }).join('')}</tbody></table></div>
@@ -2128,12 +2131,12 @@ function renderRecords() {
           <div class="rec-card-sub">${esc(r.gradeLevel)||'–'} · ${r.gender==='male'?'ชาย':r.gender==='female'?'หญิง':'–'}${r.visitDate?' · เยี่ยม '+esc(r.visitDate):''}</div>
         </div>
         <div class="rec-card-badges">
-          ${r.visited ? '<span class="bv">✅ เยี่ยมแล้ว</span>' : '<span class="bnv">❌ ยังไม่ได้</span>'}
-          ${r.urgent ? '<span class="bur">🚨 ด่วน</span>' : ''}
+          ${r.visited ? visBadge : nvisBadge}
+          ${r.urgent ? urgBadge : ''}
         </div>
       </div>
       ${rc>0 ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">${riskBadges(r)}</div>` : ''}
-      ${(r.parentName||r.parentPhone) ? `<div class="rec-card-parent">👤 ${esc(r.parentName)||'–'}${r.parentRel?' ('+esc(r.parentRel)+')':''}${r.parentPhone?` · <a href="tel:${esc(r.parentPhone)}" style="color:var(--pri-d);font-weight:600">${esc(r.parentPhone)}</a>`:''}</div>` : ''}
+      ${(r.parentName||r.parentPhone) ? `<div class="rec-card-parent"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg> ${esc(r.parentName)||'–'}${r.parentRel?' ('+esc(r.parentRel)+')':''}${r.parentPhone?` · <a href="tel:${esc(r.parentPhone)}" style="color:var(--pri-d);font-weight:600">${esc(r.parentPhone)}</a>`:''}</div>` : ''}
       <div class="rec-card-actions">${actionBtns(r)}</div>
     </div>`;
   }).join('')}</div>`;
@@ -2733,8 +2736,8 @@ function renderPresent() {
         <div style="font-size:.72rem;color:var(--muted)">${gv}/${gt} คน</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;min-width:70px">
-        ${gr_r?`<span style="background:#fef2f2;color:#b91c1c;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:700">⚠️ ${gr_r}</span>`:''}
-        ${gr_u?`<span style="background:#fff7ed;color:#c2410c;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:700">🚨 ${gr_u}</span>`:''}
+        ${gr_r?`<span style="background:#fef2f2;color:#b91c1c;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:3px"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> ${gr_r}</span>`:''}
+        ${gr_u?`<span style="background:#fff7ed;color:#c2410c;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:3px"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg> ${gr_u}</span>`:''}
       </div>
     </div>`;
   }).filter(Boolean).join('');
@@ -2744,17 +2747,17 @@ function renderPresent() {
       <div style="flex:1">
         <div style="font-weight:700;font-size:.9rem">${esc(r.studentName)||'–'} <span style="font-size:.75rem;color:var(--muted)">${esc(r.gradeLevel)}</span></div>
         <div style="font-size:.78rem;color:var(--muted)">ผู้ปกครอง: ${esc(r.parentName)||'–'} | โทร: ${esc(r.parentPhone)||'–'}</div>
-        ${r.notes?`<div style="font-size:.76rem;color:#b91c1c;margin-top:2px">📝 ${esc(r.notes)}</div>`:''}
+        ${r.notes?`<div style="font-size:.76rem;color:#b91c1c;margin-top:2px">${ICONS.log} ${esc(r.notes)}</div>`:''}
       </div>
       <button class="btn btn-sm btn-out" onclick="printStudent('${r.id}')">${ICONS.print}</button>
-    </div>`).join('') : '<div style="color:var(--muted);font-size:.88rem;padding:10px">ไม่มีกรณีเร่งด่วน ✅</div>';
+    </div>`).join('') : `<div style="color:var(--muted);font-size:.88rem;padding:10px">${ICONS.check} ไม่มีกรณีเร่งด่วน</div>`;
   document.getElementById('present-out').innerHTML = `
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px">
-    ${[['นักเรียนทั้งหมด',total,'–','var(--pri)','👥'],['ชาย / หญิง',male+' / '+female,'–','#0369a1','⚥'],
-       ['เยี่ยมบ้านแล้ว',vis,pct+'%','#15803d','✅'],['ยังไม่ได้เยี่ยม',nvis,total?Math.round(nvis/total*100)+'%':'0%','#b45309','⏳'],
-       ['พฤติกรรมเสี่ยง',risk,total?Math.round(risk/total*100)+'%':'0%','#b91c1c','⚠️'],['กรณีเร่งด่วน',urg,'–','#7c3aed','🚨']
+    ${[['นักเรียนทั้งหมด',total,'–','var(--pri)',ICONS.users],['ชาย / หญิง',male+' / '+female,'–','#0369a1','⚥'],
+       ['เยี่ยมบ้านแล้ว',vis,pct+'%','#15803d',ICONS.check],['ยังไม่ได้เยี่ยม',nvis,total?Math.round(nvis/total*100)+'%':'0%','#b45309',ICONS.clock],
+       ['พฤติกรรมเสี่ยง',risk,total?Math.round(risk/total*100)+'%':'0%','#b91c1c',ICONS.alert],['กรณีเร่งด่วน',urg,'–','#7c3aed',ICONS.zap]
     ].map(([l,v,sub,c,ic])=>`<div style="background:#fff;border:1px solid var(--bdr);border-top:3px solid ${c};border-radius:10px;padding:14px 15px">
-      <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em">${ic} ${l}</div>
+      <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;display:flex;align-items:center;gap:4px">${ic} ${l}</div>
       <div style="font-size:2rem;font-weight:800;color:${c};line-height:1.1;margin-top:4px">${v}</div>
       ${sub!=='–'?`<div style="font-size:.72rem;color:var(--muted);margin-top:2px">${sub}</div>`:''}
     </div>`).join('')}
@@ -2775,16 +2778,16 @@ function renderPresent() {
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
     <div style="background:#fff;border:1px solid var(--bdr);border-radius:10px;padding:16px 18px">
-      <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);margin-bottom:12px;border-bottom:2px solid var(--pri-l);padding-bottom:6px">🏫 ความคืบหน้ารายชั้น</div>
+      <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);margin-bottom:12px;border-bottom:2px solid var(--pri-l);padding-bottom:6px">${ICONS.school} ความคืบหน้ารายชั้น</div>
       <div style="display:flex;flex-direction:column;gap:8px">${gradeRows||'<div style="color:var(--muted)">ไม่มีข้อมูล</div>'}</div>
     </div>
     <div style="background:#fff;border:1px solid var(--bdr);border-radius:10px;padding:16px 18px">
-      <div style="font-weight:700;font-size:.88rem;color:#b91c1c;margin-bottom:12px;border-bottom:2px solid #fecaca;padding-bottom:6px">🚨 กรณีเร่งด่วน (${urgRecs.length} คน)</div>
+      <div style="font-weight:700;font-size:.88rem;color:#b91c1c;margin-bottom:12px;border-bottom:2px solid #fecaca;padding-bottom:6px">${ICONS.zap} กรณีเร่งด่วน (${urgRecs.length} คน)</div>
       <div style="display:flex;flex-direction:column;gap:8px;max-height:360px;overflow-y:auto">${urgList}</div>
     </div>
   </div>
   <div style="background:#fff;border:1px solid var(--bdr);border-radius:10px;padding:16px 18px">
-    <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);margin-bottom:12px;border-bottom:2px solid var(--pri-l);padding-bottom:6px">📊 สรุปปัญหาและความเสี่ยง</div>
+    <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);margin-bottom:12px;border-bottom:2px solid var(--pri-l);padding-bottom:6px"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg> สรุปปัญหาและความเสี่ยง</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">
       ${[['การเรียน',recs.filter(r=>r.pL).length,'#3b82f6'],['สุขภาพ',recs.filter(r=>r.pH).length,'#22c55e'],
          ['เศรษฐกิจ',recs.filter(r=>r.pE).length,'#f59e0b'],['สารเสพติด',recs.filter(r=>r.pS).length,'#ef4444'],
@@ -2806,7 +2809,13 @@ function renderPresent() {
 
 // ── SURVEY DASHBOARD ──────────────────────
 const SURVEY_COL = 'violenceSurvey';
-const RISK_LABEL = { critical:'🔴🔴 วิกฤต', high:'🔴 เสี่ยงสูง', medium:'🟡 เสี่ยงปานกลาง', low:'🟢 ปกติ' };
+const _dot = c => `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c};margin-right:2px"></span>`;
+const RISK_LABEL = {
+  critical: _dot('#991b1b')+_dot('#991b1b')+' วิกฤต',
+  high:     _dot('#dc2626')+' เสี่ยงสูง',
+  medium:   _dot('#eab308')+' เสี่ยงปานกลาง',
+  low:      _dot('#16a34a')+' ปกติ'
+};
 const RISK_COLOR = { critical:'#fee2e2', high:'#fff7ed', medium:'#fefce8', low:'#f0fdf4' };
 const RISK_BORDER= { critical:'#fca5a5', high:'#fed7aa', medium:'#fde68a', low:'#bbf7d0' };
 const FLAG_LABEL = {
@@ -2840,7 +2849,7 @@ async function renderSurvey() {
     _latestSurveyData = { rows, year, sem };
 
     if (rows.length === 0) {
-      out.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:2rem;margin-bottom:8px">📭</div><div style="font-weight:600">ยังไม่มีข้อมูลแบบสำรวจ</div><div style="font-size:.8rem;margin-top:4px">ภาคเรียน ${sem}/${year}</div></div>`;
+      out.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)"><div style="margin-bottom:8px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:2rem;height:2rem"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><path d="M9 12h6"/><path d="M9 16h6"/></svg></div><div style="font-weight:600">ยังไม่มีข้อมูลแบบสำรวจ</div><div style="font-size:.8rem;margin-top:4px">ภาคเรียน ${sem}/${year}</div></div>`;
       return;
     }
 
@@ -2872,8 +2881,8 @@ async function renderSurvey() {
       if (r.q10_friend_weapon==='yes'&&(r.q10_friend_name||r.q10_friend_grade||r.q10_friend_no)) fp.push(`ข้อ 10: ${friendLbl(10,r)}`);
       if (r.q11_friend_violent==='yes'&&(r.q11_friend_name||r.q11_friend_grade||r.q11_friend_no)) fp.push(`ข้อ 11: ${friendLbl(11,r)}`);
       if (r.q12_friend_concern==='yes'&&(r.q12_friend_name||r.q12_friend_grade||r.q12_friend_no)) fp.push(`ข้อ 12: ${friendLbl(12,r)}`);
-      const friendInfo = fp.length ? `<div style="margin-top:6px;font-size:.75rem;background:#fff7ed;padding:5px 9px;border-radius:6px;color:#92400e">👥 เพื่อนที่ถูกระบุ: ${fp.join(' | ')}</div>` : '';
-      const fuNote = done ? `<div style="font-size:.73rem;color:#15803d;margin-top:6px;font-weight:600">✅ ติดตามแล้ว โดย ${r.followUpBy||'–'} (${r.followUpAt?new Date(r.followUpAt).toLocaleDateString('th-TH'):''})</div>` : '';
+      const friendInfo = fp.length ? `<div style="margin-top:6px;font-size:.75rem;background:#fff7ed;padding:5px 9px;border-radius:6px;color:#92400e">${ICONS.users} เพื่อนที่ถูกระบุ: ${fp.join(' | ')}</div>` : '';
+      const fuNote = done ? `<div style="font-size:.73rem;color:#15803d;margin-top:6px;font-weight:600">${ICONS.check} ติดตามแล้ว โดย ${esc(r.followUpBy)||'–'} (${r.followUpAt?new Date(r.followUpAt).toLocaleDateString('th-TH'):''})</div>` : '';
       const bg = done?'#f0fdf4':(RISK_COLOR[r.riskLevel]||'#fff'), bd = done?'#bbf7d0':(RISK_BORDER[r.riskLevel]||'var(--bdr)');
       const txtColor = r.riskLevel==='critical'?'#991b1b':r.riskLevel==='high'?'#9a3412':r.riskLevel==='medium'?'#854d0e':'#166534';
       return `<div style="background:${bg};border:1px solid ${bd};border-left:4px solid ${bd};border-radius:10px;padding:13px 15px;margin-bottom:10px">
@@ -2899,44 +2908,44 @@ async function renderSurvey() {
       return `<tr style="border-top:1px solid var(--bdr);background:${i%2?'var(--bg)':'#fff'}">
         <td style="padding:8px 10px;font-weight:700">${r.studentName ? `${esc(r.studentName)}<br><span style="font-weight:500;font-size:.72rem;color:var(--muted)">${esc(r.grade)} / ${esc(r.studentNo)}</span>` : `${esc(r.grade)} / ${esc(r.studentNo)}`}</td>
         <td style="padding:8px 10px"><span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:12px;background:${RISK_COLOR[r.riskLevel]||'#f3f4f6'};color:${rc}">${RISK_LABEL[r.riskLevel]||'–'}</span></td>
-        <td style="padding:8px 10px;color:${freqColor[safeMax]}">${safeMax>0?freqLabel[safeMax]:'✅'}</td>
-        <td style="padding:8px 10px;color:${freqColor[thinkMax]}">${thinkMax>0?freqLabel[thinkMax]:'✅'}</td>
-        <td style="padding:8px 10px">${r.q8_weapon_home==='yes'?'<span style="color:#dc2626;font-weight:700">⚠️ มี</span>':'–'}</td>
-        <td style="padding:8px 10px">${hasFriend?'<span style="color:#dc2626;font-weight:700">⚠️ มี</span>':'–'}</td>
+        <td style="padding:8px 10px;color:${freqColor[safeMax]}">${safeMax>0?freqLabel[safeMax]:ICONS.check}</td>
+        <td style="padding:8px 10px;color:${freqColor[thinkMax]}">${thinkMax>0?freqLabel[thinkMax]:ICONS.check}</td>
+        <td style="padding:8px 10px">${r.q8_weapon_home==='yes'?`<span style="color:#dc2626;font-weight:700">${ICONS.alert} มี</span>`:'–'}</td>
+        <td style="padding:8px 10px">${hasFriend?`<span style="color:#dc2626;font-weight:700">${ICONS.alert} มี</span>`:'–'}</td>
       </tr>`;
     }).join('');
 
     out.innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px">
-      ${[['ตอบแบบสำรวจ',rows.length,'#0369a1','📋'],['วิกฤต',byCrit.critical,'#dc2626','🔴🔴'],['เสี่ยงสูง',byCrit.high,'#ea580c','🔴'],['ติดตามแล้ว',doneCnt+'/'+alerts.length,'#7c3aed','✅']
+      ${[['ตอบแบบสำรวจ',rows.length,'#0369a1',ICONS.log],['วิกฤต',byCrit.critical,'#dc2626',_dot('#991b1b')+_dot('#991b1b')],['เสี่ยงสูง',byCrit.high,'#ea580c',_dot('#dc2626')],['ติดตามแล้ว',doneCnt+'/'+alerts.length,'#7c3aed',ICONS.check]
       ].map(([l,v,c,ic])=>`<div style="background:#fff;border:1px solid var(--bdr);border-top:3px solid ${c};border-radius:10px;padding:13px 15px">
-        <div style="font-size:.7rem;color:var(--muted)">${ic} ${l}</div>
+        <div style="font-size:.7rem;color:var(--muted);display:flex;align-items:center;gap:4px">${ic} ${l}</div>
         <div style="font-size:1.8rem;font-weight:800;color:${c};line-height:1.2;margin-top:3px">${v}</div>
         <div style="font-size:.68rem;color:var(--muted);margin-top:1px">ภาค ${sem}/${year}</div>
       </div>`).join('')}
     </div>
 
     <div style="background:#fff;border:1px solid var(--bdr);border-radius:12px;padding:16px 18px;margin-bottom:14px">
-      <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--pri-l)">📊 ความเสี่ยงแยกตามชั้นเรียน</div>
+      <div style="font-weight:700;font-size:.88rem;color:var(--pri-d);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--pri-l)"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg> ความเสี่ยงแยกตามชั้นเรียน</div>
       <div style="position:relative;height:200px"><canvas id="sv-risk-chart"></canvas></div>
     </div>
 
     ${alerts.length > 0 ? `
     <div style="background:#fff;border:1px solid var(--bdr);border-radius:12px;padding:16px 18px;margin-bottom:14px">
       <div style="font-weight:700;font-size:.92rem;color:#991b1b;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #fecaca;display:flex;align-items:center;justify-content:space-between">
-        <span>🚨 นักเรียนที่ต้องติดตาม (${alerts.length} คน)</span>
+        <span>${ICONS.zap} นักเรียนที่ต้องติดตาม (${alerts.length} คน)</span>
         <span style="font-size:.72rem;color:var(--muted);font-weight:400">ดำเนินการแล้ว ${doneCnt}/${alerts.length}</span>
       </div>
       ${alertCards}
     </div>` : `
     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px 18px;margin-bottom:14px;text-align:center;color:#166534;font-weight:600">
-      ✅ ไม่มีนักเรียนที่ต้องติดตามเป็นพิเศษ
+      ${ICONS.check} ไม่มีนักเรียนที่ต้องติดตามเป็นพิเศษ
     </div>`}
 
     <div style="background:#fff;border:1px solid var(--bdr);border-radius:12px;padding:16px 18px">
       <div style="font-weight:700;font-size:.92rem;color:var(--pri-d);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--pri-l);display:flex;align-items:center;justify-content:space-between">
-        <span>📋 รายการทั้งหมด (${rows.length} คน)</span>
-        <button onclick="printSurveyReport()" class="btn btn-sm btn-out" style="font-size:.75rem">🖨️ พิมพ์รายงาน</button>
+        <span>${ICONS.log} รายการทั้งหมด (${rows.length} คน)</span>
+        <button onclick="printSurveyReport()" class="btn btn-sm btn-out" style="font-size:.75rem">${ICONS.print} พิมพ์รายงาน</button>
       </div>
       <div style="overflow-x:auto">
         <table style="width:100%;border-collapse:collapse;font-size:.8rem">
@@ -2989,7 +2998,7 @@ function openTeacherLog(id) {
   const auditEl = document.getElementById('tl-audit-list');
   const log = (r.editLog || []).slice().reverse();
   auditEl.innerHTML = log.length
-    ? log.map(e => `<div style="padding:5px 0;border-bottom:1px dashed var(--bdr)">✏️ <strong style="color:var(--txt)">${e.by||'ไม่ทราบชื่อ'}</strong> — ${new Date(e.at).toLocaleString('th-TH',{dateStyle:'medium',timeStyle:'short'})}</div>`).join('')
+    ? log.map(e => `<div style="padding:5px 0;border-bottom:1px dashed var(--bdr)">${ICONS.edit} <strong style="color:var(--txt)">${esc(e.by)||'ไม่ทราบชื่อ'}</strong> — ${new Date(e.at).toLocaleString('th-TH',{dateStyle:'medium',timeStyle:'short'})}</div>`).join('')
     : '<div>ยังไม่มีประวัติการแก้ไข</div>';
 
   // reset add-entry form
@@ -3007,10 +3016,12 @@ function renderTLLog(entries) {
     el.innerHTML = '<div style="font-size:.8rem;color:var(--muted);padding:8px 0">ยังไม่มีบันทึกการดำเนินการ</div>';
     return;
   }
+  const msgIco = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>';
+  const phoneIco = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/></svg>';
   const actionLabel = {
-    talk:'💬 พูดคุยกับนักเรียน', parent:'📞 ติดต่อผู้ปกครอง',
-    counselor:'🧑‍⚕️ ส่งต่อครูแนะแนว', admin:'🏫 รายงานผู้บริหาร',
-    external:'🏥 ส่งต่อหน่วยงานภายนอก', other:'📌 อื่นๆ'
+    talk:`${msgIco} พูดคุยกับนักเรียน`, parent:`${phoneIco} ติดต่อผู้ปกครอง`,
+    counselor:`${ICONS.user1} ส่งต่อครูแนะแนว`, admin:`${ICONS.school} รายงานผู้บริหาร`,
+    external:`${ICONS.school} ส่งต่อหน่วยงานภายนอก`, other:`${ICONS.pin} อื่นๆ`
   };
   el.innerHTML = [...entries].reverse().map((e, ri) => {
     const realIdx = entries.length - 1 - ri;
@@ -3036,7 +3047,7 @@ async function saveTeacherObs() {
   obs.date = document.getElementById('tl-obs-date').value;
   r.obs = obs;
   await upsert(r);
-  document.getElementById('tl-obs-saved').textContent = `✅ บันทึกแล้ว: ${obs.date}`;
+  document.getElementById('tl-obs-saved').textContent = `บันทึกแล้ว: ${obs.date}`;
 }
 
 async function addFollowupEntry() {
@@ -3059,7 +3070,7 @@ async function addFollowupEntry() {
 
 async function deleteTLEntry(idx) {
   if (!_tlId) return;
-  if (!await showConfirm('ต้องการลบบันทึกนี้ใช่ไหมครับ?', '🗑 ยืนยันการลบบันทึก')) return;
+  if (!await showConfirm('ต้องการลบบันทึกนี้ใช่ไหมครับ?', 'ยืนยันการลบบันทึก')) return;
   const r = _recs.find(x => x.id === _tlId);
   if (!r || !r.followup_log) return;
   r.followup_log.splice(idx, 1);

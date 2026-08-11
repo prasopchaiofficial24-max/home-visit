@@ -46,6 +46,7 @@ body{font-family:'Prompt','Sarabun',Arial,sans-serif;background:var(--bg);color:
 .tb-logo{font-size:.95rem;font-weight:800;color:var(--pri-d);letter-spacing:-.02em}
 .tb-logo span{color:var(--muted);font-size:.72rem;font-weight:400;margin-left:4px}
 .tb-private{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--sec);font-weight:600;background:#dcfce7;padding:3px 10px;border-radius:20px}
+.icon{width:1.05em;height:1.05em;vertical-align:-0.16em;flex-shrink:0}
 
 /* ── WRAP ── */
 .wrap{max-width:520px;margin:0 auto;padding:20px 16px 40px}
@@ -159,7 +160,7 @@ body{font-family:'Prompt','Sarabun',Arial,sans-serif;background:var(--bg);color:
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="tb-logo"><img src="logo.png" style="height:34px;width:34px;object-fit:contain;vertical-align:middle;margin-right:7px;border-radius:50%">จิกดู่วิทยา <span>แบบสำรวจความปลอดภัย</span></div>
-  <div class="tb-private">🔒 เป็นความลับ</div>
+  <div class="tb-private"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> เป็นความลับ</div>
 </div>
 
 <!-- LOADING -->
@@ -174,19 +175,19 @@ body{font-family:'Prompt','Sarabun',Arial,sans-serif;background:var(--bg);color:
   <div id="step-0">
     <div class="card">
       <div class="login-hero">
-        <div class="login-icon">📋</div>
+        <div class="login-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:3rem;height:3rem"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><path d="M9 12h6"/><path d="M9 16h6"/></svg></div>
         <div class="login-title">แบบสำรวจความปลอดภัยในโรงเรียน</div>
         <div class="login-sub">กรอกข้อมูลเพื่อเข้าสู่แบบสำรวจ<br>ใช้เวลาประมาณ 3–5 นาที</div>
       </div>
 
       <div class="privacy-note">
-        🔒 <strong>ข้อมูลของคุณเป็นความลับ</strong><br>
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> <strong>ข้อมูลของคุณเป็นความลับ</strong><br>
         มีเฉพาะครูแนะแนวและผู้บริหารเท่านั้นที่เห็นคำตอบ
         ตอบตามความจริงเพื่อให้โรงเรียนช่วยเหลือได้ตรงจุด
       </div>
 
       <div id="draft-resume-box" style="display:none;background:var(--warn-bg);border:1px solid var(--warn-bd);border-radius:10px;padding:12px 14px;margin-bottom:16px">
-        <div style="font-size:.85rem;color:var(--warn-fg);font-weight:600;margin-bottom:8px">📝 พบคำตอบที่ทำค้างไว้ (ยังไม่ได้ส่ง) ต้องการทำต่อไหม?</div>
+        <div style="font-size:.85rem;color:var(--warn-fg);font-weight:600;margin-bottom:8px"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><path d="M9 12h6"/><path d="M9 16h6"/></svg> พบคำตอบที่ทำค้างไว้ (ยังไม่ได้ส่ง) ต้องการทำต่อไหม?</div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-pri" style="flex:1;padding:9px" onclick="resumeDraft()">ทำต่อ</button>
           <button class="btn btn-sec" style="flex:1;padding:9px" onclick="discardDraft()">เริ่มใหม่</button>
@@ -218,7 +219,7 @@ body{font-family:'Prompt','Sarabun',Arial,sans-serif;background:var(--bg);color:
       </div>
 
       <div class="err-msg" id="login-err">กรุณากรอกข้อมูลให้ครบถ้วน และตรวจสอบรหัสห้องเรียน</div>
-      <div class="dup-box" id="dup-box">🔒 คุณได้ทำแบบสำรวจในภาคเรียนนี้แล้ว ไม่สามารถกรอกซ้ำได้ หากมีข้อสงสัยกรุณาติดต่อครูที่ปรึกษา</div>
+      <div class="dup-box" id="dup-box"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> คุณได้ทำแบบสำรวจในภาคเรียนนี้แล้ว ไม่สามารถกรอกซ้ำได้ หากมีข้อสงสัยกรุณาติดต่อครูที่ปรึกษา</div>
 
       <button class="btn btn-pri" id="btn-login" onclick="doLogin()">ดำเนินการต่อ →</button>
     </div>
@@ -239,7 +240,7 @@ body{font-family:'Prompt','Sarabun',Arial,sans-serif;background:var(--bg);color:
 
     <div class="card">
       <div class="sec-header">
-        <div class="sec-badge">🛡️ ส่วนที่ 1</div>
+        <div class="sec-badge"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg> ส่วนที่ 1</div>
         <div class="sec-title">ความปลอดภัยของตัวเอง</div>
         <div class="sec-desc">ตอบตามที่รู้สึกจริงๆ ในช่วง <strong>1 เดือนที่ผ่านมา</strong></div>
       </div>
@@ -311,7 +312,7 @@ body{font-family:'Prompt','Sarabun',Arial,sans-serif;background:var(--bg);color:
 
     <div class="card">
       <div class="sec-header">
-        <div class="sec-badge">💭 ส่วนที่ 2</div>
+        <div class="sec-badge"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg> ส่วนที่ 2</div>
         <div class="sec-title">ความคิดและความรู้สึก</div>
         <div class="sec-desc">ข้อมูลส่วนนี้เป็นความลับมากที่สุด ตอบตรงๆ ได้เลย ไม่มีคำตอบผิดถูก</div>
       </div>
@@ -381,7 +382,7 @@ body{font-family:'Prompt','Sarabun',Arial,sans-serif;background:var(--bg);color:
 
     <div class="card">
       <div class="sec-header">
-        <div class="sec-badge">👥 ส่วนที่ 3</div>
+        <div class="sec-badge"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> ส่วนที่ 3</div>
         <div class="sec-title">สิ่งที่สังเกตเห็นในเพื่อน</div>
         <div class="sec-desc">ถ้ามีเพื่อนที่คุณเป็นห่วง การบอกโรงเรียนคือการช่วยเพื่อน ไม่ใช่การฟ้อง</div>
       </div>
@@ -461,11 +462,11 @@ body{font-family:'Prompt','Sarabun',Arial,sans-serif;background:var(--bg);color:
   <!-- ─── STEP 4: SUCCESS ─── -->
   <div id="step-4" style="display:none">
     <div class="card success-card">
-      <div class="success-icon">✅</div>
+      <div class="success-icon" style="color:var(--sec)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:3.5rem;height:3.5rem"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg></div>
       <div class="success-title">ส่งแบบสำรวจเรียบร้อยแล้ว</div>
       <div class="success-sub">ขอบคุณที่ร่วมทำแบบสำรวจ<br>ข้อมูลของคุณจะช่วยให้โรงเรียนดูแลทุกคนได้ดีขึ้น</div>
       <div class="alert-box" id="alert-followup" style="display:none">
-        <strong>📞 โรงเรียนจะติดต่อกลับ</strong>
+        <strong><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/></svg> โรงเรียนจะติดต่อกลับ</strong>
         มีข้อมูลบางส่วนที่ครูแนะแนวจะติดตามดูแลเป็นพิเศษ ไม่ต้องกังวล — นี่คือการช่วยเหลือ ไม่ใช่การลงโทษ
       </div>
     </div>
