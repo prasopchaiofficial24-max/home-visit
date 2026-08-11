@@ -251,8 +251,11 @@ tbody tr{transition:background .1s}
 .db-sub{font-size:.69rem;color:var(--muted);margin-top:2px}
 
 /* ── DASHBOARD CHARTS ── */
-.db-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--sp-3);margin-bottom:var(--sp-3)}
-.db-chart-box{background:#fff;border-radius:var(--radius);padding:var(--sp-4) var(--sp-4) var(--sp-3);box-shadow:var(--sh);border:1px solid var(--bdr);transition:var(--tr)}
+.db-charts{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-3);margin-bottom:var(--sp-3)}
+@media(max-width:1000px){.db-charts{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.db-charts{grid-template-columns:1fr}}
+.db-chart-box{background:#fff;border-radius:var(--radius);padding:var(--sp-4) var(--sp-4) var(--sp-3);box-shadow:var(--sh);border:1px solid var(--bdr);border-top:3px solid var(--bdr);transition:var(--tr)}
+.db-chart-box.primary{border-top-color:var(--pri)}
 .db-chart-box:hover{box-shadow:var(--sh-md)}
 .db-chart-box h3{font-size:.8rem;font-weight:700;color:var(--txt);margin-bottom:var(--sp-3);display:flex;align-items:center;gap:var(--sp-2);padding-bottom:var(--sp-2);border-bottom:1px solid var(--bdr-l)}
 .db-chart-c{position:relative;height:185px}
@@ -395,8 +398,8 @@ body.booting .db-vis-row strong{
 
   <!-- Charts -->
   <div class="db-charts">
-    <div class="db-chart-box"><h3>⚠️ พฤติกรรมเสี่ยง</h3><div class="db-chart-c"><canvas id="c-risk"></canvas></div></div>
-    <div class="db-chart-box"><h3>📌 ปัญหาที่พบ</h3><div class="db-chart-c"><canvas id="c-prob"></canvas></div></div>
+    <div class="db-chart-box primary"><h3>⚠️ พฤติกรรมเสี่ยง</h3><div class="db-chart-c"><canvas id="c-risk"></canvas></div></div>
+    <div class="db-chart-box primary"><h3>📌 ปัญหาที่พบ</h3><div class="db-chart-c"><canvas id="c-prob"></canvas></div></div>
     <div class="db-chart-box"><h3>👪 ความสัมพันธ์ครอบครัว</h3><div class="db-chart-c"><canvas id="c-fam"></canvas></div></div>
     <div class="db-chart-box"><h3>🏠 สภาพบ้าน</h3><div class="db-chart-c"><canvas id="c-home"></canvas></div></div>
     <div class="db-chart-box"><h3>🚗 การเดินทาง</h3><div class="db-chart-c"><canvas id="c-transport"></canvas></div></div>
@@ -2003,7 +2006,7 @@ function renderGradeSummary(recs) {
     const risk  = gr.filter(r => riskCount(r) > 0).length;
     const urg   = gr.filter(r => r.urgent).length;
     const pct   = (vis / total * 100).toFixed(1);
-    const col   = parseFloat(pct) >= 80 ? '#22c55e' : parseFloat(pct) >= 50 ? '#f59e0b' : '#ef4444';
+    const col   = parseFloat(pct) >= 80 ? 'var(--sec)' : parseFloat(pct) >= 50 ? 'var(--warn)' : 'var(--dan)';
     const tchr  = gr.find(r => r.teacher)?.teacher || '–';
     return `<tr>
       <td><strong>${g}</strong></td>
@@ -2018,8 +2021,8 @@ function renderGradeSummary(recs) {
           <span style="font-size:.76rem;font-weight:700;color:${col};min-width:34px">${pct}%</span>
         </div>
       </td>
-      <td style="text-align:center;color:#ef4444;font-weight:700">${risk||'–'}</td>
-      <td style="text-align:center;color:#f97316;font-weight:700">${urg||'–'}</td>
+      <td style="text-align:center;color:var(--dan);font-weight:700">${risk||'–'}</td>
+      <td style="text-align:center;color:var(--warn);font-weight:700">${urg||'–'}</td>
     </tr>`;
   }).filter(Boolean);
 
@@ -2031,8 +2034,8 @@ function renderGradeSummary(recs) {
     <thead><tr>
       <th>ชั้น</th><th>ครูประจำชั้น</th>
       <th style="text-align:center">ทั้งหมด</th>
-      <th style="text-align:center">ชาย✅</th>
-      <th style="text-align:center">หญิง✅</th>
+      <th style="text-align:center">ชาย</th>
+      <th style="text-align:center">หญิง</th>
       <th style="text-align:center">เยี่ยมแล้ว</th>
       <th>ความคืบหน้า</th>
       <th style="text-align:center">เสี่ยง</th>
