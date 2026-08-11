@@ -47,7 +47,11 @@ const PRINCIPAL = 'นายโกวิท สุพรรณ์';
   --tr:all .2s cubic-bezier(.4,0,.2,1);
   /* สเกลระยะห่าง (grid 4px) — ใช้แทนค่า px ลอยๆ ให้ระยะห่างทั้งระบบสม่ำเสมอ */
   --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;
-  --sp-6:24px;--sp-7:28px;--sp-8:32px;--sp-10:40px;--sp-12:48px
+  --sp-6:24px;--sp-7:28px;--sp-8:32px;--sp-10:40px;--sp-12:48px;
+  /* โทนอ่อน (พื้นอ่อน+ตัวอักษรเข้ม+ขอบ) สำหรับ toast/banner แจ้งเตือน */
+  --warn-bg:#fef3c7;--warn-fg:#92400e;--warn-bd:#fcd34d;
+  --sec-bg:#dcfce7;--sec-fg:#15803d;--sec-bd:#86efac;
+  --dan-bg:#fee2e2;--dan-fg:#991b1b;--dan-bd:#fca5a5
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background:var(--bg);color:var(--txt);font-size:15px;-webkit-font-smoothing:antialiased}
@@ -414,7 +418,7 @@ body.booting .db-vis-row strong{
   <input type="hidden" id="edit-id">
   <div class="alert al-ok"  id="f-alert"></div>
   <div class="alert al-info" id="f-edit-alert"></div>
-  <div id="f-draft-banner" style="display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:#fff7ed;color:#92400e;border:1px solid #fed7aa;border-radius:9px;padding:10px 14px;margin-bottom:12px;font-size:.85rem">
+  <div id="f-draft-banner" style="display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--warn-bg);color:var(--warn-fg);border:1px solid var(--warn-bd);border-radius:9px;padding:10px 14px;margin-bottom:12px;font-size:.85rem">
     <span>📝 พบข้อมูลที่กรอกค้างไว้ (ยังไม่ได้บันทึก) ต้องการกู้คืนไหมครับ?</span>
     <div style="display:flex;gap:6px;flex-shrink:0">
       <button class="btn btn-sm btn-pri" onclick="restoreDraft()">กู้คืน</button>
@@ -977,7 +981,7 @@ body.booting .db-vis-row strong{
       <input type="password" id="w-pin" maxlength="20" placeholder="กรอก PIN ที่ได้รับจากผู้ดูแลระบบ" autocomplete="off"
         style="padding:8px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.9rem;font-family:inherit;width:100%;letter-spacing:.1em">
     </div>
-    <div id="w-pin-err" style="display:none;font-size:.82rem;color:var(--dan);margin-bottom:10px;padding:8px 12px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca"></div>
+    <div id="w-pin-err" style="display:none;font-size:.82rem;color:var(--dan-fg);margin-bottom:10px;padding:8px 12px;background:var(--dan-bg);border-radius:8px;border:1px solid var(--dan-bd)"></div>
     <button class="btn btn-pri" style="width:100%" onclick="saveTeacher()">🚀 เริ่มใช้งาน</button>
   </div>
 </div>
@@ -992,7 +996,7 @@ body.booting .db-vis-row strong{
         onkeydown="if(event.key==='Enter') checkAdminPin()"
         style="padding:8px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.9rem;font-family:inherit;width:100%;letter-spacing:.1em">
     </div>
-    <div id="admin-pin-err" style="display:none;font-size:.82rem;color:var(--dan);margin-bottom:10px;padding:8px 12px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca"></div>
+    <div id="admin-pin-err" style="display:none;font-size:.82rem;color:var(--dan-fg);margin-bottom:10px;padding:8px 12px;background:var(--dan-bg);border-radius:8px;border:1px solid var(--dan-bd)"></div>
     <div class="btn-row">
       <button class="btn btn-pri" onclick="checkAdminPin()">🔓 เข้าสู่ระบบ</button>
       <button class="btn btn-gray" onclick="closeMo('mo-admin-pin')">ยกเลิก</button>
@@ -1283,9 +1287,9 @@ function setConn(s, errMsg) {
 
 // ── TOAST (แทน alert() มาตรฐานเบราว์เซอร์ ให้เข้าธีมระบบ) ──
 const _TOAST_STYLE = {
-  warn:    { bg:'#fef3c7', color:'#92400e', border:'#fcd34d' },
-  success: { bg:'#dcfce7', color:'#15803d', border:'#86efac' },
-  error:   { bg:'#fee2e2', color:'#991b1b', border:'#fca5a5' }
+  warn:    { bg:'var(--warn-bg)', color:'var(--warn-fg)', border:'var(--warn-bd)' },
+  success: { bg:'var(--sec-bg)',  color:'var(--sec-fg)',  border:'var(--sec-bd)' },
+  error:   { bg:'var(--dan-bg)',  color:'var(--dan-fg)',  border:'var(--dan-bd)' }
 };
 function _showToast(msg, kind) {
   const s = _TOAST_STYLE[kind] || _TOAST_STYLE.warn;
