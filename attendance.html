@@ -12,6 +12,10 @@ const DUTY_COL     = 'dutyReports';
 const ROSTER_COL   = 'roster';
 const DUTY_DAYS    = ['mon','tue','wed','thu','fri'];
 const DUTY_DAY_LBL = {mon:'จันทร์',tue:'อังคาร',wed:'พุธ',thu:'พฤหัสบดี',fri:'ศุกร์'};
+const GRADES       = ['ม.1','ม.2','ม.3','ม.4','ม.5','ม.6'];
+const ATT_STATUS   = ['present','absent','leave','late'];
+const ATT_STATUS_LBL = {present:'มา',absent:'ขาด',leave:'ลา',late:'สาย'};
+const THAI_MONTHS  = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 </script>
 
 <link rel="icon" type="image/png" href="logo.png">
@@ -77,6 +81,24 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
 .pin-box h2{font-size:1.05rem;margin-bottom:var(--sp-4)}
 .soon{text-align:center;color:var(--muted);padding:var(--sp-8) 0;font-size:.9rem}
 .hidden{display:none !important}
+.fg select{width:100%;padding:10px 12px;border:1.5px solid var(--bdr);border-radius:var(--radius-sm);font-size:.92rem;font-family:inherit;background:#fff}
+.session-row{display:flex;gap:8px;margin-top:var(--sp-2)}
+.session-row .btn{flex:1}
+.chk-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-3);flex-wrap:wrap;gap:8px}
+.chk-head-info{font-size:.85rem;color:var(--muted)}
+.chk-head-info strong{color:var(--txt)}
+.att-row{background:var(--card);border:1px solid var(--bdr);border-radius:var(--radius-sm);padding:var(--sp-3);margin-bottom:var(--sp-2)}
+.att-row .nm{font-weight:700;font-size:.92rem;margin-bottom:8px}
+.att-row .nm .no{color:var(--muted);font-weight:400;font-size:.8rem;margin-right:4px}
+.att-status{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px}
+.att-status button{padding:9px 4px;border-radius:8px;border:1.5px solid var(--bdr);background:#fff;font-size:.78rem;font-weight:700;cursor:pointer;color:var(--muted);transition:var(--tr)}
+.att-status button.sel-present{background:var(--sec);color:#fff;border-color:var(--sec)}
+.att-status button.sel-absent{background:var(--dan);color:#fff;border-color:var(--dan)}
+.att-status button.sel-leave{background:#0369a1;color:#fff;border-color:#0369a1}
+.att-status button.sel-late{background:var(--warn);color:#fff;border-color:var(--warn)}
+.att-row input[type=text]{width:100%;padding:7px 9px;border:1px solid var(--bdr-l);border-radius:6px;font-size:.8rem;font-family:inherit}
+.att-summary{display:flex;gap:10px;flex-wrap:wrap;font-size:.78rem;color:var(--muted);margin-bottom:var(--sp-3)}
+.att-summary span strong{color:var(--txt)}
 </style>
 </head>
 <body>
@@ -119,13 +141,39 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
     </div>
   </div>
 
-  <!-- เช็คชื่อ (ยังไม่เปิดใช้ในเฟสนี้) -->
+  <!-- เช็คชื่อ -->
   <div id="view-check" class="hidden">
     <div class="page-head">
       <button class="back-btn" onclick="go('home')">← กลับ</button>
       <h2>เช็คชื่อ</h2>
     </div>
-    <div class="card"><div class="soon">ยังไม่เปิดใช้งาน — จะเพิ่มในเฟสถัดไป</div></div>
+
+    <div id="check-login" class="card">
+      <div class="fg">
+        <label>ชั้นเรียน</label>
+        <select id="chk-grade"></select>
+      </div>
+      <div class="fg">
+        <label>PIN ประจำชั้นเรียน</label>
+        <input type="password" id="chk-pin" placeholder="กรอก PIN" autocomplete="off">
+      </div>
+      <div class="session-row">
+        <button class="btn btn-pri" onclick="startCheck('morning')">รอบเช้า</button>
+        <button class="btn btn-pri" onclick="startCheck('evening')">รอบเย็น</button>
+      </div>
+      <div class="msg err" id="chk-login-err"></div>
+    </div>
+
+    <div id="check-list" class="hidden">
+      <div class="chk-head">
+        <div class="chk-head-info" id="chk-head-info"></div>
+        <button class="back-btn" onclick="logoutCheck()">ออกจากระบบ</button>
+      </div>
+      <div class="att-summary" id="chk-summary"></div>
+      <div id="check-rows"></div>
+      <button class="btn btn-pri" style="width:100%;margin-top:var(--sp-2)" onclick="saveAttendance()">บันทึกการเช็คชื่อ</button>
+      <div class="msg" id="chk-save-msg"></div>
+    </div>
   </div>
 
   <!-- รายงานครูเวร (ยังไม่เปิดใช้ในเฟสนี้) -->
@@ -184,6 +232,15 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
         <button class="btn btn-pri" onclick="saveDutySchedule()">บันทึกตารางเวร</button>
         <div class="msg" id="duty-msg"></div>
       </div>
+
+      <div class="card" style="margin-top:var(--sp-4)">
+        <div class="fg">
+          <label>ซิงค์รายชื่อนักเรียน (roster)</label>
+          <div style="font-size:.78rem;color:var(--muted);margin-bottom:var(--sp-2)">คัดลอกเฉพาะ ชื่อ / ชั้น / เลขที่ / เพศ / ครูประจำชั้น จากระบบเยี่ยมบ้าน มาให้หน้าเช็คชื่อใช้ (ไม่ดึงข้อมูลอ่อนไหว) กดซ้ำได้เพื่ออัปเดตรายชื่อใหม่</div>
+        </div>
+        <button class="btn btn-pri" onclick="syncRoster()">ซิงค์รายชื่อตอนนี้</button>
+        <div class="msg" id="roster-msg"></div>
+      </div>
     </div>
   </div>
 
@@ -207,6 +264,21 @@ function go(view) {
   location.hash = '#' + view;
 }
 
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function todayISO() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+function thaiDateLabel(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return `${d} ${THAI_MONTHS[m]} ${y + 543}`;
+}
+
 function renderView() {
   const v = (location.hash || '#home').slice(1);
   ['home','check','duty','report','settings'].forEach(id => {
@@ -218,8 +290,198 @@ function renderView() {
     document.getElementById('settings-body').classList.toggle('hidden', !unlocked);
     if (unlocked) loadSettingsData();
   }
+  if (v === 'check') initCheckLogin();
 }
 window.addEventListener('hashchange', renderView);
+
+// ── เช็คชื่อ ──
+let _gradePins = null;
+let _checkGrade = null, _checkSession = null, _checkDate = null;
+let _roster = [];
+let _attRecords = {}; // studentId -> {status, note}
+let _checkLoggedIn = false;
+
+function initCheckLogin() {
+  const sel = document.getElementById('chk-grade');
+  if (!sel.options.length) {
+    sel.innerHTML = GRADES.map(g => `<option value="${g}">${g}</option>`).join('');
+  }
+  if (_checkLoggedIn) {
+    document.getElementById('check-login').classList.add('hidden');
+    document.getElementById('check-list').classList.remove('hidden');
+    return;
+  }
+  document.getElementById('check-login').classList.remove('hidden');
+  document.getElementById('check-list').classList.add('hidden');
+  const savedGrade = localStorage.getItem('att_chk_grade');
+  const savedPin   = localStorage.getItem('att_chk_pin');
+  if (savedGrade) sel.value = savedGrade;
+  if (savedPin) document.getElementById('chk-pin').value = savedPin;
+}
+
+async function loadGradePins() {
+  if (_gradePins) return _gradePins;
+  const doc = await db.collection('config').doc('app').get();
+  _gradePins = (doc.exists && doc.data().grade_pins) || {};
+  return _gradePins;
+}
+
+async function startCheck(session) {
+  const grade = document.getElementById('chk-grade').value;
+  const pin   = document.getElementById('chk-pin').value.trim();
+  const err   = document.getElementById('chk-login-err');
+  err.textContent = '';
+  if (!pin) { err.textContent = 'กรุณากรอก PIN ประจำชั้นเรียน'; return; }
+
+  let pins;
+  try { pins = await loadGradePins(); }
+  catch (e) { err.textContent = 'เชื่อมต่อไม่ได้ กรุณาลองใหม่'; return; }
+
+  if (!pins[grade]) { err.textContent = 'ไม่พบ PIN สำหรับชั้น ' + grade + ' กรุณาติดต่อผู้ดูแลระบบ'; return; }
+  if (pin !== pins[grade]) { err.textContent = 'PIN ไม่ถูกต้อง'; return; }
+
+  localStorage.setItem('att_chk_grade', grade);
+  localStorage.setItem('att_chk_pin', pin);
+
+  _checkGrade = grade;
+  _checkSession = session;
+  _checkDate = todayISO();
+
+  try {
+    const rosterSnap = await db.collection(ROSTER_COL).where('gradeLevel', '==', grade).get();
+    _roster = [];
+    rosterSnap.forEach(d => _roster.push({ id: d.id, ...d.data() }));
+    _roster.sort((a, b) => (a.studentNo || 0) - (b.studentNo || 0));
+  } catch (e) {
+    err.textContent = 'โหลดรายชื่อไม่สำเร็จ กรุณาลองใหม่';
+    return;
+  }
+
+  if (!_roster.length) {
+    err.textContent = 'ยังไม่มีรายชื่อนักเรียนชั้น ' + grade + ' ในระบบ — ให้ผู้ดูแลกด "ซิงค์รายชื่อนักเรียน" ในหน้าตั้งค่าก่อน';
+    return;
+  }
+
+  _attRecords = {};
+  _roster.forEach(s => { _attRecords[s.id] = { status: 'present', note: '' }; });
+
+  try {
+    const docId = `${_checkDate}_${grade}_${session}`;
+    const existing = await db.collection(ATT_COL).doc(docId).get();
+    if (existing.exists && existing.data().records) {
+      const recs = existing.data().records;
+      Object.keys(recs).forEach(sid => {
+        if (_attRecords[sid]) _attRecords[sid] = { status: recs[sid].status || 'present', note: recs[sid].note || '' };
+      });
+    }
+  } catch (e) {}
+
+  _checkLoggedIn = true;
+  document.getElementById('check-login').classList.add('hidden');
+  document.getElementById('check-list').classList.remove('hidden');
+  renderCheckList();
+}
+
+function renderCheckList() {
+  const info = document.getElementById('chk-head-info');
+  info.innerHTML = `<strong>${esc(_checkGrade)}</strong> — ${_checkSession === 'morning' ? 'รอบเช้า' : 'รอบเย็น'} — วันที่ ${thaiDateLabel(_checkDate)}`;
+
+  const rows = document.getElementById('check-rows');
+  rows.innerHTML = _roster.map(s => {
+    const rec = _attRecords[s.id] || { status: 'present', note: '' };
+    const btns = ATT_STATUS.map(st =>
+      `<button class="${rec.status === st ? 'sel-' + st : ''}" onclick="setStatus('${s.id}','${st}')">${ATT_STATUS_LBL[st]}</button>`
+    ).join('');
+    return `<div class="att-row">
+      <div class="nm"><span class="no">${esc(s.studentNo ?? '-')}.</span>${esc(s.studentName)}</div>
+      <div class="att-status">${btns}</div>
+      <input type="text" placeholder="หมายเหตุ (ถ้ามี)" value="${esc(rec.note)}" oninput="updateNote('${s.id}', this.value)">
+    </div>`;
+  }).join('');
+
+  renderCheckSummary();
+}
+
+function renderCheckSummary() {
+  const counts = { present: 0, absent: 0, leave: 0, late: 0 };
+  Object.values(_attRecords).forEach(r => { counts[r.status] = (counts[r.status] || 0) + 1; });
+  document.getElementById('chk-summary').innerHTML = ATT_STATUS.map(st =>
+    `<span>${ATT_STATUS_LBL[st]} <strong>${counts[st]}</strong></span>`
+  ).join('');
+}
+
+function setStatus(studentId, status) {
+  if (!_attRecords[studentId]) return;
+  _attRecords[studentId].status = status;
+  renderCheckList();
+}
+
+function updateNote(studentId, val) {
+  if (!_attRecords[studentId]) return;
+  _attRecords[studentId].note = val;
+}
+
+async function saveAttendance() {
+  const msg = document.getElementById('chk-save-msg');
+  const docId = `${_checkDate}_${_checkGrade}_${_checkSession}`;
+  const records = {};
+  Object.keys(_attRecords).forEach(sid => {
+    records[sid] = { status: _attRecords[sid].status, note: (_attRecords[sid].note || '').trim() };
+  });
+  try {
+    await db.collection(ATT_COL).doc(docId).set({
+      date: _checkDate,
+      grade: _checkGrade,
+      session: _checkSession,
+      lateThreshold: _lateThreshold,
+      records,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    msg.className = 'msg ok';
+    msg.textContent = 'บันทึกแล้ว';
+  } catch (e) {
+    msg.className = 'msg err';
+    msg.textContent = 'บันทึกไม่สำเร็จ กรุณาลองใหม่';
+  }
+}
+
+function logoutCheck() {
+  localStorage.removeItem('att_chk_grade');
+  localStorage.removeItem('att_chk_pin');
+  _checkLoggedIn = false;
+  document.getElementById('chk-pin').value = '';
+  document.getElementById('chk-login-err').textContent = '';
+  initCheckLogin();
+}
+
+async function syncRoster() {
+  const msg = document.getElementById('roster-msg');
+  msg.className = 'msg';
+  msg.textContent = 'กำลังซิงค์...';
+  try {
+    const snap = await db.collection('studentVisits').get();
+    const batch = db.batch();
+    let n = 0;
+    snap.forEach(d => {
+      const r = d.data();
+      const no = typeof r.studentNo === 'string' ? (parseInt(r.studentNo, 10) || null) : (r.studentNo ?? null);
+      batch.set(db.collection(ROSTER_COL).doc(d.id), {
+        studentName: r.studentName || '',
+        gradeLevel: r.gradeLevel || '',
+        studentNo: no,
+        gender: r.gender || '',
+        teacher: r.teacher || ''
+      });
+      n++;
+    });
+    await batch.commit();
+    msg.className = 'msg ok';
+    msg.textContent = `ซิงค์แล้ว ${n} คน`;
+  } catch (e) {
+    msg.className = 'msg err';
+    msg.textContent = 'ซิงค์ไม่สำเร็จ: ' + e.message;
+  }
+}
 
 async function checkSettingsPin() {
   const pin = document.getElementById('settings-pin').value.trim();
