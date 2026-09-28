@@ -185,13 +185,39 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
     <div class="card"><div class="soon">ยังไม่เปิดใช้งาน — จะเพิ่มในเฟสถัดไป</div></div>
   </div>
 
-  <!-- สรุปและพิมพ์ (ยังไม่เปิดใช้ในเฟสนี้) -->
+  <!-- สรุปและพิมพ์ -->
   <div id="view-report" class="hidden">
-    <div class="page-head">
-      <button class="back-btn" onclick="go('home')">← กลับ</button>
-      <h2>สรุปและพิมพ์</h2>
+    <div id="report-gate" class="pin-box">
+      <h2>PIN ผู้ดูแลระบบ</h2>
+      <div class="fg"><input type="password" id="report-pin" placeholder="กรอก PIN" autocomplete="off"></div>
+      <button class="btn btn-pri" style="width:100%" onclick="checkReportPin()">เข้าดูสรุป</button>
+      <div class="msg err" id="report-pin-err"></div>
+      <div style="margin-top:var(--sp-4)"><button class="back-btn" onclick="go('home')">← กลับ</button></div>
     </div>
-    <div class="card"><div class="soon">ยังไม่เปิดใช้งาน — จะเพิ่มในเฟสถัดไป</div></div>
+
+    <div id="report-body" class="hidden">
+      <div class="page-head">
+        <button class="back-btn" onclick="go('home')">← กลับ</button>
+        <h2>สรุปและพิมพ์</h2>
+      </div>
+
+      <div class="card" style="margin-bottom:var(--sp-4)">
+        <div class="fg" style="margin-bottom:0">
+          <label>เลือกวันที่</label>
+          <input type="date" id="rpt-date" onchange="loadReport()">
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:var(--sp-4)">
+        <div class="fg" style="margin-bottom:var(--sp-2)"><label style="margin-bottom:0">รอบเช้า</label></div>
+        <table class="duty-table" id="rpt-table-morning"></table>
+      </div>
+
+      <div class="card">
+        <div class="fg" style="margin-bottom:var(--sp-2)"><label style="margin-bottom:0">รอบเย็น</label></div>
+        <table class="duty-table" id="rpt-table-evening"></table>
+      </div>
+    </div>
   </div>
 
   <!-- ตั้งค่า (ต้องใส่ PIN ผู้ดูแลระบบ) -->
@@ -289,6 +315,12 @@ function renderView() {
     document.getElementById('settings-gate').classList.toggle('hidden', unlocked);
     document.getElementById('settings-body').classList.toggle('hidden', !unlocked);
     if (unlocked) loadSettingsData();
+  }
+  if (v === 'report') {
+    const unlocked = sessionStorage.getItem('att_admin_ok') === '1';
+    document.getElementById('report-gate').classList.toggle('hidden', unlocked);
+    document.getElementById('report-body').classList.toggle('hidden', !unlocked);
+    if (unlocked) initReport();
   }
   if (v === 'check') initCheckLogin();
 }
@@ -487,16 +519,96 @@ async function checkSettingsPin() {
   const pin = document.getElementById('settings-pin').value.trim();
   const err = document.getElementById('settings-pin-err');
   err.textContent = '';
-  if (_adminPin === null) {
-    try {
-      const doc = await db.collection('config').doc('app').get();
-      _adminPin = (doc.exists && doc.data().admin_pin) || '';
-    } catch (e) { err.textContent = 'เชื่อมต่อไม่ได้ กรุณาลองใหม่'; return; }
-  }
-  if (!_adminPin) { err.textContent = 'ยังไม่ได้ตั้ง PIN ผู้ดูแลระบบ — ตั้งค่าที่ระบบเยี่ยมบ้านก่อน'; return; }
-  if (pin !== _adminPin) { err.textContent = 'PIN ไม่ถูกต้อง'; document.getElementById('settings-pin').value = ''; return; }
+  let pinVal;
+  try { pinVal = await loadAdminPin(); }
+  catch (e) { err.textContent = 'เชื่อมต่อไม่ได้ กรุณาลองใหม่'; return; }
+  if (!pinVal) { err.textContent = 'ยังไม่ได้ตั้ง PIN ผู้ดูแลระบบ — ตั้งค่าที่ระบบเยี่ยมบ้านก่อน'; return; }
+  if (pin !== pinVal) { err.textContent = 'PIN ไม่ถูกต้อง'; document.getElementById('settings-pin').value = ''; return; }
   sessionStorage.setItem('att_admin_ok', '1');
   renderView();
+}
+
+async function loadAdminPin() {
+  if (_adminPin !== null) return _adminPin;
+  const doc = await db.collection('config').doc('app').get();
+  _adminPin = (doc.exists && doc.data().admin_pin) || '';
+  return _adminPin;
+}
+
+async function checkReportPin() {
+  const pin = document.getElementById('report-pin').value.trim();
+  const err = document.getElementById('report-pin-err');
+  err.textContent = '';
+  let pinVal;
+  try { pinVal = await loadAdminPin(); }
+  catch (e) { err.textContent = 'เชื่อมต่อไม่ได้ กรุณาลองใหม่'; return; }
+  if (!pinVal) { err.textContent = 'ยังไม่ได้ตั้ง PIN ผู้ดูแลระบบ — ตั้งค่าที่ระบบเยี่ยมบ้านก่อน'; return; }
+  if (pin !== pinVal) { err.textContent = 'PIN ไม่ถูกต้อง'; document.getElementById('report-pin').value = ''; return; }
+  sessionStorage.setItem('att_admin_ok', '1');
+  renderView();
+}
+
+function initReport() {
+  const dateEl = document.getElementById('rpt-date');
+  if (!dateEl.value) dateEl.value = todayISO();
+  loadReport();
+}
+
+async function loadReport() {
+  const dateEl = document.getElementById('rpt-date');
+  const date = dateEl.value || todayISO();
+
+  let docs = [];
+  try {
+    const snap = await db.collection(ATT_COL).where('date', '==', date).get();
+    snap.forEach(d => docs.push(d.data()));
+  } catch (e) {
+    document.getElementById('rpt-table-morning').innerHTML = '<tr><td>โหลดข้อมูลไม่สำเร็จ</td></tr>';
+    document.getElementById('rpt-table-evening').innerHTML = '';
+    return;
+  }
+
+  renderReportTable('rpt-table-morning', docs.filter(d => d.session === 'morning'));
+  renderReportTable('rpt-table-evening', docs.filter(d => d.session === 'evening'));
+}
+
+function renderReportTable(tableId, sessionDocs) {
+  const byGrade = {};
+  sessionDocs.forEach(d => { byGrade[d.grade] = d; });
+
+  const totals = { present: 0, absent: 0, leave: 0, late: 0 };
+  const rows = GRADES.map(g => {
+    const d = byGrade[g];
+    if (!d) {
+      return `<tr><td><strong>${esc(g)}</strong></td><td colspan="5" style="color:var(--muted);text-align:center">ยังไม่เช็คชื่อ</td></tr>`;
+    }
+    const c = { present: 0, absent: 0, leave: 0, late: 0 };
+    Object.values(d.records || {}).forEach(r => { c[r.status] = (c[r.status] || 0) + 1; });
+    ATT_STATUS.forEach(st => { totals[st] += c[st]; });
+    const sum = c.present + c.absent + c.leave + c.late;
+    return `<tr>
+      <td><strong>${esc(g)}</strong></td>
+      <td style="text-align:center;color:var(--sec)">${c.present}</td>
+      <td style="text-align:center;color:var(--dan)">${c.absent}</td>
+      <td style="text-align:center;color:#0369a1">${c.leave}</td>
+      <td style="text-align:center;color:var(--warn)">${c.late}</td>
+      <td style="text-align:center;font-weight:700">${sum}</td>
+    </tr>`;
+  });
+
+  const grandTotal = totals.present + totals.absent + totals.leave + totals.late;
+  const totalRow = `<tr style="background:var(--pri-ll)">
+    <td><strong>รวมทั้งโรงเรียน</strong></td>
+    <td style="text-align:center;color:var(--sec);font-weight:700">${totals.present}</td>
+    <td style="text-align:center;color:var(--dan);font-weight:700">${totals.absent}</td>
+    <td style="text-align:center;color:#0369a1;font-weight:700">${totals.leave}</td>
+    <td style="text-align:center;color:var(--warn);font-weight:700">${totals.late}</td>
+    <td style="text-align:center;font-weight:700">${grandTotal}</td>
+  </tr>`;
+
+  document.getElementById(tableId).innerHTML = `
+    <thead><tr><th>ชั้น</th><th>มา</th><th>ขาด</th><th>ลา</th><th>สาย</th><th>รวม</th></tr></thead>
+    <tbody>${rows.join('')}${totalRow}</tbody>`;
 }
 
 async function loadSettingsData() {
