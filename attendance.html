@@ -23,7 +23,7 @@ const THAI_MONTHS  = ['','มกราคม','กุมภาพันธ์','
 <link rel="manifest" href="attendance-manifest.json">
 <meta name="theme-color" content="#c8102e">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
@@ -99,6 +99,21 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
 .att-row input[type=text]{width:100%;padding:7px 9px;border:1px solid var(--bdr-l);border-radius:6px;font-size:.8rem;font-family:inherit}
 .att-summary{display:flex;gap:10px;flex-wrap:wrap;font-size:.78rem;color:var(--muted);margin-bottom:var(--sp-3)}
 .att-summary span strong{color:var(--txt)}
+#print-area{display:none}
+.p-header{text-align:center;margin-bottom:16px}
+.p-header h1{font-size:1.2rem;margin-bottom:4px}
+.p-table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:.85rem}
+.p-table th,.p-table td{border:1px solid #333;padding:4px 6px}
+.p-table th{background:#eee}
+.p-section{margin-bottom:10px;font-size:.9rem}
+.p-section h3{font-size:.92rem;margin-bottom:4px}
+.p-sign{display:flex;justify-content:space-between;margin-top:40px;font-size:.88rem;text-align:center}
+@media print{
+  @page{size:A4 portrait;margin:2cm 2.5cm}
+  body.printing-duty .topbar,body.printing-duty .wrap{display:none !important}
+  body.printing-duty #print-area{display:block !important}
+  body{font-family:'Sarabun',Arial,sans-serif}
+}
 </style>
 </head>
 <body>
@@ -176,13 +191,58 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
     </div>
   </div>
 
-  <!-- รายงานครูเวร (ยังไม่เปิดใช้ในเฟสนี้) -->
+  <!-- รายงานครูเวร -->
   <div id="view-duty" class="hidden">
-    <div class="page-head">
-      <button class="back-btn" onclick="go('home')">← กลับ</button>
-      <h2>รายงานครูเวร</h2>
+    <div id="duty-gate" class="pin-box">
+      <h2>PIN ผู้ดูแลระบบ</h2>
+      <div class="fg"><input type="password" id="duty-pin" placeholder="กรอก PIN" autocomplete="off"></div>
+      <button class="btn btn-pri" style="width:100%" onclick="checkDutyPin()">เข้ากรอกรายงาน</button>
+      <div class="msg err" id="duty-pin-err"></div>
+      <div style="margin-top:var(--sp-4)"><button class="back-btn" onclick="go('home')">← กลับ</button></div>
     </div>
-    <div class="card"><div class="soon">ยังไม่เปิดใช้งาน — จะเพิ่มในเฟสถัดไป</div></div>
+
+    <div id="duty-body" class="hidden">
+      <div class="page-head">
+        <button class="back-btn" onclick="go('home')">← กลับ</button>
+        <h2>รายงานครูเวร</h2>
+      </div>
+
+      <div class="card" style="margin-bottom:var(--sp-4)">
+        <div class="fg" style="margin-bottom:0">
+          <label>เลือกวันที่</label>
+          <input type="date" id="dr-date" onchange="loadDutyReport()">
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:var(--sp-4)">
+        <div class="fg" style="margin-bottom:var(--sp-1)"><label style="margin-bottom:0">เวรหน้าประตู</label></div>
+        <div class="ds" id="dr-gate-hint" style="font-size:.78rem;color:var(--muted);margin-bottom:var(--sp-3)"></div>
+        <div class="fg"><label>นักเรียนมาสาย</label><input type="text" id="dr-gate-late" placeholder="จำนวน / รายชื่อ (ถ้ามี)"></div>
+        <div class="fg"><label>การแต่งกาย</label><input type="text" id="dr-gate-dress" placeholder="เรียบร้อยดี / มีปัญหา..."></div>
+        <div class="fg"><label>เหตุการณ์</label><input type="text" id="dr-gate-incident" placeholder="ไม่มี / ระบุเหตุการณ์"></div>
+        <div class="fg" style="margin-bottom:0"><label>ผู้บันทึก</label><input type="text" id="dr-gate-reporter" placeholder="ชื่อครูเวร"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:var(--sp-4)">
+        <div class="fg" style="margin-bottom:var(--sp-1)"><label style="margin-bottom:0">เวรตรวจอาคาร</label></div>
+        <div class="ds" id="dr-building-hint" style="font-size:.78rem;color:var(--muted);margin-bottom:var(--sp-3)"></div>
+        <div class="fg"><label>ความเรียบร้อย</label><input type="text" id="dr-building-condition" placeholder="เรียบร้อยดี / มีปัญหา..."></div>
+        <div class="fg"><label>ไฟ</label><input type="text" id="dr-building-electric" placeholder="ปกติ / ระบุปัญหา"></div>
+        <div class="fg"><label>น้ำ</label><input type="text" id="dr-building-water" placeholder="ปกติ / ระบุปัญหา"></div>
+        <div class="fg"><label>ความเสียหาย</label><input type="text" id="dr-building-damage" placeholder="ไม่มี / ระบุความเสียหาย"></div>
+        <div class="fg" style="margin-bottom:0"><label>ผู้บันทึก</label><input type="text" id="dr-building-reporter" placeholder="ชื่อครูเวร"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:var(--sp-4)">
+        <div class="fg" style="margin-bottom:var(--sp-1)"><label style="margin-bottom:0">เวรพูดหน้าเสาธง</label></div>
+        <div class="ds" id="dr-flag-hint" style="font-size:.78rem;color:var(--muted);margin-bottom:var(--sp-3)"></div>
+        <div class="fg"><label>หัวข้อที่พูด</label><input type="text" id="dr-flag-topic" placeholder="หัวข้อที่พูดหน้าเสาธง"></div>
+        <div class="fg" style="margin-bottom:0"><label>ผู้บันทึก</label><input type="text" id="dr-flag-reporter" placeholder="ชื่อครูเวร"></div>
+      </div>
+
+      <button class="btn btn-pri" style="width:100%" onclick="saveDutyReport()">บันทึกรายงานครูเวร</button>
+      <div class="msg" id="dr-save-msg"></div>
+    </div>
   </div>
 
   <!-- สรุปและพิมพ์ -->
@@ -213,10 +273,43 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
         <table class="duty-table" id="rpt-table-morning"></table>
       </div>
 
-      <div class="card">
+      <div class="card" style="margin-bottom:var(--sp-4)">
         <div class="fg" style="margin-bottom:var(--sp-2)"><label style="margin-bottom:0">รอบเย็น</label></div>
         <table class="duty-table" id="rpt-table-evening"></table>
       </div>
+
+      <div class="card" style="margin-bottom:var(--sp-4)">
+        <div class="fg" style="margin-bottom:var(--sp-2)"><label style="margin-bottom:0">รายงานครูเวรวันนี้</label></div>
+        <div id="rpt-duty-view" style="font-size:.85rem;line-height:1.8"></div>
+      </div>
+
+      <button class="btn btn-pri" style="width:100%" onclick="printReport()">พิมพ์รายงาน A4</button>
+    </div>
+  </div>
+
+  <!-- เนื้อหาสำหรับพิมพ์เท่านั้น -->
+  <div id="print-area">
+    <div class="p-header">
+      <h1>รายงานเวรประจำวัน</h1>
+      <p id="p-school-date"></p>
+    </div>
+    <table class="p-table" id="p-summary-morning"></table>
+    <table class="p-table" id="p-summary-evening"></table>
+    <div class="p-section">
+      <h3>1. เวรหน้าประตู</h3>
+      <p id="p-gate"></p>
+    </div>
+    <div class="p-section">
+      <h3>2. เวรตรวจอาคาร</h3>
+      <p id="p-building"></p>
+    </div>
+    <div class="p-section">
+      <h3>3. เวรพูดหน้าเสาธง</h3>
+      <p id="p-flag"></p>
+    </div>
+    <div class="p-sign">
+      <div>ลงชื่อ ................................................ ครูเวร<br>(...........................................)</div>
+      <div>ลงชื่อ ................................................ ผู้บริหาร<br>(...........................................)</div>
     </div>
   </div>
 
@@ -305,6 +398,12 @@ function thaiDateLabel(iso) {
   return `${d} ${THAI_MONTHS[m]} ${y + 543}`;
 }
 
+function dayKeyFromDate(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const dow = new Date(y, m - 1, d).getDay(); // 0=อาทิตย์ ... 6=เสาร์
+  return ['sun','mon','tue','wed','thu','fri','sat'][dow];
+}
+
 function renderView() {
   const v = (location.hash || '#home').slice(1);
   ['home','check','duty','report','settings'].forEach(id => {
@@ -321,6 +420,12 @@ function renderView() {
     document.getElementById('report-gate').classList.toggle('hidden', unlocked);
     document.getElementById('report-body').classList.toggle('hidden', !unlocked);
     if (unlocked) initReport();
+  }
+  if (v === 'duty') {
+    const unlocked = sessionStorage.getItem('att_admin_ok') === '1';
+    document.getElementById('duty-gate').classList.toggle('hidden', unlocked);
+    document.getElementById('duty-body').classList.toggle('hidden', !unlocked);
+    if (unlocked) initDuty();
   }
   if (v === 'check') initCheckLogin();
 }
@@ -568,8 +673,19 @@ async function loadReport() {
     return;
   }
 
-  renderReportTable('rpt-table-morning', docs.filter(d => d.session === 'morning'));
-  renderReportTable('rpt-table-evening', docs.filter(d => d.session === 'evening'));
+  const morningDocs = docs.filter(d => d.session === 'morning');
+  const eveningDocs = docs.filter(d => d.session === 'evening');
+  renderReportTable('rpt-table-morning', morningDocs);
+  renderReportTable('rpt-table-evening', eveningDocs);
+
+  let dutyData = null;
+  try {
+    const dDoc = await db.collection(DUTY_COL).doc(date).get();
+    if (dDoc.exists) dutyData = dDoc.data();
+  } catch (e) {}
+  renderDutyPreview(date, dutyData);
+
+  _printState = { date, morningDocs, eveningDocs, dutyData };
 }
 
 function renderReportTable(tableId, sessionDocs) {
@@ -610,6 +726,151 @@ function renderReportTable(tableId, sessionDocs) {
     <thead><tr><th>ชั้น</th><th>มา</th><th>ขาด</th><th>ลา</th><th>สาย</th><th>รวม</th></tr></thead>
     <tbody>${rows.join('')}${totalRow}</tbody>`;
 }
+
+// ── รายงานครูเวร ──
+let _dutyScheduleCache = null;
+
+async function checkDutyPin() {
+  const pin = document.getElementById('duty-pin').value.trim();
+  const err = document.getElementById('duty-pin-err');
+  err.textContent = '';
+  let pinVal;
+  try { pinVal = await loadAdminPin(); }
+  catch (e) { err.textContent = 'เชื่อมต่อไม่ได้ กรุณาลองใหม่'; return; }
+  if (!pinVal) { err.textContent = 'ยังไม่ได้ตั้ง PIN ผู้ดูแลระบบ — ตั้งค่าที่ระบบเยี่ยมบ้านก่อน'; return; }
+  if (pin !== pinVal) { err.textContent = 'PIN ไม่ถูกต้อง'; document.getElementById('duty-pin').value = ''; return; }
+  sessionStorage.setItem('att_admin_ok', '1');
+  renderView();
+}
+
+function initDuty() {
+  const dateEl = document.getElementById('dr-date');
+  if (!dateEl.value) dateEl.value = todayISO();
+  loadDutyReport();
+}
+
+async function getDutySchedule() {
+  if (_dutyScheduleCache) return _dutyScheduleCache;
+  const doc = await db.collection('config').doc('dutySchedule').get();
+  _dutyScheduleCache = (doc.exists && doc.data()) || {};
+  return _dutyScheduleCache;
+}
+
+function updateDutyHints(date) {
+  const dayKey = dayKeyFromDate(date);
+  const sched = (_dutyScheduleCache && _dutyScheduleCache[dayKey]) || {};
+  const dayLbl = DUTY_DAY_LBL[dayKey] || 'วันหยุด';
+  document.getElementById('dr-gate-hint').textContent = `ตารางเวรวัน${dayLbl}: ${sched.gate || '-'}`;
+  document.getElementById('dr-building-hint').textContent = `ตารางเวรวัน${dayLbl}: ${sched.building || '-'}`;
+  document.getElementById('dr-flag-hint').textContent = `ตารางเวรวัน${dayLbl}: ${sched.flag || '-'}`;
+}
+
+const DUTY_FIELDS = {
+  gate: ['late', 'dress', 'incident', 'reporter'],
+  building: ['condition', 'electric', 'water', 'damage', 'reporter'],
+  flag: ['topic', 'reporter']
+};
+
+async function loadDutyReport() {
+  const date = document.getElementById('dr-date').value || todayISO();
+  await getDutySchedule();
+  updateDutyHints(date);
+
+  let data = {};
+  try {
+    const doc = await db.collection(DUTY_COL).doc(date).get();
+    if (doc.exists) data = doc.data();
+  } catch (e) {}
+
+  Object.keys(DUTY_FIELDS).forEach(section => {
+    const sectionData = data[section] || {};
+    DUTY_FIELDS[section].forEach(f => {
+      const el = document.getElementById(`dr-${section}-${f}`);
+      if (el) el.value = sectionData[f] || '';
+    });
+  });
+}
+
+async function saveDutyReport() {
+  const date = document.getElementById('dr-date').value || todayISO();
+  const msg = document.getElementById('dr-save-msg');
+  const data = { date };
+  Object.keys(DUTY_FIELDS).forEach(section => {
+    data[section] = {};
+    DUTY_FIELDS[section].forEach(f => {
+      const el = document.getElementById(`dr-${section}-${f}`);
+      data[section][f] = el ? el.value.trim() : '';
+    });
+  });
+  try {
+    await db.collection(DUTY_COL).doc(date).set({
+      ...data,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    msg.className = 'msg ok';
+    msg.textContent = 'บันทึกแล้ว';
+  } catch (e) {
+    msg.className = 'msg err';
+    msg.textContent = 'บันทึกไม่สำเร็จ กรุณาลองใหม่';
+  }
+}
+
+// ── พิมพ์รายงาน A4 ──
+let _printState = null;
+
+function dutySummaryText(section, data) {
+  const d = (data && data[section]) || {};
+  if (section === 'gate') return `นักเรียนมาสาย: ${d.late || '-'} | การแต่งกาย: ${d.dress || '-'} | เหตุการณ์: ${d.incident || '-'} | ผู้บันทึก: ${d.reporter || '-'}`;
+  if (section === 'building') return `ความเรียบร้อย: ${d.condition || '-'} | ไฟ: ${d.electric || '-'} | น้ำ: ${d.water || '-'} | ความเสียหาย: ${d.damage || '-'} | ผู้บันทึก: ${d.reporter || '-'}`;
+  if (section === 'flag') return `หัวข้อที่พูด: ${d.topic || '-'} | ผู้บันทึก: ${d.reporter || '-'}`;
+  return '';
+}
+
+function renderDutyPreview(date, dutyData) {
+  const el = document.getElementById('rpt-duty-view');
+  if (!dutyData) {
+    el.innerHTML = '<span style="color:var(--muted)">ยังไม่มีรายงานครูเวรสำหรับวันนี้</span>';
+    return;
+  }
+  el.innerHTML = `
+    <div><strong>เวรหน้าประตู</strong> — ${esc(dutySummaryText('gate', dutyData))}</div>
+    <div><strong>เวรตรวจอาคาร</strong> — ${esc(dutySummaryText('building', dutyData))}</div>
+    <div><strong>เวรพูดหน้าเสาธง</strong> — ${esc(dutySummaryText('flag', dutyData))}</div>`;
+}
+
+function buildSummaryTableHtml(title, sessionDocs) {
+  const byGrade = {};
+  sessionDocs.forEach(d => { byGrade[d.grade] = d; });
+  const totals = { present: 0, absent: 0, leave: 0, late: 0 };
+  const rows = GRADES.map(g => {
+    const d = byGrade[g];
+    if (!d) return `<tr><td>${esc(g)}</td><td colspan="5">ยังไม่เช็คชื่อ</td></tr>`;
+    const c = { present: 0, absent: 0, leave: 0, late: 0 };
+    Object.values(d.records || {}).forEach(r => { c[r.status] = (c[r.status] || 0) + 1; });
+    ATT_STATUS.forEach(st => { totals[st] += c[st]; });
+    const sum = c.present + c.absent + c.leave + c.late;
+    return `<tr><td>${esc(g)}</td><td>${c.present}</td><td>${c.absent}</td><td>${c.leave}</td><td>${c.late}</td><td>${sum}</td></tr>`;
+  });
+  const grand = totals.present + totals.absent + totals.leave + totals.late;
+  return `<thead><tr><th colspan="6" style="text-align:center">${esc(title)}</th></tr>
+    <tr><th>ชั้น</th><th>มา</th><th>ขาด</th><th>ลา</th><th>สาย</th><th>รวม</th></tr></thead>
+    <tbody>${rows.join('')}<tr><td><strong>รวม</strong></td><td>${totals.present}</td><td>${totals.absent}</td><td>${totals.leave}</td><td>${totals.late}</td><td>${grand}</td></tr></tbody>`;
+}
+
+function printReport() {
+  if (!_printState) return;
+  const { date, morningDocs, eveningDocs, dutyData } = _printState;
+  document.getElementById('p-school-date').textContent = `${SCHOOL} — วันที่ ${thaiDateLabel(date)}`;
+  document.getElementById('p-summary-morning').innerHTML = buildSummaryTableHtml('รอบเช้า', morningDocs);
+  document.getElementById('p-summary-evening').innerHTML = buildSummaryTableHtml('รอบเย็น', eveningDocs);
+  document.getElementById('p-gate').textContent = dutySummaryText('gate', dutyData || {});
+  document.getElementById('p-building').textContent = dutySummaryText('building', dutyData || {});
+  document.getElementById('p-flag').textContent = dutySummaryText('flag', dutyData || {});
+
+  document.body.classList.add('printing-duty');
+  window.print();
+}
+window.addEventListener('afterprint', () => document.body.classList.remove('printing-duty'));
 
 async function loadSettingsData() {
   try {
