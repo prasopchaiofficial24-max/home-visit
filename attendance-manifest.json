@@ -1,0 +1,11 @@
+{
+  "name": "เช็คชื่อนักเรียน - โรงเรียนจิกดู่วิทยา",
+  "short_name": "เช็คชื่อ จิกดู่",
+  "start_url": "attendance.html",
+  "display": "standalone",
+  "background_color": "#f7f7f8",
+  "theme_color": "#c8102e",
+  "icons": [
+    { "src": "logo.png", "sizes": "350x327", "type": "image/png" }
+  ]
+}

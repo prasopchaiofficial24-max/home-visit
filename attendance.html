@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>เช็คชื่อนักเรียน – โรงเรียนจิกดู่วิทยา</title>
+
+<script src="shared-config.js"></script>
+<script>
+const ATT_COL      = 'attendance';
+const DUTY_COL     = 'dutyReports';
+const ROSTER_COL   = 'roster';
+const DUTY_DAYS    = ['mon','tue','wed','thu','fri'];
+const DUTY_DAY_LBL = {mon:'จันทร์',tue:'อังคาร',wed:'พุธ',thu:'พฤหัสบดี',fri:'ศุกร์'};
+</script>
+
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+<link rel="manifest" href="attendance-manifest.json">
+<meta name="theme-color" content="#c8102e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+
+<style>
+:root{
+  --pri:#c8102e;--pri-d:#9b0a23;--pri-l:#fde8ec;--pri-ll:#fff5f7;
+  --sec:#16a34a;--dan:#dc2626;--warn:#ea580c;
+  --bg:#f7f7f8;--card:#fff;--bdr:#e8e8ea;--bdr-l:#f1f1f3;
+  --txt:#18181b;--muted:#71717a;
+  --sh:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sh-md:0 4px 16px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.04);
+  --radius:14px;--radius-sm:9px;
+  --tr:all .2s cubic-bezier(.4,0,.2,1);
+  --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;--sp-6:24px;--sp-8:32px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background:var(--bg);color:var(--txt);font-size:15px;-webkit-font-smoothing:antialiased}
+.topbar{background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr);box-shadow:0 1px 0 rgba(0,0,0,.05);position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) var(--sp-4)}
+.tb-logo{font-size:1rem;font-weight:800;color:var(--pri-d);letter-spacing:-.02em}
+.tb-logo span{color:var(--muted);font-size:.76rem;font-weight:400;margin-left:4px}
+.btn-gear{background:transparent;border:1.5px solid var(--bdr);border-radius:10px;cursor:pointer;color:var(--muted);font-size:.85rem;padding:var(--sp-2) var(--sp-3);transition:var(--tr)}
+.btn-gear:hover{background:var(--pri-l);border-color:rgba(200,16,46,.2);color:var(--pri-d)}
+.wrap{max-width:720px;margin:0 auto;padding:var(--sp-5) var(--sp-4) var(--sp-8)}
+.home-title{font-size:1.3rem;font-weight:800;margin-bottom:var(--sp-2);text-align:center}
+.home-sub{color:var(--muted);font-size:.88rem;text-align:center;margin-bottom:var(--sp-6)}
+.home-grid{display:grid;grid-template-columns:1fr;gap:var(--sp-3)}
+.home-btn{display:flex;align-items:center;gap:var(--sp-4);background:var(--card);border:1px solid var(--bdr);border-radius:var(--radius);padding:var(--sp-5);box-shadow:var(--sh);cursor:pointer;transition:var(--tr);text-align:right;text-decoration:none;color:inherit}
+.home-btn:hover{box-shadow:var(--sh-md);transform:translateY(-2px);border-color:rgba(200,16,46,.25)}
+.home-btn .ico{width:52px;height:52px;border-radius:14px;background:var(--pri-l);color:var(--pri-d);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.home-btn .ico svg{width:26px;height:26px}
+.home-btn .tt{font-weight:700;font-size:1rem;margin-bottom:2px}
+.home-btn .ds{color:var(--muted);font-size:.8rem}
+.card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--radius);box-shadow:var(--sh);padding:var(--sp-5)}
+.page-head{display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-5)}
+.page-head h2{font-size:1.1rem;font-weight:800}
+.back-btn{background:transparent;border:1.5px solid var(--bdr);border-radius:10px;cursor:pointer;color:var(--txt);font-size:.85rem;padding:6px 10px;display:flex;align-items:center;gap:4px}
+.fg{margin-bottom:var(--sp-4)}
+.fg label{display:block;font-size:.82rem;font-weight:600;color:var(--txt);margin-bottom:6px}
+.fg input[type=text],.fg input[type=time],.fg input[type=password]{width:100%;padding:10px 12px;border:1.5px solid var(--bdr);border-radius:var(--radius-sm);font-size:.92rem;font-family:inherit}
+.fg input:focus{outline:none;border-color:var(--pri)}
+.btn{padding:10px 18px;border-radius:var(--radius-sm);font-size:.88rem;font-weight:700;cursor:pointer;border:none;transition:var(--tr)}
+.btn-pri{background:var(--pri);color:#fff}
+.btn-pri:hover{background:var(--pri-d)}
+.btn-gray{background:var(--bdr-l);color:var(--txt)}
+.duty-table{width:100%;border-collapse:collapse;margin-bottom:var(--sp-5)}
+.duty-table th,.duty-table td{border:1px solid var(--bdr);padding:8px;font-size:.82rem}
+.duty-table th{background:var(--pri-ll);color:var(--pri-d);font-weight:700}
+.duty-table td input{width:100%;border:none;font-size:.85rem;font-family:inherit;padding:4px}
+.duty-table td input:focus{outline:1.5px solid var(--pri);border-radius:4px}
+.msg{font-size:.8rem;min-height:18px;margin-top:var(--sp-3)}
+.msg.ok{color:var(--sec)}
+.msg.err{color:var(--dan)}
+.pin-box{max-width:320px;margin:60px auto;text-align:center}
+.pin-box h2{font-size:1.05rem;margin-bottom:var(--sp-4)}
+.soon{text-align:center;color:var(--muted);padding:var(--sp-8) 0;font-size:.9rem}
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tb-logo">จิกดู่วิทยา <span>เช็คชื่อนักเรียน</span></div>
+  <button class="btn-gear" onclick="go('settings')" aria-label="ตั้งค่า">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:1.1em;height:1.1em"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+  </button>
+</div>
+
+<div class="wrap">
+
+  <!-- หน้าแรก -->
+  <div id="view-home">
+    <div class="home-title">เช็คชื่อนักเรียน</div>
+    <div class="home-sub">โรงเรียนจิกดู่วิทยา</div>
+    <div class="home-grid">
+      <a class="home-btn" href="#check">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m17 11 2 2 4-4"/></svg></span>
+        <span>
+          <div class="tt">เช็คชื่อ (ครูประจำชั้น)</div>
+          <div class="ds">เลือกชั้น → PIN ประจำชั้น → รอบเช้า/เย็น</div>
+        </span>
+      </a>
+      <a class="home-btn" href="#duty">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><path d="M9 12h6"/><path d="M9 16h6"/></svg></span>
+        <span>
+          <div class="tt">รายงานครูเวร</div>
+          <div class="ds">เวรหน้าประตู / ตรวจอาคาร / หน้าเสาธง</div>
+        </span>
+      </a>
+      <a class="home-btn" href="#report">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span>
+        <span>
+          <div class="tt">สรุปและพิมพ์</div>
+          <div class="ds">สรุปแยกตามชั้น ดูย้อนหลัง พิมพ์ A4</div>
+        </span>
+      </a>
+    </div>
+  </div>
+
+  <!-- เช็คชื่อ (ยังไม่เปิดใช้ในเฟสนี้) -->
+  <div id="view-check" class="hidden">
+    <div class="page-head">
+      <button class="back-btn" onclick="go('home')">← กลับ</button>
+      <h2>เช็คชื่อ</h2>
+    </div>
+    <div class="card"><div class="soon">ยังไม่เปิดใช้งาน — จะเพิ่มในเฟสถัดไป</div></div>
+  </div>
+
+  <!-- รายงานครูเวร (ยังไม่เปิดใช้ในเฟสนี้) -->
+  <div id="view-duty" class="hidden">
+    <div class="page-head">
+      <button class="back-btn" onclick="go('home')">← กลับ</button>
+      <h2>รายงานครูเวร</h2>
+    </div>
+    <div class="card"><div class="soon">ยังไม่เปิดใช้งาน — จะเพิ่มในเฟสถัดไป</div></div>
+  </div>
+
+  <!-- สรุปและพิมพ์ (ยังไม่เปิดใช้ในเฟสนี้) -->
+  <div id="view-report" class="hidden">
+    <div class="page-head">
+      <button class="back-btn" onclick="go('home')">← กลับ</button>
+      <h2>สรุปและพิมพ์</h2>
+    </div>
+    <div class="card"><div class="soon">ยังไม่เปิดใช้งาน — จะเพิ่มในเฟสถัดไป</div></div>
+  </div>
+
+  <!-- ตั้งค่า (ต้องใส่ PIN ผู้ดูแลระบบ) -->
+  <div id="view-settings" class="hidden">
+    <div id="settings-gate" class="pin-box">
+      <h2>PIN ผู้ดูแลระบบ</h2>
+      <div class="fg"><input type="password" id="settings-pin" placeholder="กรอก PIN" autocomplete="off"></div>
+      <button class="btn btn-pri" style="width:100%" onclick="checkSettingsPin()">เข้าหน้าตั้งค่า</button>
+      <div class="msg err" id="settings-pin-err"></div>
+      <div style="margin-top:var(--sp-4)"><button class="back-btn" onclick="go('home')">← กลับ</button></div>
+    </div>
+
+    <div id="settings-body" class="hidden">
+      <div class="page-head">
+        <button class="back-btn" onclick="go('home')">← กลับ</button>
+        <h2>ตั้งค่าเช็คชื่อ</h2>
+      </div>
+
+      <div class="card" style="margin-bottom:var(--sp-4)">
+        <div class="fg">
+          <label>เวลาตัดสาย (มาหลังเวลานี้ = สาย)</label>
+          <input type="time" id="cfg-late-time">
+        </div>
+        <button class="btn btn-pri" onclick="saveLateThreshold()">บันทึกเวลาตัดสาย</button>
+        <div class="msg" id="late-msg"></div>
+      </div>
+
+      <div class="card">
+        <div class="fg" style="margin-bottom:var(--sp-3)">
+          <label style="margin-bottom:var(--sp-2)">ตารางเวรประจำวัน (จันทร์–ศุกร์)</label>
+        </div>
+        <table class="duty-table" id="duty-table">
+          <thead>
+            <tr><th>วัน</th><th>เวรหน้าประตู</th><th>เวรตรวจอาคาร</th><th>เวรหน้าเสาธง</th></tr>
+          </thead>
+          <tbody id="duty-tbody"></tbody>
+        </table>
+        <button class="btn btn-pri" onclick="saveDutySchedule()">บันทึกตารางเวร</button>
+        <div class="msg" id="duty-msg"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+'use strict';
+let db = null;
+let _adminPin = null;
+let _lateThreshold = '08:00';
+let _dutySchedule = {};
+
+try {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  db = firebase.firestore();
+  // ต้อง sign in (แบบไม่ระบุตัวตน) ก่อน ไม่งั้น Firestore Rules จะปฏิเสธการเขียนข้อมูล (เหมือน index.html)
+  firebase.auth().signInAnonymously().catch(e => console.error('auth error', e));
+} catch (e) { console.warn('Firebase init failed', e); }
+
+function go(view) {
+  location.hash = '#' + view;
+}
+
+function renderView() {
+  const v = (location.hash || '#home').slice(1);
+  ['home','check','duty','report','settings'].forEach(id => {
+    document.getElementById('view-' + id).classList.toggle('hidden', id !== v);
+  });
+  if (v === 'settings') {
+    const unlocked = sessionStorage.getItem('att_admin_ok') === '1';
+    document.getElementById('settings-gate').classList.toggle('hidden', unlocked);
+    document.getElementById('settings-body').classList.toggle('hidden', !unlocked);
+    if (unlocked) loadSettingsData();
+  }
+}
+window.addEventListener('hashchange', renderView);
+
+async function checkSettingsPin() {
+  const pin = document.getElementById('settings-pin').value.trim();
+  const err = document.getElementById('settings-pin-err');
+  err.textContent = '';
+  if (_adminPin === null) {
+    try {
+      const doc = await db.collection('config').doc('app').get();
+      _adminPin = (doc.exists && doc.data().admin_pin) || '';
+    } catch (e) { err.textContent = 'เชื่อมต่อไม่ได้ กรุณาลองใหม่'; return; }
+  }
+  if (!_adminPin) { err.textContent = 'ยังไม่ได้ตั้ง PIN ผู้ดูแลระบบ — ตั้งค่าที่ระบบเยี่ยมบ้านก่อน'; return; }
+  if (pin !== _adminPin) { err.textContent = 'PIN ไม่ถูกต้อง'; document.getElementById('settings-pin').value = ''; return; }
+  sessionStorage.setItem('att_admin_ok', '1');
+  renderView();
+}
+
+async function loadSettingsData() {
+  try {
+    const doc = await db.collection('config').doc('app').get();
+    if (doc.exists && doc.data().lateThresholdTime) _lateThreshold = doc.data().lateThresholdTime;
+  } catch (e) {}
+  document.getElementById('cfg-late-time').value = _lateThreshold;
+
+  try {
+    const doc = await db.collection('config').doc('dutySchedule').get();
+    if (doc.exists) _dutySchedule = doc.data() || {};
+  } catch (e) {}
+  renderDutyTable();
+}
+
+function renderDutyTable() {
+  const tbody = document.getElementById('duty-tbody');
+  tbody.innerHTML = DUTY_DAYS.map(d => {
+    const row = _dutySchedule[d] || {};
+    return `<tr>
+      <td><strong>${DUTY_DAY_LBL[d]}</strong></td>
+      <td><input type="text" id="duty-${d}-gate" value="${(row.gate||'').replace(/"/g,'&quot;')}" placeholder="ชื่อครู"></td>
+      <td><input type="text" id="duty-${d}-building" value="${(row.building||'').replace(/"/g,'&quot;')}" placeholder="ชื่อครู"></td>
+      <td><input type="text" id="duty-${d}-flag" value="${(row.flag||'').replace(/"/g,'&quot;')}" placeholder="ชื่อครู"></td>
+    </tr>`;
+  }).join('');
+}
+
+async function saveLateThreshold() {
+  const val = document.getElementById('cfg-late-time').value;
+  const msg = document.getElementById('late-msg');
+  if (!val) { msg.className = 'msg err'; msg.textContent = 'กรุณาเลือกเวลา'; return; }
+  try {
+    await db.collection('config').doc('app').set({ lateThresholdTime: val }, { merge: true });
+    _lateThreshold = val;
+    msg.className = 'msg ok';
+    msg.textContent = 'บันทึกแล้ว';
+  } catch (e) {
+    msg.className = 'msg err';
+    msg.textContent = 'บันทึกไม่สำเร็จ กรุณาลองใหม่';
+  }
+}
+
+async function saveDutySchedule() {
+  const msg = document.getElementById('duty-msg');
+  const data = {};
+  DUTY_DAYS.forEach(d => {
+    data[d] = {
+      gate:     document.getElementById('duty-' + d + '-gate').value.trim(),
+      building: document.getElementById('duty-' + d + '-building').value.trim(),
+      flag:     document.getElementById('duty-' + d + '-flag').value.trim()
+    };
+  });
+  try {
+    await db.collection('config').doc('dutySchedule').set(data, { merge: true });
+    _dutySchedule = data;
+    msg.className = 'msg ok';
+    msg.textContent = 'บันทึกแล้ว';
+  } catch (e) {
+    msg.className = 'msg err';
+    msg.textContent = 'บันทึกไม่สำเร็จ กรุณาลองใหม่';
+  }
+}
+
+renderView();
+</script>
+</body>
+</html>
