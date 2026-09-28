@@ -302,44 +302,6 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
     </div>
   </div>
 
-  <!-- เนื้อหาสำหรับพิมพ์เท่านั้น -->
-  <div id="print-area">
-    <div class="p-header">
-      <img src="logo.png" class="p-seal" alt="">
-      <h1>แบบบันทึกข้อมูลการปฏิบัติหน้าที่เวรประจำวัน</h1>
-      <p>โรงเรียนจิกดู่วิทยา อำเภอหัวตะพาน จังหวัดอำนาจเจริญ</p>
-      <p id="p-district"></p>
-      <p id="p-term-line"></p>
-      <p id="p-date-line"></p>
-    </div>
-
-    <table class="p-table" id="p-points-table"></table>
-
-    <table class="p-table" id="p-stats-table"></table>
-    <p id="p-percent-line" style="font-size:.85rem;text-align:right;margin-bottom:14px"></p>
-
-    <div class="p-section">
-      <h3>บันทึกเหตุการณ์วันนี้</h3>
-      <p id="p-daily-log"></p>
-    </div>
-
-    <div class="p-sign">
-      <div>ลงชื่อ....................................................ครูเวรประจำวัน<br>(<span id="p-sign-teacher1"></span>)</div>
-      <div>ลงชื่อ....................................................ครูเวรประจำวัน<br>(<span id="p-sign-teacher2"></span>)</div>
-    </div>
-    <div class="p-sign" style="margin-top:26px">
-      <div>ลงชื่อ....................................................หัวหน้าเวรประจำวัน<br>(...........................................)</div>
-      <div></div>
-    </div>
-    <div class="p-sign" style="margin-top:26px">
-      <div>ลงชื่อ....................................................หัวหน้างานกิจการนักเรียน<br>(นายฉัตรชัย สนิทชัย)</div>
-      <div>ลงชื่อ....................................................หัวหน้ากลุ่มงานบริหารทั่วไป<br>(นายมงคล แสงย้อย)</div>
-    </div>
-    <div class="p-sign-center">
-      <div>ลงชื่อ....................................................<br>(นายโกวิท สุพรรณ์)<br>ผู้อำนวยการโรงเรียนจิกดู่วิทยา</div>
-    </div>
-  </div>
-
   <!-- ตั้งค่า (ต้องใส่ PIN ผู้ดูแลระบบ) -->
   <div id="view-settings" class="hidden">
     <div id="settings-gate" class="pin-box">
@@ -390,6 +352,44 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
     </div>
   </div>
 
+</div>
+
+<!-- เนื้อหาสำหรับพิมพ์เท่านั้น -- อยู่นอก .wrap ตั้งใจ เพราะตอนพิมพ์จะซ่อนทั้ง .wrap -->
+<div id="print-area">
+  <div class="p-header">
+    <img src="logo.png" class="p-seal" alt="">
+    <h1>แบบบันทึกข้อมูลการปฏิบัติหน้าที่เวรประจำวัน</h1>
+    <p>โรงเรียนจิกดู่วิทยา อำเภอหัวตะพาน จังหวัดอำนาจเจริญ</p>
+    <p id="p-district"></p>
+    <p id="p-term-line"></p>
+    <p id="p-date-line"></p>
+  </div>
+
+  <table class="p-table" id="p-points-table"></table>
+
+  <table class="p-table" id="p-stats-table"></table>
+  <p id="p-percent-line" style="font-size:.85rem;text-align:right;margin-bottom:14px"></p>
+
+  <div class="p-section">
+    <h3>บันทึกเหตุการณ์วันนี้</h3>
+    <p id="p-daily-log"></p>
+  </div>
+
+  <div class="p-sign">
+    <div>ลงชื่อ....................................................ครูเวรประจำวัน<br>(<span id="p-sign-teacher1"></span>)</div>
+    <div>ลงชื่อ....................................................ครูเวรประจำวัน<br>(<span id="p-sign-teacher2"></span>)</div>
+  </div>
+  <div class="p-sign" style="margin-top:26px">
+    <div>ลงชื่อ....................................................หัวหน้าเวรประจำวัน<br>(...........................................)</div>
+    <div></div>
+  </div>
+  <div class="p-sign" style="margin-top:26px">
+    <div>ลงชื่อ....................................................หัวหน้างานกิจการนักเรียน<br>(นายฉัตรชัย สนิทชัย)</div>
+    <div>ลงชื่อ....................................................หัวหน้ากลุ่มงานบริหารทั่วไป<br>(นายมงคล แสงย้อย)</div>
+  </div>
+  <div class="p-sign-center">
+    <div>ลงชื่อ....................................................<br>(นายโกวิท สุพรรณ์)<br>ผู้อำนวยการโรงเรียนจิกดู่วิทยา</div>
+  </div>
 </div>
 
 <script>
