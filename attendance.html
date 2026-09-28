@@ -116,15 +116,18 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
 .p-table td.p-txt{text-align:left}
 .p-section{margin-bottom:6px;font-size:.78rem}
 .p-section h3{font-size:.8rem;margin-bottom:2px}
-.p-sign{display:flex;justify-content:space-around;margin-top:14px;font-size:.76rem;text-align:center}
-.p-sign>div{flex:1}
-.p-sign-center{text-align:center;margin-top:14px;font-size:.76rem}
+.p-signatures{margin-top:20px;display:flex;flex-direction:column;gap:18px}
+.p-sign-row{display:flex;justify-content:center;gap:56px}
+.p-sign-block{width:210px;text-align:center;font-size:.76rem;line-height:1.5}
+.p-sign-line{display:block;width:100%;border-bottom:1px solid #333;height:20px}
+.p-sign-role{margin-top:2px}
+.p-sign-name{color:#333}
 @media print{
   @page{size:A4 portrait;margin:1.2cm 1.8cm}
   body.printing-duty .topbar,body.printing-duty .wrap{display:none !important}
   body.printing-duty #print-area{display:block !important}
   body{font-family:'Sarabun',Arial,sans-serif}
-  .p-sign,.p-sign-center{page-break-inside:avoid}
+  .p-sign-row{page-break-inside:avoid}
 }
 </style>
 </head>
@@ -374,20 +377,45 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
     <p id="p-daily-log"></p>
   </div>
 
-  <div class="p-sign">
-    <div>ลงชื่อ....................................................ครูเวรประจำวัน<br>(<span id="p-sign-teacher1"></span>)</div>
-    <div>ลงชื่อ....................................................ครูเวรประจำวัน<br>(<span id="p-sign-teacher2"></span>)</div>
-  </div>
-  <div class="p-sign" style="margin-top:26px">
-    <div>ลงชื่อ....................................................หัวหน้าเวรประจำวัน<br>(...........................................)</div>
-    <div></div>
-  </div>
-  <div class="p-sign" style="margin-top:26px">
-    <div>ลงชื่อ....................................................หัวหน้างานกิจการนักเรียน<br>(นายฉัตรชัย สนิทชัย)</div>
-    <div>ลงชื่อ....................................................หัวหน้ากลุ่มงานบริหารทั่วไป<br>(นายมงคล แสงย้อย)</div>
-  </div>
-  <div class="p-sign-center">
-    <div>ลงชื่อ....................................................<br>(นายโกวิท สุพรรณ์)<br>ผู้อำนวยการโรงเรียนจิกดู่วิทยา</div>
+  <div class="p-signatures">
+    <div class="p-sign-row">
+      <div class="p-sign-block">
+        <span class="p-sign-line"></span>
+        <div class="p-sign-role">ครูเวรประจำวัน</div>
+        <div class="p-sign-name">(<span id="p-sign-teacher1"></span>)</div>
+      </div>
+      <div class="p-sign-block">
+        <span class="p-sign-line"></span>
+        <div class="p-sign-role">ครูเวรประจำวัน</div>
+        <div class="p-sign-name">(<span id="p-sign-teacher2"></span>)</div>
+      </div>
+    </div>
+    <div class="p-sign-row p-sign-row-1">
+      <div class="p-sign-block">
+        <span class="p-sign-line"></span>
+        <div class="p-sign-role">หัวหน้าเวรประจำวัน</div>
+        <div class="p-sign-name">(&nbsp;)</div>
+      </div>
+    </div>
+    <div class="p-sign-row">
+      <div class="p-sign-block">
+        <span class="p-sign-line"></span>
+        <div class="p-sign-role">หัวหน้างานกิจการนักเรียน</div>
+        <div class="p-sign-name">(นายฉัตรชัย สนิทชัย)</div>
+      </div>
+      <div class="p-sign-block">
+        <span class="p-sign-line"></span>
+        <div class="p-sign-role">หัวหน้ากลุ่มงานบริหารทั่วไป</div>
+        <div class="p-sign-name">(นายมงคล แสงย้อย)</div>
+      </div>
+    </div>
+    <div class="p-sign-row p-sign-row-1">
+      <div class="p-sign-block">
+        <span class="p-sign-line"></span>
+        <div class="p-sign-name">(นายโกวิท สุพรรณ์)</div>
+        <div class="p-sign-role">ผู้อำนวยการโรงเรียนจิกดู่วิทยา</div>
+      </div>
+    </div>
   </div>
 </div>
 
