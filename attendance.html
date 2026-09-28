@@ -97,7 +97,7 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
 .att-row .nm{font-weight:700;font-size:.92rem;margin-bottom:8px}
 .att-row .nm .no{color:var(--muted);font-weight:400;font-size:.8rem;margin-right:4px}
 .att-status{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px}
-.att-status button{padding:9px 4px;border-radius:8px;border:1.5px solid var(--bdr);background:#fff;font-size:.78rem;font-weight:700;cursor:pointer;color:var(--muted);transition:var(--tr)}
+.att-status button{min-height:46px;padding:10px 4px;border-radius:8px;border:1.5px solid var(--bdr);background:#fff;font-size:.78rem;font-weight:700;cursor:pointer;color:var(--muted);transition:var(--tr)}
 .att-status button.sel-present{background:var(--sec);color:#fff;border-color:var(--sec)}
 .att-status button.sel-absent{background:var(--dan);color:#fff;border-color:var(--dan)}
 .att-status button.sel-leave{background:#0369a1;color:#fff;border-color:#0369a1}
@@ -105,6 +105,7 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
 .att-row input[type=text]{width:100%;padding:7px 9px;border:1px solid var(--bdr-l);border-radius:6px;font-size:.8rem;font-family:inherit}
 .att-summary{display:flex;gap:10px;flex-wrap:wrap;font-size:.78rem;color:var(--muted);margin-bottom:var(--sp-3)}
 .att-summary span strong{color:var(--txt)}
+.chk-save-bar{position:sticky;bottom:0;background:var(--bg);padding:var(--sp-3) 0;margin-top:var(--sp-2);border-top:1px solid var(--bdr);box-shadow:0 -4px 10px rgba(0,0,0,.04)}
 #print-area{display:none;font-size:.82rem}
 .p-header{text-align:center;margin-bottom:8px}
 .p-seal{width:38px;height:38px;object-fit:contain;margin-bottom:2px}
@@ -175,7 +176,7 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
   <!-- เช็คชื่อ -->
   <div id="view-check" class="hidden">
     <div class="page-head">
-      <button class="back-btn" onclick="go('home')">← กลับ</button>
+      <button class="back-btn" onclick="backFromCheck()">← กลับ</button>
       <h2>เช็คชื่อ</h2>
     </div>
 
@@ -186,7 +187,7 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
       </div>
       <div class="fg">
         <label>PIN ประจำชั้นเรียน</label>
-        <input type="password" id="chk-pin" placeholder="กรอก PIN" autocomplete="off">
+        <input type="password" id="chk-pin" placeholder="กรอก PIN" autocomplete="off" onkeydown="if(event.key==='Enter')startCheck('morning')">
       </div>
       <div class="session-row">
         <button class="btn btn-pri" onclick="startCheck('morning')">รอบเช้า</button>
@@ -202,8 +203,10 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
       </div>
       <div class="att-summary" id="chk-summary"></div>
       <div id="check-rows"></div>
-      <button class="btn btn-pri" style="width:100%;margin-top:var(--sp-2)" onclick="saveAttendance()">บันทึกการเช็คชื่อ</button>
-      <div class="msg" id="chk-save-msg"></div>
+      <div class="chk-save-bar">
+        <button class="btn btn-pri" style="width:100%" onclick="saveAttendance()">บันทึกการเช็คชื่อ</button>
+        <div class="msg" id="chk-save-msg"></div>
+      </div>
     </div>
   </div>
 
@@ -211,7 +214,7 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
   <div id="view-duty" class="hidden">
     <div id="duty-gate" class="pin-box">
       <h2>PIN ผู้ดูแลระบบ</h2>
-      <div class="fg"><input type="password" id="duty-pin" placeholder="กรอก PIN" autocomplete="off"></div>
+      <div class="fg"><input type="password" id="duty-pin" placeholder="กรอก PIN" autocomplete="off" onkeydown="if(event.key==='Enter')checkDutyPin()"></div>
       <button class="btn btn-pri" style="width:100%" onclick="checkDutyPin()">เข้ากรอกรายงาน</button>
       <div class="msg err" id="duty-pin-err"></div>
       <div style="margin-top:var(--sp-4)"><button class="back-btn" onclick="go('home')">← กลับ</button></div>
@@ -267,7 +270,7 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
   <div id="view-report" class="hidden">
     <div id="report-gate" class="pin-box">
       <h2>PIN ผู้ดูแลระบบ</h2>
-      <div class="fg"><input type="password" id="report-pin" placeholder="กรอก PIN" autocomplete="off"></div>
+      <div class="fg"><input type="password" id="report-pin" placeholder="กรอก PIN" autocomplete="off" onkeydown="if(event.key==='Enter')checkReportPin()"></div>
       <button class="btn btn-pri" style="width:100%" onclick="checkReportPin()">เข้าดูสรุป</button>
       <div class="msg err" id="report-pin-err"></div>
       <div style="margin-top:var(--sp-4)"><button class="back-btn" onclick="go('home')">← กลับ</button></div>
@@ -309,7 +312,7 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
   <div id="view-settings" class="hidden">
     <div id="settings-gate" class="pin-box">
       <h2>PIN ผู้ดูแลระบบ</h2>
-      <div class="fg"><input type="password" id="settings-pin" placeholder="กรอก PIN" autocomplete="off"></div>
+      <div class="fg"><input type="password" id="settings-pin" placeholder="กรอก PIN" autocomplete="off" onkeydown="if(event.key==='Enter')checkSettingsPin()"></div>
       <button class="btn btn-pri" style="width:100%" onclick="checkSettingsPin()">เข้าหน้าตั้งค่า</button>
       <div class="msg err" id="settings-pin-err"></div>
       <div style="margin-top:var(--sp-4)"><button class="back-btn" onclick="go('home')">← กลับ</button></div>
@@ -435,7 +438,14 @@ try {
 } catch (e) { console.warn('Firebase init failed', e); }
 
 function go(view) {
+  if (view !== 'check' && _checkLoggedIn && _attDirty) {
+    if (!confirm('มีการแก้ไขที่ยังไม่ได้บันทึก ต้องการออกจากหน้านี้โดยไม่บันทึกหรือไม่?')) return;
+  }
   location.hash = '#' + view;
+}
+
+function backFromCheck() {
+  go('home');
 }
 
 function esc(s) {
@@ -492,6 +502,7 @@ let _checkGrade = null, _checkSession = null, _checkDate = null;
 let _roster = [];
 let _attRecords = {}; // studentId -> {status, note}
 let _checkLoggedIn = false;
+let _attDirty = false;
 
 function initCheckLogin() {
   const sel = document.getElementById('chk-grade');
@@ -569,6 +580,7 @@ async function startCheck(session) {
   } catch (e) {}
 
   _checkLoggedIn = true;
+  _attDirty = false;
   document.getElementById('check-login').classList.add('hidden');
   document.getElementById('check-list').classList.remove('hidden');
   renderCheckList();
@@ -605,12 +617,14 @@ function renderCheckSummary() {
 function setStatus(studentId, status) {
   if (!_attRecords[studentId]) return;
   _attRecords[studentId].status = status;
+  _attDirty = true;
   renderCheckList();
 }
 
 function updateNote(studentId, val) {
   if (!_attRecords[studentId]) return;
   _attRecords[studentId].note = val;
+  _attDirty = true;
 }
 
 async function saveAttendance() {
@@ -629,6 +643,7 @@ async function saveAttendance() {
       records,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
+    _attDirty = false;
     msg.className = 'msg ok';
     msg.textContent = 'บันทึกแล้ว';
   } catch (e) {
@@ -638,9 +653,13 @@ async function saveAttendance() {
 }
 
 function logoutCheck() {
+  if (_checkLoggedIn && _attDirty) {
+    if (!confirm('มีการแก้ไขที่ยังไม่ได้บันทึก ต้องการออกจากระบบโดยไม่บันทึกหรือไม่?')) return;
+  }
   localStorage.removeItem('att_chk_grade');
   localStorage.removeItem('att_chk_pin');
   _checkLoggedIn = false;
+  _attDirty = false;
   document.getElementById('chk-pin').value = '';
   document.getElementById('chk-login-err').textContent = '';
   initCheckLogin();
