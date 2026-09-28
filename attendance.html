@@ -228,9 +228,7 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
       <div class="card" style="margin-bottom:var(--sp-4)">
         <div class="fg" style="margin-bottom:var(--sp-1)"><label style="margin-bottom:0">เวรหน้าประตู</label></div>
         <div class="ds" id="dr-gate-hint" style="font-size:.78rem;color:var(--muted);margin-bottom:var(--sp-3)"></div>
-        <div class="fg"><label>นักเรียนมาสาย</label><input type="text" id="dr-gate-late" placeholder="จำนวน / รายชื่อ (ถ้ามี)"></div>
-        <div class="fg"><label>การแต่งกาย</label><input type="text" id="dr-gate-dress" placeholder="เรียบร้อยดี / มีปัญหา..."></div>
-        <div class="fg"><label>เหตุการณ์</label><input type="text" id="dr-gate-incident" placeholder="ไม่มี / ระบุเหตุการณ์"></div>
+        <div class="fg"><label>บันทึกเหตุการณ์</label><input type="text" id="dr-gate-incident" placeholder="ไม่มี / ระบุเหตุการณ์ (จำนวนมาสายเช็คจากหน้าเช็คชื่อแล้ว ไม่ต้องกรอกซ้ำ)"></div>
         <div class="fg" style="margin-bottom:0"><label>ผู้บันทึก</label><input type="text" id="dr-gate-reporter" placeholder="ชื่อครูเวร"></div>
       </div>
 
@@ -793,7 +791,7 @@ function updateDutyHints(date) {
 }
 
 const DUTY_FIELDS = {
-  gate: ['late', 'dress', 'incident', 'reporter'],
+  gate: ['incident', 'reporter'],
   building: ['condition', 'electric', 'water', 'damage', 'reporter'],
   flag: ['topic', 'reporter']
 };
@@ -849,7 +847,7 @@ let _printState = null;
 
 function dutySummaryText(section, data) {
   const d = (data && data[section]) || {};
-  if (section === 'gate') return `นักเรียนมาสาย: ${d.late || '-'} | การแต่งกาย: ${d.dress || '-'} | เหตุการณ์: ${d.incident || '-'} | ผู้บันทึก: ${d.reporter || '-'}`;
+  if (section === 'gate') return `บันทึกเหตุการณ์: ${d.incident || '-'} | ผู้บันทึก: ${d.reporter || '-'}`;
   if (section === 'building') return `ความเรียบร้อย: ${d.condition || '-'} | ไฟ: ${d.electric || '-'} | น้ำ: ${d.water || '-'} | ความเสียหาย: ${d.damage || '-'} | ผู้บันทึก: ${d.reporter || '-'}`;
   if (section === 'flag') return `หัวข้อที่พูด: ${d.topic || '-'} | ผู้บันทึก: ${d.reporter || '-'}`;
   return '';
@@ -878,8 +876,6 @@ function pointNarrative(section, data) {
   const d = (data && data[section]) || {};
   const parts = [];
   if (section === 'gate') {
-    if (d.late) parts.push('นักเรียนมาสาย ' + d.late);
-    if (d.dress) parts.push('การแต่งกาย ' + d.dress);
     if (d.incident) parts.push(d.incident);
   } else if (section === 'building') {
     if (d.condition) parts.push('ความเรียบร้อย ' + d.condition);
