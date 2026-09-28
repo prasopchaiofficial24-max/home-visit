@@ -978,8 +978,10 @@ function printReport() {
 
     document.getElementById('p-daily-log').textContent = (dutyData && dutyData.dailyLog) || '-';
 
+    const schedule = await getDutySchedule();
+    const daySchedule = schedule[dayKeyFromDate(date)] || {};
     const reporters = ['gate', 'building', 'flag']
-      .map(s => dutyData && dutyData[s] && dutyData[s].reporter)
+      .map(s => (dutyData && dutyData[s] && dutyData[s].reporter) || daySchedule[s])
       .filter(Boolean);
     const uniqueReporters = [...new Set(reporters)];
     document.getElementById('p-sign-teacher1').textContent = uniqueReporters[0] || '';
