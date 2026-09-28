@@ -16,6 +16,12 @@ const GRADES       = ['ม.1','ม.2','ม.3','ม.4','ม.5','ม.6'];
 const ATT_STATUS   = ['present','absent','leave','late'];
 const ATT_STATUS_LBL = {present:'มา',absent:'ขาด',leave:'ลา',late:'สาย'};
 const THAI_MONTHS  = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const AMPHOE       = 'หัวตะพาน';
+const PROVINCE     = 'อำนาจเจริญ';
+const DISTRICT_NAME = 'สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาอุบลราชธานี อำนาจเจริญ';
+const PRINCIPAL_NAME = 'นายโกวิท สุพรรณ์';
+const STUDENT_AFFAIRS_HEAD = 'นายฉัตรชัย สนิทชัย';
+const GENERAL_ADMIN_HEAD   = 'นายมงคล แสงย้อย';
 </script>
 
 <link rel="icon" type="image/png" href="logo.png">
@@ -101,13 +107,18 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
 .att-summary span strong{color:var(--txt)}
 #print-area{display:none}
 .p-header{text-align:center;margin-bottom:16px}
-.p-header h1{font-size:1.2rem;margin-bottom:4px}
-.p-table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:.85rem}
-.p-table th,.p-table td{border:1px solid #333;padding:4px 6px}
+.p-seal{width:56px;height:56px;object-fit:contain;margin-bottom:4px}
+.p-header h1{font-size:1.15rem;margin-bottom:6px}
+.p-header p{font-size:.85rem;margin:2px 0}
+.p-table{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:.8rem}
+.p-table th,.p-table td{border:1px solid #333;padding:4px 6px;text-align:center}
 .p-table th{background:#eee}
+.p-table td.p-txt{text-align:left}
 .p-section{margin-bottom:10px;font-size:.9rem}
 .p-section h3{font-size:.92rem;margin-bottom:4px}
-.p-sign{display:flex;justify-content:space-between;margin-top:40px;font-size:.88rem;text-align:center}
+.p-sign{display:flex;justify-content:space-around;margin-top:30px;font-size:.85rem;text-align:center}
+.p-sign>div{flex:1}
+.p-sign-center{text-align:center;margin-top:30px;font-size:.85rem}
 @media print{
   @page{size:A4 portrait;margin:2cm 2.5cm}
   body.printing-duty .topbar,body.printing-duty .wrap{display:none !important}
@@ -240,6 +251,10 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
         <div class="fg" style="margin-bottom:0"><label>ผู้บันทึก</label><input type="text" id="dr-flag-reporter" placeholder="ชื่อครูเวร"></div>
       </div>
 
+      <div class="card" style="margin-bottom:var(--sp-4)">
+        <div class="fg" style="margin-bottom:0"><label>บันทึกเหตุการณ์วันนี้ (ภาพรวมทั้งวัน)</label><input type="text" id="dr-daily-log" placeholder="ไม่มีเหตุการณ์ผิดปกติ / ระบุเหตุการณ์"></div>
+      </div>
+
       <button class="btn btn-pri" style="width:100%" onclick="saveDutyReport()">บันทึกรายงานครูเวร</button>
       <div class="msg" id="dr-save-msg"></div>
     </div>
@@ -290,26 +305,38 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
   <!-- เนื้อหาสำหรับพิมพ์เท่านั้น -->
   <div id="print-area">
     <div class="p-header">
-      <h1>รายงานเวรประจำวัน</h1>
-      <p id="p-school-date"></p>
+      <img src="logo.png" class="p-seal" alt="">
+      <h1>แบบบันทึกข้อมูลการปฏิบัติหน้าที่เวรประจำวัน</h1>
+      <p>โรงเรียนจิกดู่วิทยา อำเภอหัวตะพาน จังหวัดอำนาจเจริญ</p>
+      <p id="p-district"></p>
+      <p id="p-term-line"></p>
+      <p id="p-date-line"></p>
     </div>
-    <table class="p-table" id="p-summary-morning"></table>
-    <table class="p-table" id="p-summary-evening"></table>
+
+    <table class="p-table" id="p-points-table"></table>
+
+    <table class="p-table" id="p-stats-table"></table>
+    <p id="p-percent-line" style="font-size:.85rem;text-align:right;margin-bottom:14px"></p>
+
     <div class="p-section">
-      <h3>1. เวรหน้าประตู</h3>
-      <p id="p-gate"></p>
+      <h3>บันทึกเหตุการณ์วันนี้</h3>
+      <p id="p-daily-log"></p>
     </div>
-    <div class="p-section">
-      <h3>2. เวรตรวจอาคาร</h3>
-      <p id="p-building"></p>
-    </div>
-    <div class="p-section">
-      <h3>3. เวรพูดหน้าเสาธง</h3>
-      <p id="p-flag"></p>
-    </div>
+
     <div class="p-sign">
-      <div>ลงชื่อ ................................................ ครูเวร<br>(...........................................)</div>
-      <div>ลงชื่อ ................................................ ผู้บริหาร<br>(...........................................)</div>
+      <div>ลงชื่อ....................................................ครูเวรประจำวัน<br>(<span id="p-sign-teacher1"></span>)</div>
+      <div>ลงชื่อ....................................................ครูเวรประจำวัน<br>(<span id="p-sign-teacher2"></span>)</div>
+    </div>
+    <div class="p-sign" style="margin-top:26px">
+      <div>ลงชื่อ....................................................หัวหน้าเวรประจำวัน<br>(...........................................)</div>
+      <div></div>
+    </div>
+    <div class="p-sign" style="margin-top:26px">
+      <div>ลงชื่อ....................................................หัวหน้างานกิจการนักเรียน<br>(นายฉัตรชัย สนิทชัย)</div>
+      <div>ลงชื่อ....................................................หัวหน้ากลุ่มงานบริหารทั่วไป<br>(นายมงคล แสงย้อย)</div>
+    </div>
+    <div class="p-sign-center">
+      <div>ลงชื่อ....................................................<br>(นายโกวิท สุพรรณ์)<br>ผู้อำนวยการโรงเรียนจิกดู่วิทยา</div>
     </div>
   </div>
 
@@ -789,6 +816,7 @@ async function loadDutyReport() {
       if (el) el.value = sectionData[f] || '';
     });
   });
+  document.getElementById('dr-daily-log').value = data.dailyLog || '';
 }
 
 async function saveDutyReport() {
@@ -802,6 +830,7 @@ async function saveDutyReport() {
       data[section][f] = el ? el.value.trim() : '';
     });
   });
+  data.dailyLog = document.getElementById('dr-daily-log').value.trim();
   try {
     await db.collection(DUTY_COL).doc(date).set({
       ...data,
@@ -835,40 +864,130 @@ function renderDutyPreview(date, dutyData) {
   el.innerHTML = `
     <div><strong>เวรหน้าประตู</strong> — ${esc(dutySummaryText('gate', dutyData))}</div>
     <div><strong>เวรตรวจอาคาร</strong> — ${esc(dutySummaryText('building', dutyData))}</div>
-    <div><strong>เวรพูดหน้าเสาธง</strong> — ${esc(dutySummaryText('flag', dutyData))}</div>`;
+    <div><strong>เวรพูดหน้าเสาธง</strong> — ${esc(dutySummaryText('flag', dutyData))}</div>
+    <div><strong>บันทึกเหตุการณ์วันนี้</strong> — ${esc(dutyData.dailyLog || '-')}</div>`;
 }
 
-function buildSummaryTableHtml(title, sessionDocs) {
+function semesterFromDate(iso) {
+  const m = Number(iso.split('-')[1]);
+  return (m >= 5 && m <= 9) ? 1 : 2;
+}
+
+// ข้อความบรรยายสำหรับพิมพ์ -- ข้ามฟิลด์ที่ว่างไว้ ไม่ใส่ "ผู้บันทึก" ในเนื้อหา (มีช่องลงชื่อแยกอยู่แล้ว)
+function pointNarrative(section, data) {
+  const d = (data && data[section]) || {};
+  const parts = [];
+  if (section === 'gate') {
+    if (d.late) parts.push('นักเรียนมาสาย ' + d.late);
+    if (d.dress) parts.push('การแต่งกาย ' + d.dress);
+    if (d.incident) parts.push(d.incident);
+  } else if (section === 'building') {
+    if (d.condition) parts.push('ความเรียบร้อย ' + d.condition);
+    if (d.electric) parts.push('ไฟ ' + d.electric);
+    if (d.water) parts.push('น้ำ ' + d.water);
+    if (d.damage) parts.push('ความเสียหาย ' + d.damage);
+  } else if (section === 'flag') {
+    if (d.topic) parts.push(d.topic);
+  }
+  return parts.length ? parts.join('  ') : '-';
+}
+
+let _rosterAllCache = null;
+async function getRosterAll() {
+  if (_rosterAllCache) return _rosterAllCache;
+  const snap = await db.collection(ROSTER_COL).get();
   const byGrade = {};
-  sessionDocs.forEach(d => { byGrade[d.grade] = d; });
-  const totals = { present: 0, absent: 0, leave: 0, late: 0 };
+  GRADES.forEach(g => { byGrade[g] = { male: 0, female: 0 }; });
+  snap.forEach(d => {
+    const r = d.data();
+    if (!byGrade[r.gradeLevel]) return;
+    if (r.gender === 'male') byGrade[r.gradeLevel].male++;
+    else if (r.gender === 'female') byGrade[r.gradeLevel].female++;
+  });
+  _rosterAllCache = byGrade;
+  return byGrade;
+}
+
+function buildPointsTableHtml(dutyData) {
+  const points = [
+    ['จุดที่ 1<br>หน้าประตูโรงเรียน<br>(ภาคเช้า-ภาคเย็น)', 'gate'],
+    ['จุดที่ 2<br>กิจกรรมหน้าเสาธง', 'flag'],
+    ['จุดที่ 3<br>โรงอาหาร, โรงจอดรถ,<br>ห้องน้ำ, อาคารเรียน', 'building']
+  ];
+  const rows = points.map(([label, section]) => {
+    const d = (dutyData && dutyData[section]) || {};
+    return `<tr><td style="width:20%">${label}</td><td class="p-txt">${esc(pointNarrative(section, dutyData))}</td><td style="width:18%">${esc(d.reporter || '')}</td></tr>`;
+  }).join('');
+  return `<thead><tr><th>จุดปฏิบัติหน้าที่</th><th>รายงานการปฏิบัติหน้าที่</th><th>ลงชื่อ</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+function buildStatsTableHtml(rosterAll, morningDocs) {
+  const byGrade = {};
+  morningDocs.forEach(d => { byGrade[d.grade] = d; });
+
+  let totM = 0, totF = 0, totPresent = 0, totAbsent = 0, totLate = 0;
   const rows = GRADES.map(g => {
+    const roster = rosterAll[g] || { male: 0, female: 0 };
+    const total = roster.male + roster.female;
+    totM += roster.male; totF += roster.female;
+
     const d = byGrade[g];
-    if (!d) return `<tr><td>${esc(g)}</td><td colspan="5">ยังไม่เช็คชื่อ</td></tr>`;
+    if (!d) {
+      return `<tr><td>${esc(g)}</td><td>${roster.male}</td><td>${roster.female}</td><td>${total}</td><td colspan="3">ยังไม่เช็คชื่อ</td><td></td></tr>`;
+    }
     const c = { present: 0, absent: 0, leave: 0, late: 0 };
     Object.values(d.records || {}).forEach(r => { c[r.status] = (c[r.status] || 0) + 1; });
-    ATT_STATUS.forEach(st => { totals[st] += c[st]; });
-    const sum = c.present + c.absent + c.leave + c.late;
-    return `<tr><td>${esc(g)}</td><td>${c.present}</td><td>${c.absent}</td><td>${c.leave}</td><td>${c.late}</td><td>${sum}</td></tr>`;
+    const present = c.present + c.late;
+    const absent = c.absent + c.leave;
+    totPresent += present; totAbsent += absent; totLate += c.late;
+    const note = (c.absent || c.leave) ? `ขาด ${c.absent} ลา ${c.leave}` : '';
+    return `<tr><td>${esc(g)}</td><td>${roster.male}</td><td>${roster.female}</td><td>${total}</td><td>${present}</td><td>${absent}</td><td>${c.late}</td><td class="p-txt">${esc(note)}</td></tr>`;
   });
-  const grand = totals.present + totals.absent + totals.leave + totals.late;
-  return `<thead><tr><th colspan="6" style="text-align:center">${esc(title)}</th></tr>
-    <tr><th>ชั้น</th><th>มา</th><th>ขาด</th><th>ลา</th><th>สาย</th><th>รวม</th></tr></thead>
-    <tbody>${rows.join('')}<tr><td><strong>รวม</strong></td><td>${totals.present}</td><td>${totals.absent}</td><td>${totals.leave}</td><td>${totals.late}</td><td>${grand}</td></tr></tbody>`;
+
+  const grandTotal = totM + totF;
+  return `<thead>
+    <tr><th rowspan="2">ชั้น</th><th colspan="3">นักเรียนทั้งหมด</th><th rowspan="2">มาเรียน</th><th rowspan="2">ไม่มาเรียน</th><th rowspan="2">มาสาย</th><th rowspan="2">หมายเหตุ</th></tr>
+    <tr><th>ชาย</th><th>หญิง</th><th>รวม</th></tr>
+    </thead>
+    <tbody>${rows.join('')}<tr><td><strong>รวม</strong></td><td>${totM}</td><td>${totF}</td><td>${grandTotal}</td><td>${totPresent}</td><td>${totAbsent}</td><td>${totLate}</td><td></td></tr></tbody>`;
 }
 
 function printReport() {
   if (!_printState) return;
-  const { date, morningDocs, eveningDocs, dutyData } = _printState;
-  document.getElementById('p-school-date').textContent = `${SCHOOL} — วันที่ ${thaiDateLabel(date)}`;
-  document.getElementById('p-summary-morning').innerHTML = buildSummaryTableHtml('รอบเช้า', morningDocs);
-  document.getElementById('p-summary-evening').innerHTML = buildSummaryTableHtml('รอบเย็น', eveningDocs);
-  document.getElementById('p-gate').textContent = dutySummaryText('gate', dutyData || {});
-  document.getElementById('p-building').textContent = dutySummaryText('building', dutyData || {});
-  document.getElementById('p-flag').textContent = dutySummaryText('flag', dutyData || {});
+  (async () => {
+    const { date, morningDocs, dutyData } = _printState;
+    const sem = semesterFromDate(date);
+    const [y, m] = date.split('-').map(Number);
 
-  document.body.classList.add('printing-duty');
-  window.print();
+    document.getElementById('p-district').textContent = DISTRICT_NAME;
+    document.getElementById('p-term-line').textContent = `ภาคเรียนที่ ${sem} ปีการศึกษา ${y + 543}  ประจำเดือน ${THAI_MONTHS[m]} ${y + 543}`;
+    document.getElementById('p-date-line').textContent = `วันที่ ${thaiDateLabel(date)}`;
+
+    document.getElementById('p-points-table').innerHTML = buildPointsTableHtml(dutyData);
+
+    const rosterAll = await getRosterAll();
+    document.getElementById('p-stats-table').innerHTML = buildStatsTableHtml(rosterAll, morningDocs);
+
+    const totalAll = GRADES.reduce((a, g) => a + (rosterAll[g] ? rosterAll[g].male + rosterAll[g].female : 0), 0);
+    const present = morningDocs.reduce((a, d) => {
+      const c = Object.values(d.records || {}).filter(r => r.status === 'present' || r.status === 'late').length;
+      return a + c;
+    }, 0);
+    const pct = totalAll ? ((present / totalAll) * 100).toFixed(1) : '0.0';
+    document.getElementById('p-percent-line').textContent = `มาเรียนคิดเป็นร้อยละ ${pct}`;
+
+    document.getElementById('p-daily-log').textContent = (dutyData && dutyData.dailyLog) || '-';
+
+    const reporters = ['gate', 'building', 'flag']
+      .map(s => dutyData && dutyData[s] && dutyData[s].reporter)
+      .filter(Boolean);
+    const uniqueReporters = [...new Set(reporters)];
+    document.getElementById('p-sign-teacher1').textContent = uniqueReporters[0] || '';
+    document.getElementById('p-sign-teacher2').textContent = uniqueReporters[1] || '';
+
+    document.body.classList.add('printing-duty');
+    window.print();
+  })();
 }
 window.addEventListener('afterprint', () => document.body.classList.remove('printing-duty'));
 
