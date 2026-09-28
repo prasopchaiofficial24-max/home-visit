@@ -105,25 +105,26 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
 .att-row input[type=text]{width:100%;padding:7px 9px;border:1px solid var(--bdr-l);border-radius:6px;font-size:.8rem;font-family:inherit}
 .att-summary{display:flex;gap:10px;flex-wrap:wrap;font-size:.78rem;color:var(--muted);margin-bottom:var(--sp-3)}
 .att-summary span strong{color:var(--txt)}
-#print-area{display:none}
-.p-header{text-align:center;margin-bottom:16px}
-.p-seal{width:56px;height:56px;object-fit:contain;margin-bottom:4px}
-.p-header h1{font-size:1.15rem;margin-bottom:6px}
-.p-header p{font-size:.85rem;margin:2px 0}
-.p-table{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:.8rem}
-.p-table th,.p-table td{border:1px solid #333;padding:4px 6px;text-align:center}
+#print-area{display:none;font-size:.82rem}
+.p-header{text-align:center;margin-bottom:8px}
+.p-seal{width:38px;height:38px;object-fit:contain;margin-bottom:2px}
+.p-header h1{font-size:1.02rem;margin-bottom:3px}
+.p-header p{font-size:.78rem;margin:1px 0}
+.p-table{width:100%;border-collapse:collapse;margin-bottom:6px;font-size:.74rem}
+.p-table th,.p-table td{border:1px solid #333;padding:2px 4px;text-align:center;line-height:1.25}
 .p-table th{background:#eee}
 .p-table td.p-txt{text-align:left}
-.p-section{margin-bottom:10px;font-size:.9rem}
-.p-section h3{font-size:.92rem;margin-bottom:4px}
-.p-sign{display:flex;justify-content:space-around;margin-top:30px;font-size:.85rem;text-align:center}
+.p-section{margin-bottom:6px;font-size:.78rem}
+.p-section h3{font-size:.8rem;margin-bottom:2px}
+.p-sign{display:flex;justify-content:space-around;margin-top:14px;font-size:.76rem;text-align:center}
 .p-sign>div{flex:1}
-.p-sign-center{text-align:center;margin-top:30px;font-size:.85rem}
+.p-sign-center{text-align:center;margin-top:14px;font-size:.76rem}
 @media print{
-  @page{size:A4 portrait;margin:2cm 2.5cm}
+  @page{size:A4 portrait;margin:1.2cm 1.8cm}
   body.printing-duty .topbar,body.printing-duty .wrap{display:none !important}
   body.printing-duty #print-area{display:block !important}
   body{font-family:'Sarabun',Arial,sans-serif}
+  .p-sign,.p-sign-center{page-break-inside:avoid}
 }
 </style>
 </head>
