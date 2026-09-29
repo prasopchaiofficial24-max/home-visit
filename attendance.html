@@ -355,6 +355,16 @@ body{font-family:'Prompt','Sarabun','Noto Sans Thai',Arial,sans-serif;background
         <button class="btn btn-pri" onclick="syncRoster()">ซิงค์รายชื่อตอนนี้</button>
         <div class="msg" id="roster-msg"></div>
       </div>
+
+      <div class="card" style="margin-top:var(--sp-4)">
+        <div class="fg">
+          <label>ผูกกลุ่มไลน์ผู้ปกครองกับชั้นเรียน</label>
+          <div style="font-size:.78rem;color:var(--muted);margin-bottom:var(--sp-2)">เชิญบอทเข้ากลุ่มไลน์แต่ละชั้นก่อน แล้วพิมพ์ "สรุปเช้า" ในกลุ่มนั้นครั้งแรก บอทจะตอบ Group ID กลับมา เอามาใส่ในช่องตรงกับชั้นด้านล่าง</div>
+        </div>
+        <div id="line-groups-rows"></div>
+        <button class="btn btn-pri" onclick="saveLineGroups()">บันทึกการผูกกลุ่ม</button>
+        <div class="msg" id="line-groups-msg"></div>
+      </div>
     </div>
   </div>
 
@@ -1050,6 +1060,40 @@ async function loadSettingsData() {
     if (doc.exists) _dutySchedule = doc.data() || {};
   } catch (e) {}
   renderDutyTable();
+
+  try {
+    const doc = await db.collection('config').doc('lineGroups').get();
+    if (doc.exists) _lineGroups = doc.data() || {};
+  } catch (e) {}
+  renderLineGroupsRows();
+}
+
+let _lineGroups = {};
+function renderLineGroupsRows() {
+  const el = document.getElementById('line-groups-rows');
+  el.innerHTML = GRADES.map(g => `
+    <div class="fg">
+      <label>${g}</label>
+      <input type="text" id="lg-${g}" value="${(_lineGroups[g] || '').replace(/"/g, '&quot;')}" placeholder="Group ID">
+    </div>`).join('');
+}
+
+async function saveLineGroups() {
+  const msg = document.getElementById('line-groups-msg');
+  const data = {};
+  GRADES.forEach(g => {
+    const v = document.getElementById('lg-' + g).value.trim();
+    if (v) data[g] = v;
+  });
+  try {
+    await db.collection('config').doc('lineGroups').set(data);
+    _lineGroups = data;
+    msg.className = 'msg ok';
+    msg.textContent = 'บันทึกแล้ว';
+  } catch (e) {
+    msg.className = 'msg err';
+    msg.textContent = 'บันทึกไม่สำเร็จ กรุณาลองใหม่';
+  }
 }
 
 function renderDutyTable() {
