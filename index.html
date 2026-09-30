@@ -412,6 +412,10 @@ body.booting .db-vis-row strong{
         <span class="hub-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg></span>
         <span><div class="hub-tt">แบบสำรวจ</div><div class="hub-ds">แดชบอร์ดแบบสำรวจความปลอดภัยนักเรียน</div></span>
       </div>
+      <div class="hub-card" onclick="showPage('archive')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')showPage('archive')">
+        <span class="hub-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg></span>
+        <span><div class="hub-tt">ข้อมูลย้อนหลัง</div><div class="hub-ds">ดูข้อมูลภาคเรียนที่ผ่านมา</div></span>
+      </div>
     </div>
   </div>
 </div>
@@ -955,6 +959,23 @@ body.booting .db-vis-row strong{
   <div id="survey-out"><div style="color:var(--muted);text-align:center;padding:40px;font-size:.88rem">กำลังโหลด...</div></div>
 </div>
 
+<!-- ════════════════════════════════════════
+     PAGE: ข้อมูลย้อนหลัง (ARCHIVE)
+════════════════════════════════════════ -->
+<div class="page" id="page-archive">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+    <div>
+      <div style="font-weight:800;font-size:1.05rem">ข้อมูลย้อนหลัง</div>
+      <div style="font-size:.8rem;color:var(--muted)">ข้อมูลภาคเรียนที่ปิดไปแล้ว — ดูได้อย่างเดียว แก้ไข/ลบไม่ได้</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select id="archive-term-sel" style="padding:8px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.88rem;font-family:inherit" onchange="renderArchiveTerm()"></select>
+      <button class="btn btn-sm btn-out" onclick="exportArchiveExcel()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Excel</button>
+    </div>
+  </div>
+  <div id="archive-out"><div style="color:var(--muted);text-align:center;padding:40px;font-size:.88rem">กำลังโหลด...</div></div>
+</div>
+
 <!-- Modal: Teacher Log -->
 <div class="mo" id="mo-teacher-log">
   <div class="mo-box" style="max-width:580px;max-height:90vh;overflow-y:auto">
@@ -1135,6 +1156,21 @@ body.booting .db-vis-row strong{
       <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">ดาวน์โหลดข้อมูลทั้งหมด (เยี่ยมบ้าน + แบบสำรวจ) เป็นไฟล์ .json เก็บไว้กู้คืนกรณีฉุกเฉิน</div>
       <button class="btn btn-sm" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe" onclick="backupAllData()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> ดาวน์โหลดไฟล์สำรอง</button>
       <div id="backup-msg" style="font-size:.78rem;color:var(--sec);min-height:18px;margin-top:6px"></div>
+    </div>
+
+    <div style="border-top:1.5px solid var(--bdr);padding-top:18px;margin-top:18px">
+      <div style="font-weight:700;font-size:.88rem;color:var(--dan);margin-bottom:8px"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg> เริ่มภาคเรียนใหม่</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">สำเนาข้อมูลนักเรียนทุกคน ณ ตอนนี้เก็บเป็นประวัติ (ดูได้ที่หน้า "ข้อมูลย้อนหลัง") แล้วล้างเฉพาะข้อมูลที่ต้องประเมินใหม่ (สถานะเยี่ยมบ้าน, พฤติกรรมเสี่ยง, ปัญหาที่พบ, ความสัมพันธ์ครอบครัว, สภาพบ้าน, การเดินทาง, เร่งด่วน, ความช่วยเหลือ, หมายเหตุ) — ข้อมูลพื้นฐาน (ชื่อ ผู้ปกครอง ที่อยู่) จะไม่ถูกแตะต้อง มีผลกับนักเรียนทุกคนพร้อมกัน</div>
+      <div class="fg"><label>ปีการศึกษาใหม่</label><input type="text" id="sem-new-year" placeholder="เช่น 2569"></div>
+      <div class="fg">
+        <label>ภาคเรียนใหม่</label>
+        <select id="sem-new-sem" style="padding:8px 11px;border:1.5px solid var(--bdr);border-radius:7px;font-size:.9rem;font-family:inherit">
+          <option value="1">ภาคเรียนที่ 1</option>
+          <option value="2">ภาคเรียนที่ 2</option>
+        </select>
+      </div>
+      <button class="btn btn-sm" style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca" onclick="startNewSemester()">เริ่มภาคเรียนใหม่</button>
+      <div id="new-sem-msg" style="font-size:.78rem;color:var(--sec);min-height:18px;margin-top:6px"></div>
     </div>
   </div>
 </div>
@@ -1711,6 +1747,65 @@ async function backupAllData() {
   }
 }
 
+// ── เริ่มภาคเรียนใหม่: สำเนาเป็นประวัติ + ล้างข้อมูลที่ต้องประเมินใหม่ ──
+const SEMESTER_RESET_FIELDS = [
+  'visited', 'visitDate', 'nvReasons',
+  'rH', 'rS', 'rV', 'rT', 'rX', 'rP', 'rSf', 'rO',
+  'pL', 'pH', 'pE', 'pS', 'pD', 'pO',
+  'family', 'house', 'transport', 'distance', 'travelTime',
+  'urgent', 'needHelp', 'parentConcern', 'notes'
+];
+async function startNewSemester() {
+  const msg = document.getElementById('new-sem-msg');
+  const newYear = document.getElementById('sem-new-year').value.trim();
+  const newSem  = document.getElementById('sem-new-sem').value;
+  if (!newYear) { msg.style.color = 'var(--dan)'; msg.textContent = 'กรุณากรอกปีการศึกษาใหม่'; return; }
+  if (!db) { msg.style.color = 'var(--dan)'; msg.textContent = 'ไม่ได้เชื่อมต่อ Firestore'; return; }
+
+  const proceed = await showConfirm(
+    `จะสำเนาข้อมูลนักเรียนทั้งหมด ${_recs.length} คน ณ ตอนนี้เก็บเป็นประวัติ แล้วล้างข้อมูลการประเมิน (พฤติกรรมเสี่ยง ปัญหาที่พบ สถานะเยี่ยมบ้าน ฯลฯ) เพื่อเริ่ม "ภาคเรียนที่ ${newSem} ปีการศึกษา ${newYear}" ใหม่\n\nข้อมูลพื้นฐาน (ชื่อ ผู้ปกครอง ที่อยู่) จะไม่ถูกแตะต้อง — การกระทำนี้มีผลกับนักเรียนทุกคนพร้อมกันและย้อนกลับเองไม่ได้\n\nยืนยันดำเนินการหรือไม่?`,
+    'เริ่มภาคเรียนใหม่'
+  );
+  if (!proceed) return;
+
+  msg.style.color = 'var(--muted)';
+  msg.textContent = `กำลังดำเนินการ (0/${_recs.length})...`;
+
+  try {
+    const CHUNK = 200; // อยู่ในลิมิต batch 500 ops ของ Firestore (archive + update = 2 ops/คน)
+    let done = 0;
+    for (let i = 0; i < _recs.length; i += CHUNK) {
+      const chunk = _recs.slice(i, i + CHUNK);
+      const batch = db.batch();
+      chunk.forEach(r => {
+        const archiveId = `${r.id}_${r.year || 'x'}_${r.semester || 'x'}`;
+        const archiveRef = db.collection('visitArchive').doc(archiveId);
+        batch.set(archiveRef, { ...r, archivedAt: firebase.firestore.FieldValue.serverTimestamp() });
+
+        const liveRef = db.collection(COL).doc(r.id);
+        const resetData = { year: newYear, semester: newSem };
+        SEMESTER_RESET_FIELDS.forEach(f => {
+          if (['visited', 'urgent'].includes(f)) resetData[f] = false;
+          else if (['nvReasons', 'house', 'needHelp'].includes(f)) resetData[f] = [];
+          else if (['rH','rS','rV','rT','rX','rP','rSf','rO','pL','pH','pE','pS','pD','pO','distance','travelTime'].includes(f)) resetData[f] = 0;
+          else resetData[f] = '';
+        });
+        batch.update(liveRef, resetData);
+      });
+      await batch.commit();
+      done += chunk.length;
+      msg.textContent = `กำลังดำเนินการ (${done}/${_recs.length})...`;
+    }
+    msg.style.color = 'var(--sec)';
+    msg.textContent = `เสร็จแล้ว — เริ่มภาคเรียนที่ ${newSem} ปีการศึกษา ${newYear} เรียบร้อย (${done} คน)`;
+    await load();
+    renderDash();
+  } catch (e) {
+    msg.style.color = 'var(--dan)';
+    msg.textContent = 'ทำรายการไม่สำเร็จ: ' + e.message;
+  }
+}
+
 // ── PRINT STUDENT PDF ─────────────────────
 function printStudentPDF() {
   const html = document.getElementById('mo-print-student').dataset.printHtml;
@@ -1754,6 +1849,7 @@ async function showPage(name) {
   if (name === 'district')  { fillYearSel(); loadRptMeta(); renderDistrict(); }
   if (name === 'present')   renderPresent();
   if (name === 'survey')    renderSurvey();
+  if (name === 'archive')   loadArchivePage();
   window.scrollTo(0, 0);
 }
 function showLd(v, txt) {
@@ -2572,6 +2668,99 @@ function renderDistrict() {
 </div>`;
 }
 
+// ── ข้อมูลย้อนหลัง (ARCHIVE) ──────────────
+let _archiveRecs = null; // cache ทั้งหมด โหลดครั้งเดียวต่อการเข้าหน้า
+async function loadArchivePage() {
+  const out = document.getElementById('archive-out');
+  if (!db) { out.innerHTML = '<div style="color:var(--muted);text-align:center;padding:40px">ไม่ได้เชื่อมต่อ Firestore</div>'; return; }
+  out.innerHTML = '<div style="color:var(--muted);text-align:center;padding:40px;font-size:.88rem">กำลังโหลด...</div>';
+  try {
+    const snap = await db.collection('visitArchive').get();
+    // ใส่ id ของเอกสาร archive เองทีหลังสุด กัน field "id" เดิม (id นักเรียนตัวจริง) ทับ
+    // ไม่งั้นถ้านักเรียนคนเดียวถูกเก็บ archive มากกว่า 1 ภาคเรียน จะมี id ซ้ำกันหาไม่เจอตัวที่ถูก
+    _archiveRecs = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+  } catch (e) {
+    out.innerHTML = '<div style="color:var(--dan);text-align:center;padding:40px">โหลดข้อมูลไม่สำเร็จ: ' + esc(e.message) + '</div>';
+    return;
+  }
+  const termMap = new Map();
+  _archiveRecs.forEach(r => {
+    const key = `${r.year}|${r.semester}`;
+    if (!termMap.has(key)) termMap.set(key, { year: r.year, semester: r.semester });
+  });
+  const terms = [...termMap.values()].sort((a, b) => (b.year - a.year) || (b.semester - a.semester));
+
+  const sel = document.getElementById('archive-term-sel');
+  if (!terms.length) {
+    sel.innerHTML = '<option value="">-- ยังไม่มีข้อมูลย้อนหลัง --</option>';
+    out.innerHTML = '<div style="color:var(--muted);text-align:center;padding:40px;font-size:.88rem">ยังไม่มีข้อมูลย้อนหลัง — จะมีข้อมูลหลังกด "เริ่มภาคเรียนใหม่" ในหน้าตั้งค่าครั้งแรก</div>';
+    return;
+  }
+  sel.innerHTML = terms.map(t => `<option value="${t.year}|${t.semester}">ภาคเรียนที่ ${esc(t.semester)} ปีการศึกษา ${esc(t.year)}</option>`).join('');
+  renderArchiveTerm();
+}
+
+function renderArchiveTerm() {
+  const sel = document.getElementById('archive-term-sel');
+  const out = document.getElementById('archive-out');
+  if (!sel.value || !_archiveRecs) return;
+  const [year, semester] = sel.value.split('|');
+  const recs = _archiveRecs.filter(r => String(r.year) === year && String(r.semester) === semester);
+
+  const total = recs.length;
+  const vis  = recs.filter(r => r.visited).length;
+  const risk = recs.filter(r => riskCount(r) > 0).length;
+  const urg  = recs.filter(r => r.urgent).length;
+  const pct  = total ? (vis / total * 100).toFixed(1) : 0;
+
+  const rows = recs.slice()
+    .sort((a, b) => (a.gradeLevel||'').localeCompare(b.gradeLevel||'') || (a.studentName||'').localeCompare(b.studentName||'', 'th'))
+    .map(r => `<tr>
+      <td>${esc(r.studentName)}</td>
+      <td>${esc(r.gradeLevel)}</td>
+      <td style="text-align:center">${r.visited ? '<span style="color:var(--sec)">เยี่ยมแล้ว</span>' : '<span style="color:var(--muted)">ยังไม่ได้เยี่ยม</span>'}</td>
+      <td style="text-align:center">${riskCount(r) || '–'}</td>
+      <td style="text-align:center">${r.urgent ? '<span style="color:var(--dan);font-weight:700">เร่งด่วน</span>' : '–'}</td>
+      <td style="text-align:center"><button class="btn btn-sm btn-out" onclick="openArchiveDetail('${r.id}')">ดูรายละเอียด</button></td>
+    </tr>`).join('');
+
+  out.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px">
+      <div class="db-stat"><div class="db-ico" style="background:var(--pri-l);color:var(--pri-d)">${ICONS.users}</div><div><div class="db-lbl">นักเรียนทั้งหมด</div><div class="db-val">${total}</div></div></div>
+      <div class="db-stat"><div class="db-ico" style="background:#dcfce7;color:#15803d">${ICONS.check}</div><div><div class="db-lbl">เยี่ยมแล้ว</div><div class="db-val">${pct}%</div></div></div>
+      <div class="db-stat"><div class="db-ico" style="background:#fef2f2;color:#b91c1c">${ICONS.alert}</div><div><div class="db-lbl">พฤติกรรมเสี่ยง</div><div class="db-val">${risk}</div></div></div>
+      <div class="db-stat"><div class="db-ico" style="background:#fff7ed;color:#c2410c">${ICONS.zap}</div><div><div class="db-lbl">เร่งด่วน</div><div class="db-val">${urg}</div></div></div>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>ชื่อ</th><th>ชั้น</th><th style="text-align:center">สถานะเยี่ยม</th><th style="text-align:center">เสี่ยง</th><th style="text-align:center">เร่งด่วน</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+}
+
+function openArchiveDetail(id) {
+  const r = _archiveRecs && _archiveRecs.find(x => x.id === id);
+  if (!r) return;
+  printStudent(id, r);
+}
+
+function exportArchiveExcel() {
+  const sel = document.getElementById('archive-term-sel');
+  if (!sel.value || !_archiveRecs) { _showToast('ไม่มีข้อมูลที่จะ export ครับ', 'warn'); return; }
+  const [year, semester] = sel.value.split('|');
+  const recs = _archiveRecs.filter(r => String(r.year) === year && String(r.semester) === semester);
+  if (!recs.length) { _showToast('ไม่มีข้อมูลที่จะ export ครับ', 'warn'); return; }
+  const parStatLabel = {'together':'อยู่ด้วยกัน','separate':'แยกกันอยู่','divorced':'หย่าร้าง','father_dead':'บิดาเสียชีวิต','mother_dead':'มารดาเสียชีวิต','both_dead':'เสียชีวิตทั้งคู่'};
+  const sheet = recs.map(r => ({
+    'ชื่อนักเรียน': r.studentName||'', 'ระดับชั้น': r.gradeLevel||'', 'ครูประจำชั้น': r.teacher||'',
+    'ปีการศึกษา': r.year||'', 'ภาคเรียน': r.semester||'', 'เยี่ยมแล้ว': r.visited?'ใช่':'ไม่ใช่',
+    'สถานภาพบิดา-มารดา': parStatLabel[r.parStatus]||r.parStatus||'',
+    'เสี่ยงรวม': riskCount(r), 'เร่งด่วน': r.urgent?'ใช่':'ไม่ใช่', 'หมายเหตุ': r.notes||''
+  }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheet), 'ข้อมูลย้อนหลัง');
+  XLSX.writeFile(wb, `เยี่ยมบ้าน_ย้อนหลัง_เทอม${semester}_${year}.xlsx`);
+}
+
 // ── EXCEL EXPORT ──────────────────────────
 function exportExcel() {
   let recs = _gFilter === 'all' ? _recs : _recs.filter(r => r.gradeLevel === _gFilter);
@@ -2623,8 +2812,8 @@ function exportExcel() {
 }
 
 // ── PRINT STUDENT FORM (แบบราชการ 1 หน้า A4) ──
-function printStudent(id) {
-  const r = _recs.find(x => x.id === id); if (!r) return;
+function printStudent(id, recOverride) {
+  const r = recOverride || _recs.find(x => x.id === id); if (!r) return;
 
   // ตัวช่วย
   const chk  = (v, l) => '<span style="margin-right:12pt;white-space:nowrap">'+(v?'&#9745;':'&#9744;')+' '+l+'</span>';
