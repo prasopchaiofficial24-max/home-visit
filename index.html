@@ -163,6 +163,8 @@ body.hub-mode .topbar,body.hub-mode #critical-banner,body.hub-mode .page,body.hu
 .hub-ico svg{width:26px;height:26px}
 .hub-tt{font-weight:700;font-size:1rem;margin-bottom:2px;color:var(--txt)}
 .hub-ds{color:var(--muted);font-size:.8rem}
+.back-to-hub-btn{background:transparent;border:1.5px solid var(--bdr);border-radius:10px;cursor:pointer;color:var(--muted);font-size:.8rem;padding:6px 12px;margin-bottom:14px;font-family:inherit;transition:var(--tr)}
+.back-to-hub-btn:hover{background:var(--pri-l);border-color:rgba(200,16,46,.2);color:var(--pri-d)}
 
 /* ── MODAL ── */
 .mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:var(--sp-4)}
@@ -350,7 +352,7 @@ body.booting .db-vis-row strong{
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="tb-top">
-    <div class="tb-logo"><img src="logo.png" style="height:34px;width:34px;object-fit:contain;vertical-align:middle;margin-right:7px;border-radius:50%">ระบบดูแลช่วยเหลือนักเรียน <span>จิกดู่วิทยา</span></div>
+    <div class="tb-logo" onclick="backToHub()" style="cursor:pointer" title="กลับหน้าเลือกระบบ"><img src="logo.png" style="height:34px;width:34px;object-fit:contain;vertical-align:middle;margin-right:7px;border-radius:50%">ระบบดูแลช่วยเหลือนักเรียน <span>จิกดู่วิทยา</span></div>
     <div class="tb-teacher" id="tb-teacher">ยังไม่ได้ตั้งชื่อ</div>
     <div class="tb-right">
       <span class="s-badge s-local" id="conn-badge" title="คลิกเพื่อลองเชื่อมต่อใหม่">⏳</span>
@@ -381,6 +383,7 @@ body.booting .db-vis-row strong{
 <div class="page active" id="page-home">
   <div class="hub-wrap" style="min-height:auto;padding:var(--sp-6) var(--sp-2)">
     <div class="hub-header">
+      <button class="back-to-hub-btn" onclick="backToHub()">← กลับหน้าเลือกระบบ</button>
       <h1 style="font-size:1.15rem">เลือกหน้าที่ต้องการใช้งาน</h1>
       <p>ระบบดูแลช่วยเหลือนักเรียน โรงเรียนจิกดู่วิทยา</p>
     </div>
@@ -1233,6 +1236,9 @@ const LABEL = {
 
 function enterMainSystem() {
   document.body.classList.remove('hub-mode');
+}
+function backToHub() {
+  document.body.classList.add('hub-mode');
 }
 
 // กัน XSS — ข้อมูลจากฟอร์ม/แบบสำรวจเป็น input ของผู้ใช้ ต้อง escape ก่อนแทรกเป็น HTML เสมอ
