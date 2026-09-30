@@ -512,6 +512,17 @@ body.booting .db-vis-row strong{
     </div>
   </div>
 
+  <!-- เลือกนักเรียน -->
+  <div class="fsec" style="border-color:rgba(200,16,46,.25)">
+    <div class="fsec-hd" style="background:var(--pri-ll)"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><path d="m21 21-4.35-4.35"/></svg> เลือกนักเรียน</div>
+    <div class="fbody">
+      <div class="fg" style="margin-bottom:0">
+        <label>เลือกจากรายชื่อที่มีอยู่แล้ว หรือเพิ่มนักเรียนใหม่</label>
+        <select id="student-picker" onchange="onStudentPick(this.value)" style="width:100%"></select>
+      </div>
+    </div>
+  </div>
+
   <!-- ส่วน 1: ข้อมูลนักเรียน -->
   <div class="fsec">
     <div class="fsec-hd"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg> ข้อมูลนักเรียน</div>
@@ -1594,6 +1605,26 @@ function applyTeacher() {
   document.getElementById('f-grade-disp').textContent = g || '–';
   const cfg = getCfg();
   if (cfg.year) document.getElementById('f-year').value = cfg.year;
+  populateStudentPicker();
+}
+
+// ── เลือกนักเรียนจากรายชื่อที่มีอยู่แล้ว (แทนพิมพ์ชื่อใหม่) ──
+function populateStudentPicker() {
+  const sel = document.getElementById('student-picker');
+  if (!sel) return;
+  const g = tGrade();
+  const list = _recs.filter(r => r.gradeLevel === g).slice()
+    .sort((a, b) => (Number(a.studentNo) || 0) - (Number(b.studentNo) || 0) || (a.studentName || '').localeCompare(b.studentName || '', 'th'));
+  const current = sel.value;
+  sel.innerHTML = '<option value="">-- + เพิ่มนักเรียนใหม่ --</option>' +
+    list.map(r => `<option value="${r.id}">${esc(r.studentNo || '-')}. ${esc(r.studentName)}${r.visited ? ' ✓' : ''}</option>`).join('');
+  sel.value = list.some(r => r.id === current) ? current : '';
+}
+function onStudentPick(id) {
+  if (!id) { clearForm(); return; }
+  editRecord(id);
+  const sel = document.getElementById('student-picker');
+  if (sel) sel.value = id;
 }
 const getCfg = () => JSON.parse(localStorage.getItem('sv_cfg') || '{}');
 
@@ -2036,6 +2067,8 @@ function clearForm() {
   document.getElementById('nv-sec').style.display = 'none';
   ['risk-sec','prob-sec','env-sec'].forEach(id => document.getElementById(id).style.display = 'block');
   document.getElementById('f-edit-alert').style.display = 'none';
+  const _sp = document.getElementById('student-picker');
+  if (_sp) _sp.value = '';
   applyTeacher();
   discardDraft();
 }
@@ -2119,6 +2152,9 @@ function editRecord(id) {
   const r = _recs.find(x => x.id === id); if (!r) return;
   setFormData(r);
   _activatePage('form');
+  populateStudentPicker();
+  const sel = document.getElementById('student-picker');
+  if (sel) sel.value = id;
   const al = document.getElementById('f-edit-alert');
   al.className = 'alert al-info'; al.textContent = 'กำลังแก้ไข – กด "บันทึกข้อมูล" เพื่ออัปเดต'; al.style.display = 'flex';
   window.scrollTo(0, 0);
