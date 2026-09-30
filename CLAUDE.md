@@ -93,6 +93,8 @@ const FIREBASE_CONFIG = {
   distance, travelTime,
   urgent,          // boolean
   notes,
+  photos,          // {url, fileId}[] — รูปประกอบการเยี่ยม สูงสุด 2 รูป เก็บไฟล์จริงใน Google Drive
+                   // (ผ่าน Apps Script webhook, ดู photo-upload-webhook.gs.js ในโฟลเดอร์แม่)
   school, amphoe, province,
   ts               // timestamp
 }
@@ -159,10 +161,7 @@ const FIREBASE_CONFIG = {
 
 ## สิ่งที่ยังค้างอยู่ (Pending)
 
-1. **Google Drive link รูปภาพ** — รอ link โฟลเดอร์จากงานวิชาการ  
-   เมื่อได้ link ให้เพิ่มในส่วน ข้อ 22 ของ `renderDistrict()` และใน section 7 ของฟอร์ม
-
-2. **Firebase Security Rules** — ตอนนี้เปิด public (`allow read, write: if true`)  
+1. **Firebase Security Rules** — ตอนนี้เปิด public (`allow read, write: if true`)  
    ควรจำกัดถ้า deploy จริง
 
 ---
@@ -174,6 +173,20 @@ const FIREBASE_CONFIG = {
 - **Transport values** ใน HTML: `parent_drive, motorbike, bus, school_bus, bicycle, walk, other` (ต้องตรงกับ `transportLabel` ใน exportExcel และ chart labels ใน renderDash)
 
 ---
+
+## รูปภาพประกอบการเยี่ยม
+
+- ไม่ได้ใช้ Firebase Storage (ต้องอัปเกรดแพ็กเกจ Blaze/ผูกบัตร) — ใช้ Google Apps Script
+  เป็นตัวกลางอัปโหลดเข้า Google Drive โฟลเดอร์ของโรงเรียนแทน (ฟรี)
+- โค้ด Apps Script: `photo-upload-webhook.gs.js` (นอก repo นี้ อยู่ที่ `D:\ระบบเยี่ยมบ้าน\`)
+- Deploy ด้วยบัญชี Google ของโรงเรียน (ต้องมีสิทธิ์ Editor บนโฟลเดอร์ Drive ปลายทาง)
+- URL ของ deployment เก็บไว้ที่ `PHOTO_UPLOAD_ENDPOINT` ใน `index.html`
+- รูปตั้งค่าแชร์เป็น "ทุกคนที่มีลิงก์ดูได้" (Drive ไม่รองรับล็อกด้วย PIN ของระบบเราได้) —
+  ทราบและยอมรับความเสี่ยงนี้แล้ว (รูปบ้าน/สภาพความเป็นอยู่ของนักเรียน เข้าถึงได้ถ้ามีลิงก์)
+- สูงสุด 2 รูป/นักเรียน/ภาคเรียน ผูกกับ `SEMESTER_RESET_FIELDS` (รีเซ็ตตอนเริ่มภาคเรียนใหม่
+  แต่ไฟล์เดิมใน Drive ไม่ถูกลบ เพราะข้อมูล archive ยังอ้างอิง URL เดิมอยู่)
+- แสดงผล 3 จุด: หน้ากรอกข้อมูล (thumbnail), หน้ารายละเอียด/พิมพ์ (`printStudent()`),
+  รายงานเขตพื้นที่ ข้อ 22 (`renderDistrict()`)
 
 ## External Libraries (CDN)
 

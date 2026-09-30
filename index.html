@@ -14,6 +14,7 @@ const GRADES    = ['ม.1','ม.2','ม.3','ม.4','ม.5','ม.6'];
 const GRADE_TOTALS = {'ม.1':19,'ม.2':12,'ม.3':23,'ม.4':6,'ม.5':14,'ม.6':7}; // จำนวนนักเรียนจริงแต่ละชั้น
 const COL       = 'studentVisits';
 const PRINCIPAL = 'นายโกวิท สุพรรณ์';
+const PHOTO_UPLOAD_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxzbY4dA0XpEQ3OP1ENQY_kW5VzID6zgTNJazuBRo6z32aXsVdxGp8KUEJp5cvlrtpC/exec';
 </script>
 
 <link rel="icon" type="image/png" href="logo.png">
@@ -520,6 +521,16 @@ body.booting .db-vis-row strong{
         <label>เลือกจากรายชื่อที่มีอยู่แล้ว หรือเพิ่มนักเรียนใหม่</label>
         <select id="student-picker" onchange="onStudentPick(this.value)" style="width:100%"></select>
       </div>
+    </div>
+  </div>
+
+  <!-- รูปภาพประกอบการเยี่ยม -->
+  <div class="fsec" id="fsec-photos">
+    <div class="fsec-hd"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg> รูปภาพประกอบการเยี่ยม (สูงสุด 2 รูป)</div>
+    <div class="fbody">
+      <div id="photo-need-save" style="font-size:.85rem;color:var(--muted);display:none">กรุณาบันทึกข้อมูลนักเรียนก่อน แล้วจึงเพิ่มรูปได้ครับ</div>
+      <div id="photo-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:420px"></div>
+      <input type="file" id="photo-file-input" accept="image/*" capture="environment" style="display:none" onchange="onPhotoFileSelected(event)">
     </div>
   </div>
 
@@ -1606,6 +1617,7 @@ function applyTeacher() {
   const cfg = getCfg();
   if (cfg.year) document.getElementById('f-year').value = cfg.year;
   populateStudentPicker();
+  renderPhotoGrid();
 }
 
 // ── เลือกนักเรียนจากรายชื่อที่มีอยู่แล้ว (แทนพิมพ์ชื่อใหม่) ──
@@ -1627,6 +1639,141 @@ function onStudentPick(id) {
   if (sel) sel.value = id;
 }
 const getCfg = () => JSON.parse(localStorage.getItem('sv_cfg') || '{}');
+
+// ── รูปภาพประกอบการเยี่ยม (Firebase Storage) ──
+let _formPhotos = [null, null];
+let _photoSlotTarget = 0;
+const PHOTO_MAX_DIM = 1280;
+const PHOTO_QUALITY = 0.72;
+
+function setFormPhotos(photos) {
+  _formPhotos = [photos?.[0] || null, photos?.[1] || null];
+  renderPhotoGrid();
+}
+function renderPhotoGrid() {
+  const grid = document.getElementById('photo-grid');
+  const needSave = document.getElementById('photo-need-save');
+  if (!grid) return;
+  const editId = document.getElementById('edit-id').value;
+  if (!editId) {
+    needSave.style.display = 'block';
+    grid.innerHTML = '';
+    return;
+  }
+  needSave.style.display = 'none';
+  grid.innerHTML = [0, 1].map(i => {
+    const p = _formPhotos[i];
+    if (p) {
+      return `<div style="border-radius:10px;overflow:hidden;border:1px solid var(--bdr);position:relative">
+        <img src="${esc(p.url)}" style="width:100%;height:130px;object-fit:cover;display:block">
+        <button type="button" onclick="deletePhoto(${i})" title="ลบรูป" style="position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);border:none;color:#fff;cursor:pointer;font-size:15px;line-height:1">✕</button>
+      </div>`;
+    }
+    return `<div onclick="pickPhoto(${i})" style="border-radius:10px;border:1.5px dashed var(--bdr);height:130px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--pri-d);background:var(--pri-ll);cursor:pointer">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg>
+      <span style="font-size:.78rem;font-weight:600">เพิ่มรูปที่ ${i+1}</span>
+    </div>`;
+  }).join('');
+}
+function pickPhoto(slot) {
+  const editId = document.getElementById('edit-id').value;
+  if (!editId) { _showToast('กรุณาบันทึกข้อมูลนักเรียนก่อนครับ', 'warn'); return; }
+  _photoSlotTarget = slot;
+  const inp = document.getElementById('photo-file-input');
+  inp.value = '';
+  inp.click();
+}
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = e => { img.src = e.target.result; };
+    reader.onerror = reject;
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > PHOTO_MAX_DIM || height > PHOTO_MAX_DIM) {
+        if (width > height) { height = Math.round(height * PHOTO_MAX_DIM / width); width = PHOTO_MAX_DIM; }
+        else { width = Math.round(width * PHOTO_MAX_DIM / height); height = PHOTO_MAX_DIM; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('บีบอัดรูปไม่สำเร็จ')), 'image/jpeg', PHOTO_QUALITY);
+    };
+    img.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+function _blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+// ส่งด้วย Content-Type: text/plain เพื่อเลี่ยง CORS preflight (Apps Script ไม่รองรับ OPTIONS)
+async function _photoApi(payload) {
+  const res = await fetch(PHOTO_UPLOAD_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'ไม่ทราบสาเหตุ');
+  return data;
+}
+async function onPhotoFileSelected(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const editId = document.getElementById('edit-id').value;
+  if (!editId) return;
+  if (!file.type.startsWith('image/')) { _showToast('กรุณาเลือกไฟล์รูปภาพครับ', 'warn'); return; }
+  showLd(true, 'กำลังอัปโหลดรูป...');
+  try {
+    const blob = await compressImage(file);
+    const base64 = await _blobToBase64(blob);
+    const { fileId, url } = await _photoApi({
+      action: 'upload',
+      base64,
+      mimeType: 'image/jpeg',
+      filename: `${editId}_${Date.now()}.jpg`
+    });
+    const photoObj = { url, fileId };
+    await db.collection(COL).doc(editId).update({
+      photos: firebase.firestore.FieldValue.arrayUnion(photoObj)
+    });
+    // ไม่ mutate _recs เองตรงนี้ — realtime listener จะอัปเดต _recs ให้ตรงกับ Firestore
+    // ให้เองในไม่กี่ร้อย ms ถัดไป (ถ้า mutate เองด้วยอาจซ้ำกับที่ listener เพิ่งอัปเดตไปแล้ว)
+    _formPhotos[_photoSlotTarget] = photoObj;
+    renderPhotoGrid();
+    _showToast('อัปโหลดรูปเรียบร้อยแล้ว', 'ok');
+  } catch (e) {
+    _showToast('อัปโหลดรูปไม่สำเร็จ: ' + e.message, 'warn');
+  } finally {
+    showLd(false);
+  }
+}
+async function deletePhoto(slot) {
+  const photoObj = _formPhotos[slot];
+  if (!photoObj) return;
+  const editId = document.getElementById('edit-id').value;
+  const proceed = await showConfirm('ต้องการลบรูปนี้หรือไม่?', 'ลบรูปภาพ');
+  if (!proceed) return;
+  showLd(true, 'กำลังลบรูป...');
+  try {
+    await db.collection(COL).doc(editId).update({
+      photos: firebase.firestore.FieldValue.arrayRemove(photoObj)
+    });
+    try { await _photoApi({ action: 'delete', fileId: photoObj.fileId }); } catch(e) {}
+    _formPhotos[slot] = null;
+    renderPhotoGrid();
+  } catch (e) {
+    _showToast('ลบรูปไม่สำเร็จ: ' + e.message, 'warn');
+  } finally {
+    showLd(false);
+  }
+}
 
 // ── SETTINGS (ล็อกด้วย PIN ผู้ดูแลระบบ) ────
 function openSettings() {
@@ -1784,7 +1931,7 @@ const SEMESTER_RESET_FIELDS = [
   'rH', 'rS', 'rV', 'rT', 'rX', 'rP', 'rSf', 'rO',
   'pL', 'pH', 'pE', 'pS', 'pD', 'pO',
   'family', 'house', 'transport', 'distance', 'travelTime',
-  'urgent', 'needHelp', 'parentConcern', 'notes'
+  'urgent', 'needHelp', 'parentConcern', 'notes', 'photos'
 ];
 async function startNewSemester() {
   const msg = document.getElementById('new-sem-msg');
@@ -1817,7 +1964,7 @@ async function startNewSemester() {
         const resetData = { year: newYear, semester: newSem };
         SEMESTER_RESET_FIELDS.forEach(f => {
           if (['visited', 'urgent'].includes(f)) resetData[f] = false;
-          else if (['nvReasons', 'house', 'needHelp'].includes(f)) resetData[f] = [];
+          else if (['nvReasons', 'house', 'needHelp', 'photos'].includes(f)) resetData[f] = [];
           else if (['rH','rS','rV','rT','rX','rP','rSf','rO','pL','pH','pE','pS','pD','pO','distance','travelTime'].includes(f)) resetData[f] = 0;
           else resetData[f] = '';
         });
@@ -2069,6 +2216,7 @@ function clearForm() {
   document.getElementById('f-edit-alert').style.display = 'none';
   const _sp = document.getElementById('student-picker');
   if (_sp) _sp.value = '';
+  setFormPhotos([]);
   applyTeacher();
   discardDraft();
 }
@@ -2151,6 +2299,7 @@ async function submitForm() {
 function editRecord(id) {
   const r = _recs.find(x => x.id === id); if (!r) return;
   setFormData(r);
+  setFormPhotos(r.photos || []);
   _activatePage('form');
   populateStudentPicker();
   const sel = document.getElementById('student-picker');
@@ -2543,6 +2692,11 @@ function renderDistrict() {
   const chk = (checked, label) => `<span style="margin-right:16px;white-space:nowrap">${checked?'☑':'☐'} ${label}</span>`;
   const blankLine = n => `<div style="border-bottom:1px solid #999;min-height:22px;margin-bottom:4px">${esc(n)}</div>`;
 
+  // ข้อ 22: ภาพประกอบ (ดึงจากรูปที่ครูอัปโหลดไว้ ในช่วงปี/ภาคเรียนที่กำลังดู)
+  const districtPhotos = recs.filter(r => (r.photos||[]).length)
+    .flatMap(r => (r.photos||[]).map(p => ({ url: p.url, name: r.studentName })))
+    .slice(0, 4);
+
   document.getElementById('district-out').innerHTML = `
 <div style="background:#fff;padding:28px 32px;border-radius:10px;box-shadow:var(--sh);font-size:13.5px;line-height:1.8;color:#111;font-family:'TH SarabunPSK','Sarabun','Noto Sans Thai',Arial,sans-serif">
 
@@ -2681,7 +2835,12 @@ function renderDistrict() {
   </div>
 
   <!-- ข้อ 22 -->
-  <div style="margin-bottom:16px"><strong>22.</strong> รูปภาพประกอบ 2 - 4 รูป (แนบเพิ่มเติม)</div>
+  <div style="margin-bottom:16px">
+    <div><strong>22.</strong> รูปภาพประกอบ 2 - 4 รูป (แนบเพิ่มเติม)</div>
+    <div style="padding-left:20px;margin-top:8px">
+      ${districtPhotos.length ? `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:520px">${districtPhotos.map(p => `<div style="text-align:center"><img src="${esc(p.url)}" style="width:100%;height:90px;object-fit:cover;border-radius:6px;border:1px solid #ddd"><div style="font-size:11px;margin-top:2px">${esc(p.name)}</div></div>`).join('')}</div>` : '<span style="color:#999">(ยังไม่มีรูปภาพแนบในช่วงที่เลือก)</span>'}
+    </div>
+  </div>
 
   <!-- ข้อ 23 -->
   <div style="margin-bottom:20px">
@@ -2994,6 +3153,16 @@ function printStudent(id, recOverride) {
       td('',1, v(r.parentConcern))
     ),
     rows(td('lbl',1,'หมายเหตุ'), td('',3, v(r.notes))),
+
+    // ── ภาพประกอบการเยี่ยมบ้าน (ถ้ามี) ──
+    ...(r.photos && r.photos.length ? [
+      rows(td('sec',4,'ภาพประกอบการเยี่ยมบ้าน')),
+      rows(td('',4,
+        '<div style="display:flex;gap:8pt;flex-wrap:wrap;padding:4pt 0">' +
+        r.photos.map(p => '<img src="'+esc(p.url)+'" style="width:120pt;height:90pt;object-fit:cover;border:1pt solid #000">').join('') +
+        '</div>'
+      ))
+    ] : []),
 
     // ── ลายเซ็น ──
     rows(
