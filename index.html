@@ -147,6 +147,22 @@ tbody tr{transition:background .1s}
 .al-err{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
 .al-info{background:var(--pri-l);color:var(--pri-d);border:1px solid rgba(200,16,46,.2)}
 
+/* ── หน้าแรก: เลือกระบบ ── */
+#page-hub{display:none}
+body.hub-mode #page-hub{display:block}
+body.hub-mode .topbar,body.hub-mode #critical-banner,body.hub-mode .page,body.hub-mode .mo,body.hub-mode .loading{display:none!important}
+.hub-wrap{max-width:640px;margin:0 auto;padding:56px 20px;min-height:100vh;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center}
+.hub-header{text-align:center;margin-bottom:32px}
+.hub-header h1{font-size:1.4rem;font-weight:800;color:var(--pri-d);margin-bottom:4px}
+.hub-header p{color:var(--muted);font-size:.9rem}
+.hub-grid{display:grid;grid-template-columns:1fr;gap:14px}
+.hub-card{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--bdr);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--sh);cursor:pointer;transition:var(--tr);text-decoration:none;color:inherit}
+.hub-card:hover{box-shadow:var(--sh-md);transform:translateY(-2px);border-color:rgba(200,16,46,.25)}
+.hub-ico{width:52px;height:52px;border-radius:14px;background:var(--pri-l);color:var(--pri-d);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hub-ico svg{width:26px;height:26px}
+.hub-tt{font-weight:700;font-size:1rem;margin-bottom:2px;color:var(--txt)}
+.hub-ds{color:var(--muted);font-size:.8rem}
+
 /* ── MODAL ── */
 .mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:var(--sp-4)}
 .mo.open{display:flex}
@@ -298,7 +314,34 @@ body.booting .db-vis-row strong{
 }
 </style>
 </head>
-<body>
+<body class="hub-mode">
+
+<!-- ════ หน้าแรก: เลือกระบบ ════ -->
+<div id="page-hub">
+  <div class="hub-wrap">
+    <div class="hub-header">
+      <img src="logo.png" style="width:56px;height:56px;object-fit:contain;border-radius:50%;margin-bottom:12px">
+      <h1>ระบบดูแลนักเรียน</h1>
+      <p>โรงเรียนจิกดู่วิทยา</p>
+    </div>
+    <div class="hub-grid">
+      <div class="hub-card" onclick="enterMainSystem()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')enterMainSystem()">
+        <span class="hub-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 21v-8a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v8"/></svg></span>
+        <span>
+          <div class="hub-tt">ระบบดูแลช่วยเหลือนักเรียน</div>
+          <div class="hub-ds">แดชบอร์ด ข้อมูลนักเรียน เยี่ยมบ้าน รายงาน</div>
+        </span>
+      </div>
+      <a class="hub-card" href="attendance.html">
+        <span class="hub-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m17 11 2 2 4-4"/></svg></span>
+        <span>
+          <div class="hub-tt">ระบบเช็คชื่อ</div>
+          <div class="hub-ds">เช็คชื่อ 2 รอบ รายงานครูเวร สรุปและพิมพ์</div>
+        </span>
+      </a>
+    </div>
+  </div>
+</div>
 
 <!-- LOADING OVERLAY -->
 <div class="loading" id="ld"><div class="spinner"></div><p id="ld-txt">กำลังโหลด...</p></div>
@@ -1147,6 +1190,10 @@ const LABEL = {
   nv: {full100:'เยี่ยมครบแล้ว (100%)', absent:'นักเรียนไม่มาเรียน',
     busy:'ผู้ปกครองไม่สะดวก', notfound:'ติดต่อไม่ได้', moved:'ย้ายที่อยู่', other:'อื่น ๆ'}
 };
+
+function enterMainSystem() {
+  document.body.classList.remove('hub-mode');
+}
 
 // กัน XSS — ข้อมูลจากฟอร์ม/แบบสำรวจเป็น input ของผู้ใช้ ต้อง escape ก่อนแทรกเป็น HTML เสมอ
 const ESC_MAP = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
